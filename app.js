@@ -799,3 +799,279 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+/* ═══════════════════════════════════════════════
+   NEW FEATURES — v3 additions
+   ═══════════════════════════════════════════════ */
+
+/* ── WEDDING ACTIVATION ──────────────────────── */
+const WEDDING_STATE = {
+  activated: JSON.parse(localStorage.getItem('at_wed_active') || 'false'),
+  p1:     localStorage.getItem('at_wed_p1')     || 'Maria',
+  p2:     localStorage.getItem('at_wed_p2')     || 'JC',
+  date:   localStorage.getItem('at_wed_date')   || '2025-12-15',
+  venue:  localStorage.getItem('at_wed_venue')  || 'The Ruins, Bacolod',
+  budget: parseInt(localStorage.getItem('at_wed_budget') || '350000'),
+};
+
+function activateWedding() {
+  if (WEDDING_STATE.activated) {
+    navTo('wedding');
+  } else {
+    openModal('activate-wedding-modal');
+  }
+}
+
+function doActivateWedding() {
+  const p1    = document.getElementById('wed-p1')?.value.trim()     || 'Maria';
+  const p2    = document.getElementById('wed-p2')?.value.trim()     || 'JC';
+  const date  = document.getElementById('wed-date-input')?.value    || '2025-12-15';
+  const venue = document.getElementById('wed-venue-input')?.value.trim() || 'TBD';
+  const budget= parseInt(document.getElementById('wed-budget-input')?.value) || 0;
+
+  WEDDING_STATE.activated = true;
+  WEDDING_STATE.p1 = p1; WEDDING_STATE.p2 = p2;
+  WEDDING_STATE.date = date; WEDDING_STATE.venue = venue;
+  WEDDING_STATE.budget = budget;
+
+  localStorage.setItem('at_wed_active', 'true');
+  localStorage.setItem('at_wed_p1', p1);
+  localStorage.setItem('at_wed_p2', p2);
+  localStorage.setItem('at_wed_date', date);
+  localStorage.setItem('at_wed_venue', venue);
+  localStorage.setItem('at_wed_budget', budget);
+
+  // Sync to WED object if wedding.js is loaded
+  if (typeof WED !== 'undefined') {
+    WED.couple.p1 = p1; WED.couple.p2 = p2;
+    WED.date = date; WED.venue = venue; WED.budget = budget;
+  }
+
+  closeModalById('activate-wedding-modal');
+  showWeddingHomeCard();
+  showToast('💍 Wedding Planner activated!');
+  setTimeout(() => navTo('wedding'), 420);
+}
+
+function showWeddingHomeCard() {
+  const card = document.getElementById('home-wedding-card');
+  if (!card) return;
+  card.style.display = 'block';
+  // Update content
+  const titleEl = document.getElementById('whc-title-text');
+  const subEl   = document.getElementById('whc-sub-text');
+  if (titleEl) titleEl.textContent = `${WEDDING_STATE.p1} & ${WEDDING_STATE.p2}`;
+  if (subEl) {
+    const d = new Date(WEDDING_STATE.date);
+    const opts = { year:'numeric', month:'long', day:'numeric' };
+    subEl.textContent = `${d.toLocaleDateString('en-PH', opts)} · ${WEDDING_STATE.venue}`;
+  }
+  // Update the quick icon to show activated state
+  const icon = document.getElementById('wedding-quick-icon');
+  if (icon) icon.style.background = 'linear-gradient(135deg,rgba(252,232,238,0.95),rgba(240,168,192,0.85))';
+  // Update badges from WED state
+  updateWeddingHomeBadges();
+}
+
+function updateWeddingHomeBadges() {
+  const badgesEl = document.getElementById('whc-badges');
+  if (!badgesEl || typeof WED === 'undefined') return;
+  const spent    = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
+  const attending= WED.guests.filter(g=>g.rsvp==='attending').length;
+  const total    = WED.checklist.reduce((a,p)=>a+p.items.length,0);
+  const done     = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
+  badgesEl.innerHTML = `
+    <span class="whc-badge">💰 ₱${spent.toLocaleString()} committed</span>
+    <span class="whc-badge">✅ ${done}/${total} tasks</span>
+    <span class="whc-badge">👥 ${attending} guests confirmed</span>`;
+}
+
+/* ── BALANCE CARD — GROUP-ONLY ───────────────── */
+// Override renderBalanceBreakdown to exclude couple & wedding
+const _origRenderBal = window.renderBalanceBreakdown;
+window.renderBalanceBreakdown = function() {
+  openModal('balance-modal');
+  const byGroup  = document.getElementById('bal-by-group');
+  const byPerson = document.getElementById('bal-by-person');
+  if (!byGroup || !byPerson) return;
+
+  // Only group expenses (no couple, no wedding)
+  const groups = [
+    { name:'Ano Tara — Mifamilia', emoji:'🎂', owed:473, owe:0,   net:473  },
+    { name:'Ano Tara — Berks',     emoji:'🍜', owed:560, owe:0,   net:560  },
+    { name:'Palawan Trip',          emoji:'✈️', owed:800, owe:320, net:480  },
+  ];
+
+  byGroup.innerHTML = `
+    <div style="font-size:11px;color:var(--ink-4);margin-bottom:10px;padding:8px 12px;background:rgba(245,230,200,0.4);border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.18)">
+      Showing group balances only — couple and wedding expenses are tracked separately.
+    </div>` +
+    groups.map(g => {
+      const isPos = g.net >= 0;
+      return `<div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">${g.emoji}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">${g.name}</div>
+          ${g.owed ? `<div style="font-size:11px;color:var(--green-deep)">↑ Owed ₱${g.owed}</div>` : ''}
+          ${g.owe  ? `<div style="font-size:11px;color:var(--pink-deep)">↓ Owes ₱${g.owe}</div>` : ''}
+        </div>
+        <div style="font-size:16px;font-weight:700;color:${isPos?'var(--green-deep)':'var(--pink-deep)'}">
+          ${isPos?'+':'−'}₱${Math.abs(g.net)}
+        </div>
+      </div>`;
+    }).join('');
+
+  const people = [
+    { id:'CA', name:'Carlo',      color:'ma-green', owesYou:113, youOwe:0   },
+    { id:'MK', name:'Mark',       color:'ma-pink',  owesYou:200, youOwe:0   },
+    { id:'AN', name:'Ana',        color:'ma-green', owesYou:473, youOwe:0   },
+    { id:'TL', name:'Tita Linda', color:'ma-sand',  owesYou:273, youOwe:0   },
+  ];
+  byPerson.innerHTML = people.map(p => {
+    const isOwed = p.owesYou > 0;
+    return `<div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
+      <div class="member-av ${p.color}" style="width:38px;height:38px;border-radius:10px;font-size:12px">${p.id}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">${p.name}</div>
+        <div style="font-size:11px;color:${isOwed?'var(--green-deep)':'var(--pink-deep)'}">
+          ${isOwed ? p.name+' owes you ₱'+p.owesYou : 'You owe ₱'+p.youOwe}
+        </div>
+      </div>
+      <button onclick="showToast('📲 Request sent to ${p.name}!')" style="padding:6px 12px;border-radius:var(--r-xs);background:${isOwed?'rgba(90,171,122,0.15)':'rgba(224,120,152,0.12)'};border:1px solid ${isOwed?'rgba(90,171,122,0.25)':'rgba(224,120,152,0.2)'};color:${isOwed?'var(--green-deep)':'var(--pink-deep)'};font-size:11px;font-weight:700;cursor:pointer">
+        ${isOwed ? 'Request' : 'Pay'}
+      </button>
+    </div>`;
+  }).join('');
+};
+
+/* ── COUPLE GOALS ────────────────────────────── */
+let _selectedGoalEmoji = '🌏';
+let _selectedContributor = 'both';
+
+function selectGoalEmoji(btn, emoji) {
+  _selectedGoalEmoji = emoji;
+  document.querySelectorAll('#add-goal-modal .icon-pick-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectContributor(who) {
+  _selectedContributor = who;
+  ['p1','p2','both'].forEach(k => {
+    const b = document.getElementById('contrib-btn-'+k);
+    if (b) b.classList.toggle('selected', k === who);
+  });
+}
+
+function submitNewGoal() {
+  const name   = document.getElementById('goal-name')?.value.trim();
+  const target = parseFloat(document.getElementById('goal-target')?.value)||0;
+  if (!name || !target) { showToast('⚠️ Enter goal name and target'); return; }
+  closeModalById('add-goal-modal');
+  showToast(`🎯 "${name}" goal created!`);
+}
+
+let _addMoneyGoalName = '';
+function openAddMoneyModal(goalName) {
+  _addMoneyGoalName = goalName;
+  const el = document.getElementById('add-money-goal-name');
+  if (el) el.textContent = 'Goal: ' + goalName;
+  openModal('add-money-modal');
+}
+
+function submitAddMoney() {
+  const amt = parseFloat(document.getElementById('add-money-amount')?.value)||0;
+  if (!amt) { showToast('⚠️ Enter an amount'); return; }
+  closeModalById('add-money-modal');
+  showToast(`💰 ₱${amt.toLocaleString()} added to ${_addMoneyGoalName}!`);
+  document.getElementById('add-money-amount').value = '';
+}
+
+let _withdrawGoalName = '';
+function openWithdrawModal(goalName) {
+  _withdrawGoalName = goalName;
+  const el = document.getElementById('withdraw-goal-name');
+  if (el) el.textContent = 'Goal: ' + goalName;
+  openModal('withdraw-modal');
+}
+
+function submitWithdraw() {
+  const amt = parseFloat(document.getElementById('withdraw-amount')?.value)||0;
+  if (!amt) { showToast('⚠️ Enter an amount'); return; }
+  closeModalById('withdraw-modal');
+  showToast(`↩ ₱${amt.toLocaleString()} withdrawn from ${_withdrawGoalName}`);
+  document.getElementById('withdraw-amount').value = '';
+}
+
+function openEditGoalModal(name, target, saved) {
+  const n = document.getElementById('edit-goal-name');
+  const t = document.getElementById('edit-goal-target');
+  const s = document.getElementById('edit-goal-saved');
+  if (n) n.value = name;
+  if (t) t.value = target;
+  if (s) s.value = saved;
+  openModal('edit-goal-modal');
+}
+
+function submitEditGoal() {
+  const name = document.getElementById('edit-goal-name')?.value.trim();
+  closeModalById('edit-goal-modal');
+  showToast(`✅ "${name}" updated!`);
+}
+
+/* ── COUPLE EXPENSE MODAL ────────────────────── */
+let _coupleIcon   = '🍽️';
+let _couplePayer  = 'maria';
+let _coupleSplit  = 'equal';
+
+function openCoupleExpenseModal() { openModal('couple-expense-modal'); }
+
+function selectCoupleIcon(btn, icon) {
+  _coupleIcon = icon;
+  document.querySelectorAll('#couple-expense-modal .icon-pick-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectCouplePayer(who) {
+  _couplePayer = who;
+  ['maria','jc'].forEach(k => {
+    const b = document.getElementById('cpaid-'+k);
+    if (b) b.classList.toggle('selected', k === who);
+  });
+}
+
+function selectCoupleSplit(split) {
+  _coupleSplit = split;
+  ['equal','6040','full'].forEach(k => {
+    const b = document.getElementById('csplit-'+k);
+    if (b) b.classList.toggle('selected', k === split);
+  });
+}
+
+function submitCoupleExpense() {
+  closeModalById('couple-expense-modal');
+  showToast(t('expenseAdded'));
+}
+
+/* ── COUPLE POLL ─────────────────────────────── */
+function submitPoll() {
+  const q  = document.getElementById('poll-question')?.value.trim();
+  const o1 = document.getElementById('poll-opt1')?.value.trim();
+  const o2 = document.getElementById('poll-opt2')?.value.trim();
+  if (!q || !o1 || !o2) { showToast('⚠️ Add a question and at least 2 options'); return; }
+  closeModalById('add-poll-modal');
+  showToast('📊 Poll created!');
+  // Reset
+  ['poll-question','poll-opt1','poll-opt2','poll-opt3','poll-opt4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+/* ── INIT EXTENSION ──────────────────────────── */
+// Restore wedding activation state on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (WEDDING_STATE.activated) showWeddingHomeCard();
+  // Add lang key for wedding quick button
+  if (window.LANG) {
+    window.LANG.en.quickWedding  = 'Wedding';
+    window.LANG.fil.quickWedding = 'Kasal';
+  }
+});
