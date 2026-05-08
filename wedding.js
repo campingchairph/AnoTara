@@ -787,3 +787,418 @@ window.toggleChecklist=toggleChecklist; window.toggleSchedule=toggleSchedule;
 window.updateGuestRSVP=updateGuestRSVP; window.showRSVPCard=showRSVPCard;
 window.openWedModal=openWedModal; window.addWedGuest=addWedGuest;
 window.addWedExpense=addWedExpense; window.addWedSched=addWedSched;
+
+/* ═══════════════════════════════════════════════
+   WEDDING v2 — new features appended
+   ═══════════════════════════════════════════════ */
+
+/* ── CANVAS: REMOVE DEFAULT CHAIRS ──────────────
+   Override WED.furniture to start empty (no chairs)
+   and replace drawFurniture to skip auto-chairs.
+   Tables start blank; owner adds chairs manually.
+   ─────────────────────────────────────────────── */
+WED.furniture = [
+  { id:'f1', type:'stage',    x:130, y:16,  w:140, h:56,  label:'Stage',      rot:false },
+  { id:'f2', type:'round',    x:30,  y:110, w:68,  h:68,  label:'Table 1',    rot:false },
+  { id:'f3', type:'round',    x:140, y:110, w:68,  h:68,  label:'Table 2',    rot:false },
+  { id:'f4', type:'round',    x:250, y:110, w:68,  h:68,  label:'Table 3',    rot:false },
+  { id:'f5', type:'round',    x:30,  y:210, w:68,  h:68,  label:'Table 4',    rot:false },
+  { id:'f6', type:'long',     x:150, y:218, w:115, h:46,  label:'Head Table', rot:false },
+  { id:'f7', type:'entrance', x:165, y:320, w:76,  h:34,  label:'Entrance',   rot:false },
+];
+
+// Replace drawFurniture — no auto-chairs, supports rotation
+function drawFurniture(f) {
+  const selected = WED.selectedFurniture === f.id;
+  cx.save();
+
+  const isH = f.rot; // rotated = horizontal long table / vertical orientation swap
+  // For round tables rotation doesn't change appearance — skip swap
+  const w = (f.type === 'long' && isH) ? f.h : f.w;
+  const h = (f.type === 'long' && isH) ? f.w : f.h;
+  const x = f.x, y = f.y;
+
+  if (f.type === 'round') {
+    const rx = x+f.w/2, ry = y+f.h/2, r = f.w/2;
+    cx.beginPath(); cx.arc(rx,ry,r,0,Math.PI*2);
+    cx.fillStyle = selected ? 'rgba(224,120,152,0.22)' : 'rgba(255,253,248,0.88)';
+    cx.fill();
+    cx.strokeStyle = selected ? '#e07898' : 'rgba(201,169,110,0.65)';
+    cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+    // Draw assigned guest count indicator
+    const assignedCount = WED.guests.filter(g => g.table === parseInt(f.label.replace(/\D/g,''))).length;
+    if (assignedCount > 0) {
+      cx.fillStyle = 'rgba(90,171,122,0.18)';
+      cx.beginPath(); cx.arc(rx,ry,r*0.55,0,Math.PI*2); cx.fill();
+      cx.fillStyle='rgba(44,31,14,0.6)';
+      cx.font='700 11px Figtree,sans-serif'; cx.textAlign='center';
+      cx.fillText(assignedCount+'👤', rx, ry+4);
+    }
+  } else if (f.type === 'long') {
+    cx.beginPath(); cx.roundRect(x, y, w, h, 8);
+    cx.fillStyle = selected ? 'rgba(90,171,122,0.18)' : 'rgba(255,253,248,0.88)';
+    cx.fill();
+    cx.strokeStyle = selected ? '#5aab7a' : 'rgba(201,169,110,0.65)';
+    cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+  } else if (f.type === 'chair') {
+    cx.beginPath(); cx.roundRect(x, y, w, h, 5);
+    cx.fillStyle = selected ? 'rgba(108,99,255,0.18)' : 'rgba(245,230,200,0.75)';
+    cx.fill();
+    cx.strokeStyle = selected ? '#6c63ff' : 'rgba(201,169,110,0.5)';
+    cx.lineWidth = selected ? 2 : 1; cx.stroke();
+  } else if (f.type === 'stage') {
+    cx.beginPath(); cx.roundRect(x, y, w, h, 10);
+    cx.fillStyle = selected ? 'rgba(224,120,152,0.28)' : 'rgba(252,232,238,0.88)';
+    cx.fill();
+    cx.strokeStyle = selected ? '#e07898' : 'rgba(224,120,152,0.5)';
+    cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+  } else if (f.type === 'entrance') {
+    cx.beginPath(); cx.roundRect(x, y, w, h, 8);
+    cx.fillStyle = selected ? 'rgba(90,171,122,0.22)' : 'rgba(232,245,237,0.88)';
+    cx.fill();
+    cx.strokeStyle = selected ? '#5aab7a' : 'rgba(90,171,122,0.5)';
+    cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+  } else {
+    cx.beginPath(); cx.roundRect(x, y, w, h, 8);
+    cx.fillStyle = selected ? 'rgba(245,230,200,0.7)' : 'rgba(255,253,248,0.88)';
+    cx.fill();
+    cx.strokeStyle = selected ? 'rgba(201,169,110,0.8)' : 'rgba(201,169,110,0.5)';
+    cx.lineWidth = selected ? 2 : 1.5; cx.stroke();
+  }
+
+  // Rotate indicator on selected long table
+  if (selected && f.type === 'long') {
+    cx.fillStyle = 'rgba(90,171,122,0.9)';
+    cx.font = '10px serif'; cx.textAlign = 'center';
+    cx.fillText('⟳', x+w/2, y-5);
+  }
+
+  // Label
+  cx.fillStyle = 'rgba(44,31,14,0.72)';
+  cx.font = `600 ${f.type==='stage'?12:10}px Figtree,sans-serif`;
+  cx.textAlign = 'center';
+  cx.fillText(f.label, x+w/2, y+h/2+4);
+
+  cx.restore();
+}
+
+// Double-tap / double-click on selected long table = rotate
+function bindCanvasRotate() {
+  let lastTap = 0;
+  const handleDbl = (e) => {
+    const now = Date.now();
+    const sel = WED.furniture.find(f => f.id === WED.selectedFurniture);
+    if (sel && sel.type === 'long' && now - lastTap < 350) {
+      sel.rot = !sel.rot;
+      // Swap stored w/h so drag collision still works
+      const tmp = sel.w; sel.w = sel.h; sel.h = tmp;
+      drawCanvas();
+      showToast('🔄 Table rotated');
+    }
+    lastTap = now;
+  };
+  if (cvs) {
+    cvs.addEventListener('mousedown', handleDbl);
+    cvs.addEventListener('touchstart', handleDbl, {passive:true});
+  }
+}
+
+// Patch addFurniture to not add default chairs
+function addFurniture(type, label) {
+  const defaults = {
+    round:    { w:68,  h:68  },
+    long:     { w:115, h:46  },
+    stage:    { w:140, h:56  },
+    entrance: { w:76,  h:34  },
+    chair:    { w:22,  h:22  },
+    photo:    { w:68,  h:58  },
+    bar:      { w:100, h:38  },
+  };
+  const d = defaults[type] || { w:68, h:68 };
+  const num = WED.furniture.filter(f=>f.type===type).length+1;
+  WED.furniture.push({
+    id: 'f'+WED.nextFurnitureId++,
+    type, x:20, y:20,
+    w:d.w, h:d.h,
+    label: ['round','long'].includes(type) ? `${label} ${num}` : (type==='chair'?`Chair ${num}`:label),
+    rot: false,
+  });
+  drawCanvas();
+  showToast(type === 'chair' ? '🪑 Chair added! Drag to position.' : '✅ '+label+' added! Drag to position.');
+}
+
+// Re-init canvas with rotation support
+const _origInitCanvas = initCanvas;
+function initCanvas() {
+  _origInitCanvas && _origInitCanvas();
+  bindCanvasRotate();
+}
+
+/* ── CHECKLIST: CUSTOM TIMELINE ──────────────── */
+// Extended state for custom checklist phases
+if (!WED._customPhases) WED._customPhases = [];
+
+function renderChecklist() {
+  const el = document.getElementById('wed-checklist-content');
+  if (!el) return;
+
+  const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
+  const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
+  const pct = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
+
+  el.innerHTML = `
+    <!-- Header toolbar -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button onclick="openWedModal('wed-timeline-modal')" style="flex:1;padding:9px;border-radius:var(--r-md);background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer">📅 Set Timeline</button>
+      <button onclick="openAddChecklistItem()" style="flex:1;padding:9px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Task</button>
+    </div>
+    <!-- Overall progress -->
+    <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.18);margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--ink-3)">Overall Progress</span>
+        <span style="font-size:12px;font-weight:700;color:var(--tan-dark)">${totalDone}/${totalItems} · ${pct}%</span>
+      </div>
+      <div style="height:6px;border-radius:3px;background:rgba(44,31,14,0.07);overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--tan));border-radius:3px"></div>
+      </div>
+    </div>
+    ${WED.checklist.map((phase,pi) => {
+      const done  = phase.items.filter(i=>i.done).length;
+      const total = phase.items.length;
+      const pp    = total ? Math.round((done/total)*100) : 0;
+      return `
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:700;color:var(--ink-2)">${phase.phase}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--ink-4);font-weight:700">${done}/${total}</span>
+            <button onclick="openAddChecklistItemToPhase(${pi})" style="padding:3px 9px;border-radius:7px;background:rgba(245,230,200,0.6);border:1px solid rgba(201,169,110,0.22);font-size:10.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add</button>
+          </div>
+        </div>
+        <div style="height:3px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden;margin-bottom:8px">
+          <div style="width:${pp}%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--tan));border-radius:2px"></div>
+        </div>
+        ${phase.items.map(item=>`
+          <div class="glass" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:var(--r-md);margin-bottom:6px">
+            <div onclick="toggleChecklist('${item.id}')" style="width:22px;height:22px;border-radius:7px;border:2px solid ${item.done?'var(--green-accent)':'var(--ink-4)'};background:${item.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s">
+              ${item.done?'<span style="color:white;font-size:12px;font-weight:700">✓</span>':''}
+            </div>
+            <span onclick="toggleChecklist('${item.id}')" style="font-size:13px;font-weight:500;color:${item.done?'var(--ink-4)':'var(--ink)'};text-decoration:${item.done?'line-through':'none'};flex:1;cursor:pointer">${item.text}</span>
+            <button onclick="deleteChecklistItem('${item.id}')" style="width:24px;height:24px;border-radius:7px;border:none;background:rgba(224,120,152,0.1);color:var(--pink-deep);font-size:13px;cursor:pointer;flex-shrink:0">×</button>
+          </div>`).join('')}
+      </div>`;
+    }).join('')}`;
+}
+
+let _addToPhaseIndex = null;
+function openAddChecklistItem() { _addToPhaseIndex = null; openWedModal('wed-add-checklist-modal'); }
+function openAddChecklistItemToPhase(pi) { _addToPhaseIndex = pi; openWedModal('wed-add-checklist-modal'); }
+
+function submitChecklistItem() {
+  const text = document.getElementById('checklist-item-text')?.value.trim();
+  if (!text) { showToast('⚠️ Enter a task'); return; }
+  const id = 'c'+Date.now();
+  if (_addToPhaseIndex !== null && WED.checklist[_addToPhaseIndex]) {
+    WED.checklist[_addToPhaseIndex].items.push({ id, text, done:false });
+  } else {
+    // Add to last phase
+    WED.checklist[WED.checklist.length-1].items.push({ id, text, done:false });
+  }
+  document.getElementById('checklist-item-text').value = '';
+  closeModalById('wed-add-checklist-modal');
+  renderChecklist();
+  renderOverview();
+  showToast('✅ Task added!');
+}
+
+function deleteChecklistItem(id) {
+  for (const phase of WED.checklist) {
+    const idx = phase.items.findIndex(i=>i.id===id);
+    if (idx > -1) { phase.items.splice(idx,1); break; }
+  }
+  renderChecklist();
+  renderOverview();
+}
+
+function submitTimeline() {
+  const preset = document.getElementById('timeline-preset')?.value;
+  const custom = document.getElementById('timeline-custom-months')?.value;
+  closeModalById('wed-timeline-modal');
+  showToast('📅 Timeline set to ' + (custom || preset));
+}
+
+/* ── SCHEDULE: EDITABLE ENTRIES ──────────────── */
+let _editSchedIndex = null;
+
+function renderSchedule() {
+  const el = document.getElementById('wed-schedule-content');
+  if (!el) return;
+  el.innerHTML = `
+    <button onclick="openWedModal('wed-add-sched-modal')" style="width:100%;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:14px">+ Add Schedule Item</button>
+    ${WED.schedule.map((s,i)=>`
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
+        <div style="min-width:58px;text-align:right;padding-top:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-3)">${s.time}</div>
+        </div>
+        <div style="width:2px;background:linear-gradient(to bottom,rgba(201,169,110,0.3),rgba(201,169,110,0.1));border-radius:1px;min-height:50px;flex-shrink:0;margin-top:14px"></div>
+        <div style="flex:1;padding:12px 14px;border-radius:var(--r-md);background:${SCHED_COLORS[s.color]};border:1px solid ${SCHED_BORDER[s.color]};opacity:${s.done?0.6:1}">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:700;color:var(--ink);text-decoration:${s.done?'line-through':'none'}">${s.event}</div>
+              <div style="font-size:11px;color:var(--ink-4);margin-top:2px">👤 ${s.assignee}</div>
+            </div>
+            <div style="display:flex;gap:5px;flex-shrink:0">
+              <button onclick="toggleSchedule(${i})" style="width:26px;height:26px;border-radius:8px;border:2px solid ${s.done?'var(--green-accent)':'var(--ink-4)'};background:${s.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer">
+                ${s.done?'<span style="color:white;font-size:11px;font-weight:700">✓</span>':''}
+              </button>
+              <button onclick="openEditSched(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer">✏️</button>
+              <button onclick="deleteSchedItem(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(224,120,152,0.22);background:rgba(252,232,238,0.55);font-size:13px;cursor:pointer;color:var(--pink-deep)">×</button>
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}`;
+}
+
+function openEditSched(i) {
+  _editSchedIndex = i;
+  const s = WED.schedule[i];
+  const tEl = document.getElementById('edit-sched-time');
+  const eEl = document.getElementById('edit-sched-event');
+  const aEl = document.getElementById('edit-sched-assignee');
+  if (tEl) tEl.value = s.time;
+  if (eEl) eEl.value = s.event;
+  if (aEl) aEl.value = s.assignee;
+  openWedModal('wed-edit-sched-modal');
+}
+
+function submitEditSched() {
+  if (_editSchedIndex === null) return;
+  const s = WED.schedule[_editSchedIndex];
+  s.time     = document.getElementById('edit-sched-time')?.value    || s.time;
+  s.event    = document.getElementById('edit-sched-event')?.value.trim()    || s.event;
+  s.assignee = document.getElementById('edit-sched-assignee')?.value.trim() || s.assignee;
+  // Re-sort by time
+  WED.schedule.sort((a,b) => a.time.localeCompare(b.time));
+  _editSchedIndex = null;
+  closeModalById('wed-edit-sched-modal');
+  renderSchedule();
+  showToast('📅 Schedule updated & sorted!');
+}
+
+function deleteSchedItem(i) {
+  WED.schedule.splice(i, 1);
+  renderSchedule();
+  showToast('🗑 Item removed');
+}
+
+/* ── OVERVIEW: EDITABLE FIELDS ───────────────── */
+function renderOverview() {
+  const el = document.getElementById('wed-overview-content');
+  if (!el) return;
+  const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
+  const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
+  const pct     = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
+  const spent   = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
+  const attending = WED.guests.filter(g=>g.rsvp==='attending').length;
+
+  el.innerHTML = `
+    <!-- Edit overview button -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button onclick="openWedModal('wed-edit-overview-modal')" style="padding:7px 16px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">✏️ Edit Details</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="wed-stat-card glass-pink"><div class="wed-stat-emoji">💍</div><div class="wed-stat-val">${getCountdown()}</div><div class="wed-stat-lbl">Until the Big Day</div></div>
+      <div class="wed-stat-card glass-green"><div class="wed-stat-emoji">👥</div><div class="wed-stat-val">${attending} / ${WED.guests.length}</div><div class="wed-stat-lbl">Guests Confirmed</div></div>
+      <div class="wed-stat-card glass-cream"><div class="wed-stat-emoji">💰</div><div class="wed-stat-val">₱${spent.toLocaleString()}</div><div class="wed-stat-lbl">of ₱${WED.budget.toLocaleString()} spent</div></div>
+      <div class="wed-stat-card glass"><div class="wed-stat-emoji">✅</div><div class="wed-stat-val">${pct}%</div><div class="wed-stat-lbl">Planning Complete</div></div>
+    </div>
+    <div style="margin-bottom:16px;padding:16px;border-radius:var(--r-lg)" class="glass">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Planning Progress</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:10px;border-radius:5px;background:rgba(44,31,14,0.08);overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--tan));border-radius:5px"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:var(--tan-dark)">${pct}%</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-4);margin-top:6px">${totalDone} of ${totalItems} tasks complete</div>
+    </div>
+    <div style="padding:16px;border-radius:var(--r-lg);margin-bottom:12px" class="glass">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Event Details</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:16px">💑</span>
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink)">${WED.couple.p1} &amp; ${WED.couple.p2}</div><div style="font-size:11px;color:var(--ink-4)">Couple</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:16px">📅</span>
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink)">${new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div><div style="font-size:11px;color:var(--ink-4)">Wedding Date</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:16px">📍</span>
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink)">${WED.venue}</div><div style="font-size:11px;color:var(--ink-4)">Venue</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:16px">💰</span>
+          <div><div style="font-size:13px;font-weight:700;color:var(--ink)">₱${WED.budget.toLocaleString()}</div><div style="font-size:11px;color:var(--ink-4)">Total Budget</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Invitation image upload -->
+    <div style="padding:16px;border-radius:var(--r-lg)" class="glass">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Wedding Invitation</div>
+      ${WED._invitationImg ? `<img src="${WED._invitationImg}" style="width:100%;border-radius:var(--r-md);margin-bottom:10px">` : `
+        <div style="padding:20px;border-radius:var(--r-md);border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);text-align:center;margin-bottom:10px">
+          <div style="font-size:28px;margin-bottom:6px">💌</div>
+          <div style="font-size:12.5px;color:var(--ink-3)">Upload your own invitation design</div>
+        </div>`}
+      <label style="display:block;width:100%;padding:10px;border-radius:var(--r-md);background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
+        📎 ${WED._invitationImg ? 'Replace Invitation' : 'Upload Invitation'}
+        <input type="file" accept="image/*" style="display:none" onchange="uploadInvitation(event)">
+      </label>
+      <button onclick="showRSVPCard()" style="width:100%;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-top:8px">💌 Generate Digital Invitation</button>
+    </div>`;
+}
+
+function uploadInvitation(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    WED._invitationImg = e.target.result;
+    renderOverview();
+    showToast('💌 Invitation uploaded!');
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitEditOverview() {
+  const p1     = document.getElementById('ov-p1')?.value.trim()     || WED.couple.p1;
+  const p2     = document.getElementById('ov-p2')?.value.trim()     || WED.couple.p2;
+  const date   = document.getElementById('ov-date')?.value          || WED.date;
+  const venue  = document.getElementById('ov-venue')?.value.trim()  || WED.venue;
+  const budget = parseInt(document.getElementById('ov-budget')?.value) || WED.budget;
+  WED.couple.p1 = p1; WED.couple.p2 = p2;
+  WED.date = date; WED.venue = venue; WED.budget = budget;
+  // Sync to WEDDING_STATE if available
+  if (typeof WEDDING_STATE !== 'undefined') {
+    Object.assign(WEDDING_STATE, { p1, p2, date, venue, budget });
+  }
+  closeModalById('wed-edit-overview-modal');
+  renderOverview();
+  if (typeof updateWeddingHomeBadges === 'function') updateWeddingHomeBadges();
+  showToast('✅ Wedding details updated!');
+}
+
+// Expose new functions
+window.submitChecklistItem = submitChecklistItem;
+window.deleteChecklistItem = deleteChecklistItem;
+window.openAddChecklistItem = openAddChecklistItem;
+window.openAddChecklistItemToPhase = openAddChecklistItemToPhase;
+window.submitTimeline = submitTimeline;
+window.openEditSched = openEditSched;
+window.submitEditSched = submitEditSched;
+window.deleteSchedItem = deleteSchedItem;
+window.submitEditOverview = submitEditOverview;
+window.uploadInvitation = uploadInvitation;
+window.addFurniture = addFurniture;
+window.drawFurniture = drawFurniture;
