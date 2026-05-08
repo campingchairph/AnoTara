@@ -21,6 +21,7 @@ const LANG = {
     happening: 'Activity',
     seeAll: 'See all',
     quickGroups: 'Groups', quickExpense: 'Add Expense', quickCouple: 'Couple', quickInvite: 'Invite',
+    quickWedding: 'Wedding',
     // Balance breakdown
     balBreakdownTitle: 'Balance Breakdown',
     balPerGroup: 'By Group',
@@ -178,6 +179,7 @@ const LANG = {
     happening: 'Nangyayari',
     seeAll: 'Lahat',
     quickGroups: 'Grupo', quickExpense: 'Gastos', quickCouple: 'Jowa', quickInvite: 'Imbitahan',
+    quickWedding: 'Kasal',
     balBreakdownTitle: 'Breakdown ng Balance',
     balPerGroup: 'Bawat Grupo',
     balPerPerson: 'Bawat Tao',
