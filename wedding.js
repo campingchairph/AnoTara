@@ -729,8 +729,8 @@ function bindCanvasEvents() {
     const src = t ? e.touches[0] : e;
     return { x: src.clientX - r.left, y: src.clientY - r.top };
   };
-  const onDown = (e) => {
-    e.preventDefault();
+const onDown = (e) => {
+    if (e.type !== 'touchstart') e.preventDefault();
     const {x,y} = getTouchPos(e, e.type==='touchstart');
     const hit = [...WED.furniture].reverse().find(f => {
       if (f.type==='round') {
@@ -761,9 +761,9 @@ if (hit) {
       drawCanvas();
     }
   };
-  const onMove = (e) => {
+const onMove = (e) => {
     if (!WED.dragging) return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const {x,y} = getTouchPos(e, e.type==='touchmove');
     WED.dragging.x = Math.max(0, Math.min(cvs.width-WED.dragging.w,  x-WED.dragOffX));
     WED.dragging.y = Math.max(0, Math.min(cvs.height-WED.dragging.h, y-WED.dragOffY));
@@ -771,10 +771,10 @@ if (hit) {
   };
   const onUp = () => { WED.dragging = null; };
 
-  cvs.addEventListener('mousedown',  onDown);
+cvs.addEventListener('mousedown',  onDown);
   cvs.addEventListener('mousemove',  onMove);
   cvs.addEventListener('mouseup',    onUp);
-  cvs.addEventListener('touchstart', onDown, {passive:false});
+  cvs.addEventListener('touchstart', onDown, {passive:true});
   cvs.addEventListener('touchmove',  onMove, {passive:false});
   cvs.addEventListener('touchend',   onUp);
 }
