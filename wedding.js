@@ -942,12 +942,12 @@ function addFurniture(type, label) {
   showToast(type === 'chair' ? '🪑 Chair added! Drag to position.' : '✅ '+label+' added! Drag to position.');
 }
 
-// Re-init canvas with rotation support
+// Patch initCanvas to also bind rotation (run once via cvs._rotBound guard)
 const _origInitCanvas = initCanvas;
-function initCanvas() {
-  _origInitCanvas && _origInitCanvas();
-  bindCanvasRotate();
-}
+initCanvas = function() {
+  _origInitCanvas();
+  if (cvs && !cvs._rotBound) { cvs._rotBound = true; bindCanvasRotate(); }
+};
 
 /* ── CHAIR GUEST PICKER ──────────────────────── */
 function openChairGuestPicker(chairId) {
