@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#fef6e8">
+<title>RSVP — Ano Tara?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=Lora:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Figtree',sans-serif;background:linear-gradient(135deg,#fef6e8 0%,#fce8ee 50%,#e8f5ed 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px}
+  .card{width:100%;max-width:400px;background:rgba(255,253,248,0.97);border-radius:28px;padding:28px 22px;border:1px solid rgba(255,255,255,0.8);box-shadow:0 20px 60px rgba(44,31,14,0.14);margin-bottom:16px}
+  .logo{text-align:center;font-size:11px;font-weight:700;color:#b8977a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}
+  .invite-img{width:100%;border-radius:18px;display:block;margin-bottom:0;box-shadow:0 8px 32px rgba(44,31,14,0.12)}
+  .invite-canvas-wrap{width:100%;border-radius:18px;overflow:hidden;margin-bottom:0;box-shadow:0 8px 32px rgba(44,31,14,0.12)}
+  .invite-canvas-wrap canvas{display:block;width:100%;height:auto}
+  .divider{height:1px;background:rgba(201,169,110,0.25);margin:20px 0}
+  .guest-name{font-size:22px;font-weight:800;color:#2c1f0e;text-align:center;margin-bottom:4px}
+  .guest-role{font-size:13px;color:#a07840;font-weight:700;text-align:center;margin-bottom:18px;display:none}
+  .details{background:rgba(245,230,200,0.4);border-radius:16px;padding:16px;margin-bottom:22px;border:1px solid rgba(201,169,110,0.2)}
+  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid rgba(201,169,110,0.1)}
+  .detail-row:last-child{border-bottom:none}
+  .detail-key{color:#7a6045;font-weight:600}
+  .detail-val{color:#2c1f0e;font-weight:700;text-align:right;max-width:60%}
+  .question{font-size:15px;font-weight:700;color:#2c1f0e;text-align:center;margin-bottom:16px}
+  .btn-group{display:flex;gap:12px;margin-bottom:8px}
+  .btn{flex:1;padding:16px 8px;border-radius:16px;font-size:14px;font-weight:800;cursor:pointer;border:none;transition:transform 0.15s;line-height:1.3}
+  .btn:active{transform:scale(0.96)}
+  .btn-attend{background:linear-gradient(135deg,#5aab7a,#3a7a54);color:white;box-shadow:0 6px 20px rgba(58,122,84,0.3)}
+  .btn-decline{background:linear-gradient(135deg,#e07898,#c0506e);color:white;box-shadow:0 6px 20px rgba(192,80,110,0.3)}
+  .result{display:none;text-align:center;padding:16px 0}
+  .result-emoji{font-size:52px;margin-bottom:14px}
+  .result-text{font-size:17px;font-weight:800;color:#2c1f0e;margin-bottom:6px}
+  .result-sub{font-size:13px;color:#7a6045;line-height:1.5}
+  .result-seat{margin-top:14px;padding:12px 16px;background:rgba(90,171,122,0.1);border-radius:12px;border:1px solid rgba(90,171,122,0.2);font-size:13px;font-weight:700;color:#3a7a54;display:none}
+  .already-badge{display:none;text-align:center;margin-bottom:14px;padding:8px 16px;background:rgba(245,230,200,0.6);border-radius:10px;border:1px solid rgba(201,169,110,0.2);font-size:12px;font-weight:700;color:#a07840}
+  .change-btn{padding:8px 20px;border-radius:10px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.5);font-size:12px;font-weight:700;color:#a07840;cursor:pointer;margin-top:14px}
+  .footer{text-align:center;font-size:11px;color:#b8977a;margin-top:8px;padding-bottom:32px}
+  #card-loading{text-align:center;padding:32px;font-size:13px;color:#b8977a;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="card" id="invite-card">
+  <div class="logo">ano tara? 💍</div>
+  <div id="card-loading">Loading invitation…</div>
+  <div id="card-display" style="display:none"></div>
+
+  <div class="divider"></div>
+
+  <div class="guest-name" id="guest-name">—</div>
+  <div class="guest-role" id="guest-role"></div>
+
+  <div class="details" id="details-block">
+    <div class="detail-row"><span class="detail-key">📅 Date</span><span class="detail-val" id="det-date">—</span></div>
+    <div class="detail-row"><span class="detail-key">📍 Venue</span><span class="detail-val" id="det-venue">—</span></div>
+    <div class="detail-row"><span class="detail-key">🪑 Seat</span><span class="detail-val" id="det-seat">—</span></div>
+    <div class="detail-row" id="det-chair-row" style="display:none"><span class="detail-key">🏷 Chair</span><span class="detail-val" id="det-chair">—</span></div>
+  </div>
+
+  <div id="rsvp-section">
+    <div class="already-badge" id="already-badge"></div>
+    <div class="question">Will you be attending? 🎉</div>
+    <div class="btn-group">
+      <button class="btn btn-attend" onclick="respond('attending')">✅ Yes, I'll be there!</button>
+      <button class="btn btn-decline" onclick="respond('declined')">❌ Can't make it</button>
+    </div>
+  </div>
+
+  <div class="result" id="result-section">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-text" id="result-text">—</div>
+    <div class="result-sub" id="result-sub">—</div>
+    <div class="result-seat" id="result-seat"></div>
+    <button class="change-btn" onclick="changeResponse()">Change my response</button>
+  </div>
+</div>
+
+<div class="footer">Powered by Ano Tara? · Made with 💕</div>
+
+<script>
+const p       = new URLSearchParams(location.search);
+const gid     = p.get('gid')     || '';
+const name    = p.get('name')    || 'Guest';
+const role    = p.get('role')    || '';
+const table   = p.get('table')   || '—';
+const seat    = p.get('seat')    || '—';
+const chair   = p.get('chair')   || '';
+const wedding = p.get('wedding') || '—';
+const date    = p.get('date')    || '';
+const venue   = p.get('venue')   || '—';
+const hasCustom = p.get('cardImg') === '1';
+
+// --- Render invitation card ---
+const cardDisplay = document.getElementById('card-display');
+const cardLoading = document.getElementById('card-loading');
+
+function showCard() {
+  cardLoading.style.display = 'none';
+  cardDisplay.style.display = 'block';
+}
+
+// Try to get custom uploaded card from localStorage
+const storedCard = localStorage.getItem('at_wedding_custom_card');
+if (storedCard) {
+  const img = document.createElement('img');
+  img.className = 'invite-img';
+  img.src = storedCard;
+  img.onload = () => { cardDisplay.appendChild(img); showCard(); };
+  img.onerror = () => renderGeneratedCard();
+} else {
+  renderGeneratedCard();
+}
+
+function renderGeneratedCard() {
+  // Draw canvas card matching the app's generated invite
+  const wrap = document.createElement('div');
+  wrap.className = 'invite-canvas-wrap';
+  const cvs = document.createElement('canvas');
+  cvs.width = 380; cvs.height = 560;
+  wrap.appendChild(cvs);
+  cardDisplay.appendChild(wrap);
+
+  const ctx = cvs.getContext('2d');
+  const w = 380, h = 560;
+
+  const grad = ctx.createLinearGradient(0,0,w,h);
+  grad.addColorStop(0,'#fef6e8'); grad.addColorStop(0.5,'#fce8ee'); grad.addColorStop(1,'#e8f5ed');
+  ctx.fillStyle = grad;
+  ctx.roundRect(0,0,w,h,24); ctx.fill();
+
+  ctx.globalAlpha=0.12;
+  ctx.fillStyle='#c9a96e'; ctx.beginPath(); ctx.arc(340,60,90,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e07898'; ctx.beginPath(); ctx.arc(40,500,70,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+
+  ctx.strokeStyle='rgba(201,169,110,0.35)'; ctx.lineWidth=1.5;
+  ctx.roundRect(8,8,w-16,h-16,20); ctx.stroke();
+
+  ctx.font='28px serif'; ctx.textAlign='center';
+  ctx.fillText('🌸',20,50); ctx.fillText('🌸',w-50,50);
+  ctx.fillText('🌿',14,h-30); ctx.fillText('🌿',w-42,h-30);
+
+  ctx.fillStyle='#7a6045'; ctx.font='500 13px Figtree,sans-serif';
+  ctx.fillText('YOU ARE CORDIALLY INVITED TO THE WEDDING OF', w/2, 80);
+
+  const [p1,p2] = wedding.split(' & ');
+  ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
+  ctx.fillText(p1||'—', w/2, 130);
+  ctx.fillStyle='#c9a96e'; ctx.font='italic 400 22px Lora,serif';
+  ctx.fillText('&', w/2, 162);
+  ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
+  ctx.fillText(p2||'—', w/2, 200);
+
+  ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(60,220); ctx.lineTo(w-60,220); ctx.stroke();
+
+  let dateStr = '—';
+  try { if(date) dateStr = new Date(date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); } catch(e){}
+  ctx.fillStyle='#4a3520'; ctx.font='600 14px Figtree,sans-serif';
+  ctx.fillText(dateStr, w/2, 252);
+  ctx.fillStyle='#7a6045'; ctx.font='400 13px Figtree,sans-serif';
+  ctx.fillText(venue, w/2, 278);
+
+  ctx.strokeStyle='rgba(201,169,110,0.3)';
+  ctx.beginPath(); ctx.moveTo(60,298); ctx.lineTo(w-60,298); ctx.stroke();
+
+  // RSVP button visual
+  const btnX=w/2-80,btnY=318,btnW=160,btnH=38;
+  const bg=ctx.createLinearGradient(btnX,btnY,btnX+btnW,btnY+btnH);
+  bg.addColorStop(0,'#c9a96e'); bg.addColorStop(1,'#a07840');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.roundRect(btnX,btnY,btnW,btnH,10); ctx.fill();
+  ctx.fillStyle='white'; ctx.font='700 14px Figtree,sans-serif';
+  ctx.fillText('RSVP NOW →', w/2, btnY+24);
+
+  ctx.fillStyle='#b8977a'; ctx.font='400 11px Figtree,sans-serif';
+  ctx.fillText('campingchairph.github.io/AnoTara/rsvp', w/2, 380);
+
+  const [wp1,wp2] = wedding.split(' & ');
+  ctx.fillStyle='#c9a96e'; ctx.font='italic 400 13px Lora,serif';
+  ctx.fillText('#'+(wp1||'').replace(/\s/g,'')+'And'+(wp2||'').replace(/\s/g,''), w/2, 410);
+
+  showCard();
+}
+
+// --- Populate guest details ---
+document.getElementById('guest-name').textContent = name;
+if (role) {
+  const roleEl = document.getElementById('guest-role');
+  roleEl.textContent = role; roleEl.style.display = 'block';
+}
+try { document.getElementById('det-date').textContent = date ? new Date(date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '—'; } catch(e) { document.getElementById('det-date').textContent = date; }
+document.getElementById('det-venue').textContent = venue;
+document.getElementById('det-seat').textContent  = 'Table '+table+' · Seat '+seat;
+if (chair) {
+  document.getElementById('det-chair').textContent = chair;
+  document.getElementById('det-chair-row').style.display = 'flex';
+}
+
+// --- Check existing response ---
+const storageKey = 'at_rsvp_' + gid;
+const existing   = gid ? localStorage.getItem(storageKey) : null;
+if (existing) {
+  const badge = document.getElementById('already-badge');
+  badge.style.display = 'block';
+  badge.textContent   = existing === 'attending' ? '✅ You previously confirmed attendance' : '❌ You previously declined';
+}
+
+function respond(status) {
+  if (gid) {
+    localStorage.setItem(storageKey, status);
+    try {
+      const pending = JSON.parse(localStorage.getItem('at_rsvp_pending') || '[]');
+      const idx = pending.findIndex(r => r.gid == gid);
+      const entry = { gid, name, status, ts: Date.now() };
+      if (idx >= 0) pending[idx] = entry; else pending.push(entry);
+      localStorage.setItem('at_rsvp_pending', JSON.stringify(pending));
+    } catch(e) {}
+  }
+  showResult(status);
+}
+
+function showResult(status) {
+  document.getElementById('rsvp-section').style.display = 'none';
+  document.getElementById('result-section').style.display = 'block';
+  if (status === 'attending') {
+    document.getElementById('result-emoji').textContent = '🎉';
+    document.getElementById('result-text').textContent  = 'See you there, '+name.split(' ')[0]+'!';
+    document.getElementById('result-sub').textContent   = "Your attendance has been confirmed. We can't wait to celebrate with you!";
+    const seatEl = document.getElementById('result-seat');
+    seatEl.style.display = 'block';
+    seatEl.textContent = '🪑 Table '+table+' · Seat '+seat+(chair?' · '+chair:'');
+  } else {
+    document.getElementById('result-emoji').textContent = '💌';
+    document.getElementById('result-text').textContent  = "We'll miss you!";
+    document.getElementById('result-sub').textContent   = 'Thank you for letting us know. Your response has been recorded.';
+  }
+}
+
+function changeResponse() {
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('rsvp-section').style.display   = 'block';
+  document.getElementById('already-badge').style.display  = 'none';
+}
+</script>
+</body>
+</html>
