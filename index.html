@@ -571,14 +571,7 @@
     <div class="input-group"><div class="input-label">Full Name</div><input type="text" id="new-guest-name" class="glass-input" placeholder="e.g. Juan dela Cruz"></div>
     <div class="input-group"><div class="input-label">Table #</div><input type="number" id="new-guest-table" class="glass-input" placeholder="1" min="1"></div>
     <div class="input-group"><div class="input-label">Seat #</div><input type="number" id="new-guest-seat" class="glass-input" placeholder="1" min="1"></div>
-    <div class="input-group"><div class="input-label">Meal Preference</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap" id="guest-meal-picker">
-        <button class="split-btn selected" onclick="window.selectGuestMeal(this,'chicken')">🍗 Chicken</button>
-        <button class="split-btn" onclick="window.selectGuestMeal(this,'fish')">🐟 Fish</button>
-        <button class="split-btn" onclick="window.selectGuestMeal(this,'beef')">🥩 Beef</button>
-        <button class="split-btn" onclick="window.selectGuestMeal(this,'')">— None</button>
-      </div>
-    </div>
+    <div class="input-group"><div class="input-label">Role / Title</div><input type="text" id="new-guest-role" class="glass-input" placeholder="e.g. Ninong, Ninang, Best Man…"></div>
     <div class="input-group"><div class="input-label">Dietary Note</div><input type="text" id="new-guest-dietary" class="glass-input" placeholder="e.g. vegetarian, halal…"></div>
     <button class="cta-btn pink" onclick="window.submitAddGuest()">Add Guest →</button>
   </div>
