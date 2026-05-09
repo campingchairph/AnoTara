@@ -1312,8 +1312,9 @@ function renderOverview() {
   const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
   const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
   const pct     = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
-  const spent   = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
-  const attending = WED.guests.filter(g=>g.rsvp==='attending').length;
+  const totalSpent = WED.expenses.reduce((a,e)=>a+e.amount,0);
+  const paid       = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
+  const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
 
   el.innerHTML = `
     <!-- Edit overview button -->
@@ -1323,7 +1324,7 @@ function renderOverview() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
       <div class="wed-stat-card glass-pink"><div class="wed-stat-emoji">💍</div><div class="wed-stat-val">${getCountdown()}</div><div class="wed-stat-lbl">Until the Big Day</div></div>
       <div class="wed-stat-card glass-green"><div class="wed-stat-emoji">👥</div><div class="wed-stat-val">${attending} / ${WED.guests.length}</div><div class="wed-stat-lbl">Guests Confirmed</div></div>
-      <div class="wed-stat-card glass-cream"><div class="wed-stat-emoji">💰</div><div class="wed-stat-val">₱${spent.toLocaleString()}</div><div class="wed-stat-lbl">of ₱${WED.budget.toLocaleString()} spent</div></div>
+      <div class="wed-stat-card glass-cream"><div class="wed-stat-emoji">💰</div><div class="wed-stat-val">₱${totalSpent.toLocaleString()}</div><div class="wed-stat-lbl">committed · ₱${paid.toLocaleString()} paid</div></div>
       <div class="wed-stat-card glass"><div class="wed-stat-emoji">✅</div><div class="wed-stat-val">${pct}%</div><div class="wed-stat-lbl">Planning Complete</div></div>
     </div>
     <div style="margin-bottom:16px;padding:16px;border-radius:var(--r-lg)" class="glass">
