@@ -635,7 +635,10 @@ function bindCanvasEvents() {
       WED.selectedFurniture = hit.id;
       renderSeatAssignments();
       drawCanvas();
-    } else {
+      // If tapped a chair, open guest picker immediately
+      if (hit.type === 'chair') {
+        openChairGuestPicker(hit.id);
+      } else {
       WED.selectedFurniture = null;
       drawCanvas();
     }
@@ -661,13 +664,12 @@ function bindCanvasEvents() {
 function renderFurniturePalette() {
   const el = document.getElementById('furniture-palette');
   if (!el) return;
-  const items = [
+   const items = [
     { type:'round',    emoji:'⭕', label:'Round Table' },
     { type:'long',     emoji:'▬',  label:'Long Table' },
+    { type:'chair',    emoji:'🪑', label:'Chair' },
     { type:'stage',    emoji:'🎭', label:'Stage' },
     { type:'entrance', emoji:'🚪', label:'Entrance' },
-    { type:'photo',    emoji:'📸', label:'Photo Booth' },
-    { type:'bar',      emoji:'🍾', label:'Bar' },
   ];
   el.innerHTML = items.map(i=>`
     <button onclick="addFurniture('${i.type}','${i.label}')" style="
@@ -729,6 +731,59 @@ function renderSeatAssignments() {
             <span style="font-size:10.5px;color:var(--ink-4)">Seat ${g.seat}</span>
           </div>`).join('')}
       </div>`).join('')}`;
+}
+   function openChairGuestPicker(chairId) {
+  const modal = document.getElementById('chair-assign-modal');
+  if (!modal) return;
+  const chair = WED.furniture.find(f => f.id === chairId);
+  if (!chair) return;
+
+  const list = document.getElementById('chair-guest-list');
+  const title = document.getElementById('chair-assign-title');
+  if (title) title.textContent = chair.guest ? `Reassign ${chair.label}` : `Assign ${chair.label}`;
+
+  if (list) {
+    list.innerHTML = `
+      <div onclick="assignGuestToChair('${chairId}', null)"
+        style="padding:11px 14px;border-radius:var(--r-md);margin-bottom:7px;cursor:pointer;
+               background:rgba(252,232,238,0.55);border:1px solid rgba(224,120,152,0.2);
+               font-size:13px;font-weight:700;color:var(--pink-deep)">
+        🚫 Remove guest
+      </div>` +
+      WED.guests.map(g => {
+        const taken = WED.furniture.find(f => f.type==='chair' && f.guest===g.name && f.id!==chairId);
+        return `
+        <div onclick="assignGuestToChair('${chairId}','${g.name}')"
+          style="display:flex;align-items:center;gap:10px;padding:11px 14px;
+                 border-radius:var(--r-md);margin-bottom:7px;cursor:pointer;
+                 background:${chair.guest===g.name?'rgba(90,171,122,0.12)':'rgba(255,253,248,0.65)'};
+                 border:1px solid ${chair.guest===g.name?'rgba(90,171,122,0.3)':'rgba(255,255,255,0.6)'};
+                 opacity:${taken?0.45:1};pointer-events:${taken?'none':'auto'}">
+          <div style="width:32px;height:32px;border-radius:9px;
+                      background:rgba(245,230,200,0.7);display:flex;align-items:center;
+                      justify-content:center;font-size:11px;font-weight:700;color:var(--ink-2)">
+            ${g.name.split(' ').map(n=>n[0]).join('').substring(0,2)}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--ink)">${g.name}</div>
+            <div style="font-size:10.5px;color:var(--ink-4)">${taken?'Already seated':'RSVP: '+g.rsvp}</div>
+          </div>
+          ${chair.guest===g.name?'<span style="font-size:11px;color:var(--green-deep);font-weight:700">✓ Seated</span>':''}
+        </div>`;
+      }).join('');
+  }
+  modal.classList.add('open');
+}
+
+function assignGuestToChair(chairId, guestName) {
+  const chair = WED.furniture.find(f => f.id === chairId);
+  if (chair) {
+    chair.guest = guestName || null;
+    drawCanvas();
+    renderSeatAssignments();
+  }
+  closeModalById('chair-assign-modal');
+  showToast(guestName ? `🪑 ${guestName} seated!` : '🚫 Guest removed');
 }
 
 /* ── WEDDING MODALS ──────────────────────────── */
@@ -842,10 +897,20 @@ function drawFurniture(f) {
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
   } else if (f.type === 'chair') {
     cx.beginPath(); cx.roundRect(x, y, w, h, 5);
-    cx.fillStyle = selected ? 'rgba(108,99,255,0.18)' : 'rgba(245,230,200,0.75)';
+    const hasGuest = !!f.guest;
+    cx.fillStyle = selected
+      ? 'rgba(90,171,122,0.25)'
+      : hasGuest ? 'rgba(90,171,122,0.15)' : 'rgba(245,230,200,0.75)';
     cx.fill();
-    cx.strokeStyle = selected ? '#6c63ff' : 'rgba(201,169,110,0.5)';
+    cx.strokeStyle = selected ? '#5aab7a' : hasGuest ? 'rgba(90,171,122,0.5)' : 'rgba(201,169,110,0.5)';
     cx.lineWidth = selected ? 2 : 1; cx.stroke();
+    if (hasGuest) {
+      cx.fillStyle = 'rgba(44,31,14,0.72)';
+      cx.font = '500 8px Figtree,sans-serif';
+      cx.textAlign = 'center';
+      const short = f.guest.split(' ')[0].substring(0,8);
+      cx.fillText(short, x+w/2, y+h/2+3);
+    }
   } else if (f.type === 'stage') {
     cx.beginPath(); cx.roundRect(x, y, w, h, 10);
     cx.fillStyle = selected ? 'rgba(224,120,152,0.28)' : 'rgba(252,232,238,0.88)';
