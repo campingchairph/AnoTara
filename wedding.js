@@ -587,6 +587,7 @@ function initCanvas() {
   resizeCanvas();
   drawCanvas();
   bindCanvasEvents();
+  bindCanvasResize();
   renderFurniturePalette();
   renderSeatAssignments();
 }
@@ -594,8 +595,40 @@ function initCanvas() {
 function resizeCanvas() {
   const wrap = document.getElementById('canvas-wrap');
   if (!wrap || !cvs) return;
-  cvs.width  = wrap.clientWidth  || 380;
-  cvs.height = 400;
+  cvs.width  = wrap.clientWidth || 380;
+  cvs.height = cvs._userHeight || 400;
+}
+
+function bindCanvasResize() {
+  const handle = document.getElementById('canvas-resize-handle');
+  if (!handle || handle._bound) return;
+  handle._bound = true;
+  let startY = 0, startH = 0;
+  const onStart = (e) => {
+    e.preventDefault();
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startH = cvs._userHeight || 400;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onEnd);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend',  onEnd);
+  };
+  const onMove = (e) => {
+    e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const newH = Math.max(280, Math.min(1400, startH + (y - startY)));
+    cvs._userHeight = newH;
+    cvs.height = newH;
+    drawCanvas();
+  };
+  const onEnd = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onEnd);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend',  onEnd);
+  };
+  handle.addEventListener('mousedown',  onStart);
+  handle.addEventListener('touchstart', onStart, {passive:false});
 }
 
 function drawCanvas() {
