@@ -24,7 +24,7 @@ const STATE = {
 };
 
 const MEMBERS = [
-  { id: 'MA', name: 'Maria (You)', color: 'ma-tan' },
+  { id: 'MA', name: 'Jhoan (You)', color: 'ma-tan' },
   { id: 'CA', name: 'Carlo',       color: 'ma-green' },
   { id: 'MK', name: 'Mark',        color: 'ma-pink' },
   { id: 'TL', name: 'Tita Linda',  color: 'ma-sand' },
@@ -195,7 +195,7 @@ function openGroup(variant) {
 
   const data = {
     familia: { emoji:'🎂', name:'Ano Tara — Mifamilia', sub:'6 members · Family Event · May 15' },
-    jowa:    { emoji:'💑', name:'Ano Tara — Jowa',      sub:'Maria & JC · Couple Finance' },
+    jowa:    { emoji:'💑', name:'Ano Tara — Jowa',      sub:'Jhoan & JC · Couple Finance' },
     berks:   { emoji:'🍜', name:'Ano Tara — Berks',     sub:'5 people · Tonight 7pm' },
   };
   const d = data[STATE.currentGroup] || data.familia;
@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── WEDDING ACTIVATION ──────────────────────── */
 const WEDDING_STATE = {
   activated: JSON.parse(localStorage.getItem('at_wed_active') || 'false'),
-  p1:     localStorage.getItem('at_wed_p1')     || 'Maria',
+  p1:     localStorage.getItem('at_wed_p1')     || 'Jhoan',
   p2:     localStorage.getItem('at_wed_p2')     || 'JC',
   date:   localStorage.getItem('at_wed_date')   || '2025-12-15',
   venue:  localStorage.getItem('at_wed_venue')  || 'The Ruins, Bacolod',
@@ -900,7 +900,7 @@ function activateWedding() {
 }
 
 function doActivateWedding() {
-  const p1    = document.getElementById('wed-p1')?.value.trim()     || 'Maria';
+  const p1    = document.getElementById('wed-p1')?.value.trim()     || 'Jhoan';
   const p2    = document.getElementById('wed-p2')?.value.trim()     || 'JC';
   const date  = document.getElementById('wed-date-input')?.value    || '2025-12-15';
   const venue = document.getElementById('wed-venue-input')?.value.trim() || 'TBD';
@@ -1095,7 +1095,7 @@ function submitEditGoal() {
 
 /* ── COUPLE EXPENSE MODAL ────────────────────── */
 let _coupleIcon   = '🍽️';
-let _couplePayer  = 'maria';
+let _couplePayer  = 'jhoan';
 let _coupleSplit  = 'equal';
 
 function openCoupleExpenseModal() { openModal('couple-expense-modal'); }
@@ -1108,7 +1108,7 @@ function selectCoupleIcon(btn, icon) {
 
 function selectCouplePayer(who) {
   _couplePayer = who;
-  ['maria','jc'].forEach(k => {
+  ['jhoan','jc'].forEach(k => {
     const b = document.getElementById('cpaid-'+k);
     if (b) b.classList.toggle('selected', k === who);
   });
