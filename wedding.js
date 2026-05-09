@@ -13,15 +13,9 @@ const WED = {
   budget:   350000,
   activeTab: 'overview',
 
-  guests: [
-    { id:1, name:'Ana Reyes',      table:1, seat:1, rsvp:'attending', meal:'chicken', dietary:'' },
-    { id:2, name:'Carlo Santos',   table:1, seat:2, rsvp:'attending', meal:'fish',    dietary:'' },
-    { id:3, name:'Mark Dela Cruz', table:2, seat:1, rsvp:'pending',   meal:'',        dietary:'' },
-    { id:4, name:'Jess Lim',       table:2, seat:2, rsvp:'attending', meal:'chicken', dietary:'vegetarian' },
-    { id:5, name:'Tita Rosa',      table:3, seat:1, rsvp:'attending', meal:'beef',    dietary:'' },
-    { id:6, name:'Tito Ben',       table:3, seat:2, rsvp:'declined',  meal:'',        dietary:'' },
-    { id:7, name:'Claire Go',      table:4, seat:1, rsvp:'pending',   meal:'',        dietary:'' },
-    { id:8, name:'Ryan Ong',       table:4, seat:2, rsvp:'attending', meal:'chicken', dietary:'' },
+guests: [
+    { id:1, name:'Ana Reyes',    table:1, seat:1, rsvp:'attending', meal:'chicken', dietary:'' },
+    { id:2, name:'Carlo Santos', table:1, seat:2, rsvp:'pending',   meal:'fish',    dietary:'' },
   ],
 
   expenses: [
@@ -342,8 +336,7 @@ function submitAddGuest() {
   const table = parseInt(document.getElementById('new-guest-table')?.value) || 1;
   const seat  = parseInt(document.getElementById('new-guest-seat')?.value)  || 1;
   const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  const newId = (WED.guests.reduce((m,g)=>Math.max(m,g.id),0)) + 1;
-  WED.guests.push({ id:newId, name, table, seat, rsvp:'pending', meal:_newGuestMeal, dietary });
+   WED.guests.push({ id: WED.nextGuestId++, name, table, seat, rsvp:'pending', meal:_newGuestMeal, dietary });
   closeModalById('wed-add-guest-modal');
   document.getElementById('new-guest-name').value = '';
   document.getElementById('new-guest-table').value = '';
@@ -351,6 +344,8 @@ function submitAddGuest() {
   document.getElementById('new-guest-dietary').value = '';
   _newGuestMeal = 'chicken';
   renderGuests();
+  renderSeatAssignments();
+  drawCanvas();
   showToast('🎉 '+name+' added!');
 }
 
@@ -358,12 +353,9 @@ function removeGuest(id) {
   const g = WED.guests.find(g=>g.id===id);
   if (!g) return;
   if (!confirm('Remove '+g.name+'?')) return;
-  WED.guests = WED.guests.filter(g=>g.id!==id);
-  WED.guests.forEach(gg => { if (gg._chairId) { /* keep chair assignments */ } });
-  // clear chair assignment
-  const chair = WED.furniture.find(f => g._chairId === f.id);
-  if (chair) delete g._chairId;
+   WED.guests = WED.guests.filter(gg => gg.id !== id);
   renderGuests();
+  renderSeatAssignments();
   drawCanvas();
   showToast('🗑 '+g.name+' removed');
 }
