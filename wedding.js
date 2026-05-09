@@ -7,7 +7,7 @@
 
 /* ── WEDDING STATE ───────────────────────────── */
 const WED = {
-  couple:   { p1: 'Maria', p2: 'JC' },
+  couple:   { p1: 'Jhoan', p2: 'JC' },
   date:     '2025-12-15',
   venue:    'The Ruins, Bacolod',
   budget:   350000,
