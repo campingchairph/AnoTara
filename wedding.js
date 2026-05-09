@@ -104,6 +104,24 @@ const WED = {
   nextGuestId: 9,
 };
 
+/* ── SYNC RSVP RESPONSES ─────────────────────── */
+function syncRSVPResponses() {
+  try {
+    const pending = JSON.parse(localStorage.getItem('at_rsvp_pending') || '[]');
+    if (!pending.length) return;
+    let updated = 0;
+    pending.forEach(r => {
+      const g = WED.guests.find(g => g.id == r.gid);
+      if (g && g.rsvp !== r.status) { g.rsvp = r.status; updated++; }
+    });
+    if (updated) {
+      renderGuests();
+      renderOverview();
+      showToast('📬 ' + updated + ' RSVP response' + (updated > 1 ? 's' : '') + ' synced!');
+    }
+  } catch(e) {}
+}
+
 /* ── COUNTDOWN ───────────────────────────────── */
 function getCountdown() {
   const diff = new Date(WED.date) - new Date();
@@ -124,7 +142,7 @@ function wedTab(name) {
     if (tab)   tab.classList.toggle('active', t === name);
   });
   if (name === 'seating')  initCanvas();
-  if (name === 'guests')   renderGuests();
+  if (name === 'guests')   { syncRSVPResponses(); renderGuests(); }
   if (name === 'budget')   renderBudget();
   if (name === 'checklist') renderChecklist();
   if (name === 'schedule') renderSchedule();
@@ -274,7 +292,7 @@ function renderGuests() {
 
     ${WED.guests.map(g => {
       const chair = WED.furniture.find(f => g._chairId === f.id);
-      const params = new URLSearchParams({ name:g.name, table:g.table, seat:g.seat, chair:chair?chair.label:'', wedding:WED.couple.p1+' & '+WED.couple.p2, date:WED.date, venue:WED.venue });
+      const params = new URLSearchParams({ gid:g.id, name:g.name, table:g.table, seat:g.seat, role:g.role||'', chair:chair?chair.label:'', wedding:WED.couple.p1+' & '+WED.couple.p2, date:WED.date, venue:WED.venue });
       const rsvpLink = 'https://campingchairph.github.io/AnoTara/rsvp.html?'+params.toString();
       return '<div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">'
         + '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px">'
@@ -285,7 +303,7 @@ function renderGuests() {
         + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">'
         + '<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,230,200,0.7);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.2)">Table '+g.table+' · Seat '+g.seat+'</span>'
         + (chair?'<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 '+chair.label+'</span>':'')
-        + (g.meal?'<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">'+g.meal+'</span>':'')
+        + (g.role?'<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">'+g.role+'</span>':'')
         + '</div></div>'
         + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
         + '<select onchange="updateGuestRSVP('+g.id+',this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">'
@@ -847,6 +865,7 @@ function addWedSched() {
 }
 
 /* ── EXPOSE ──────────────────────────────────── */
+window.syncRSVPResponses=syncRSVPResponses;
 window.WED=WED; window.wedTab=wedTab; window.renderOverview=renderOverview;
 window.renderGuests=renderGuests; window.renderBudget=renderBudget;
 window.renderChecklist=renderChecklist; window.renderSchedule=renderSchedule;
@@ -1085,13 +1104,14 @@ function submitAddGuest() {
   const table    = parseInt(document.getElementById('new-guest-table')?.value) || 1;
   const seat     = parseInt(document.getElementById('new-guest-seat')?.value)  || 1;
   const dietary  = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  WED.guests.push({ id: WED.nextGuestId++, name, table, seat, rsvp:'pending', meal:_newGuestMeal, dietary });
+  const role     = (document.getElementById('new-guest-role')?.value || '').trim();
+  WED.guests.push({ id: WED.nextGuestId++, name, table, seat, rsvp:'pending', role, dietary });
   closeModalById('wed-add-guest-modal');
   document.getElementById('new-guest-name').value = '';
   document.getElementById('new-guest-table').value = '';
   document.getElementById('new-guest-seat').value = '';
   document.getElementById('new-guest-dietary').value = '';
-  _newGuestMeal = 'chicken';
+  if (document.getElementById('new-guest-role')) document.getElementById('new-guest-role').value = '';
   renderGuests();
   renderSeatAssignments();
   drawCanvas();
