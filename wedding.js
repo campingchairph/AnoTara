@@ -313,6 +313,7 @@ ${WED.guests.map(g=>{
               <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
               <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
             </select>
+            <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>
           </div>
         </div>
         <div style="padding:8px 14px 10px;border-top:1px solid rgba(201,169,110,0.1);display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -327,6 +328,48 @@ function updateGuestRSVP(id, val) {
   const g = WED.guests.find(g=>g.id===id);
   if (g) { g.rsvp = val; renderGuests(); showToast('✅ RSVP updated for '+g.name); }
 }
+
+let _newGuestMeal = 'chicken';
+function selectGuestMeal(btn, val) {
+  _newGuestMeal = val;
+  document.querySelectorAll('#guest-meal-picker .split-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function submitAddGuest() {
+  const name = (document.getElementById('new-guest-name')?.value || '').trim();
+  if (!name) { showToast('⚠️ Enter a guest name'); return; }
+  const table = parseInt(document.getElementById('new-guest-table')?.value) || 1;
+  const seat  = parseInt(document.getElementById('new-guest-seat')?.value)  || 1;
+  const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
+  const newId = (WED.guests.reduce((m,g)=>Math.max(m,g.id),0)) + 1;
+  WED.guests.push({ id:newId, name, table, seat, rsvp:'pending', meal:_newGuestMeal, dietary });
+  closeModalById('wed-add-guest-modal');
+  document.getElementById('new-guest-name').value = '';
+  document.getElementById('new-guest-table').value = '';
+  document.getElementById('new-guest-seat').value = '';
+  document.getElementById('new-guest-dietary').value = '';
+  _newGuestMeal = 'chicken';
+  renderGuests();
+  showToast('🎉 '+name+' added!');
+}
+
+function removeGuest(id) {
+  const g = WED.guests.find(g=>g.id===id);
+  if (!g) return;
+  if (!confirm('Remove '+g.name+'?')) return;
+  WED.guests = WED.guests.filter(g=>g.id!==id);
+  WED.guests.forEach(gg => { if (gg._chairId) { /* keep chair assignments */ } });
+  // clear chair assignment
+  const chair = WED.furniture.find(f => g._chairId === f.id);
+  if (chair) delete g._chairId;
+  renderGuests();
+  drawCanvas();
+  showToast('🗑 '+g.name+' removed');
+}
+window.selectGuestMeal = selectGuestMeal;
+window.submitAddGuest  = submitAddGuest;
+window.removeGuest     = removeGuest;
 
 function copyGuestLink(guestId) {
   const g = WED.guests.find(g=>g.id===guestId);
@@ -448,18 +491,18 @@ function showRSVPCard() {
   ctx.font='400 11.5px Figtree, sans-serif';
   ctx.fillText('anotara.app/rsvp/WEDDING_2025', w/2, 418);
 
-  // QR placeholder
-  ctx.strokeStyle='rgba(201,169,110,0.35)';
-  ctx.lineWidth=1;
-  ctx.strokeRect(w/2-30,432,60,60);
-  ctx.fillStyle='rgba(245,230,200,0.6)';
-  ctx.fillRect(w/2-30,432,60,60);
-  ctx.fillStyle='#c9a96e';
-  ctx.font='24px serif';
-  ctx.fillText('▦',w/2-8,470);
+   // QR rendered separately below canvas
   ctx.fillStyle='#b8977a';
-  ctx.font='400 10px Figtree, sans-serif';
-  ctx.fillText('Scan to RSVP', w/2, 508);
+  ctx.font='400 11px Figtree, sans-serif';
+  ctx.fillText('Scan QR below to RSVP', w/2, 470);
+
+  // Generate real QR into modal below canvas
+  const qrTarget = document.getElementById('rsvp-qr-target');
+  if (qrTarget) {
+    qrTarget.innerHTML = '';
+    const rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?wedding=${encodeURIComponent(WED.couple.p1+'&'+WED.couple.p2)}&date=${encodeURIComponent(WED.date)}&venue=${encodeURIComponent(WED.venue)}`;
+    new QRCode(qrTarget, { text: rsvpUrl, width:120, height:120, colorDark:'#2c1f0e', colorLight:'#fef6e8' });
+  }
 
   // Hashtag
   ctx.fillStyle='#c9a96e';
