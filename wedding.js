@@ -928,11 +928,13 @@ function addFurniture(type, label) {
 }
 
 // Re-init canvas with rotation support
-const _origInitCanvas = initCanvas;
-function initCanvas() {
-  _origInitCanvas && _origInitCanvas();
-  bindCanvasRotate();
-}
+// No override — just patch bindCanvasRotate into the tab switch
+// initCanvas already exists above; we extend wedTab instead
+const _origWedTab = wedTab;
+window.wedTab = function(name) {
+  _origWedTab(name);
+  if (name === 'seating') bindCanvasRotate();
+};
 
 /* ── CHECKLIST: CUSTOM TIMELINE ──────────────── */
 // Extended state for custom checklist phases
