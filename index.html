@@ -356,18 +356,14 @@
   </div>
 
   <!-- Panels -->
-  <div id="wed-panel-overview"  class="pad"><div id="wed-overview-content"></div></div>
-  <div id="wed-panel-budget"    class="pad" style="display:none"><div id="wed-budget-content"></div></div>
-  <div id="wed-panel-guests"    class="pad" style="display:none"><div id="wed-guests-content"></div></div>
-
-<div id="wed-panel-seating" style="display:none;overflow-y:auto;padding-bottom:120px">
-    <div class="canvas-section">
+<div id="wed-panel-seating" style="display:none">
+    <div class="canvas-section" style="padding-bottom:8px">
       <div class="canvas-toolbar">
         <button class="canvas-tool-btn" onclick="WED.furniture=[];drawCanvas();showToast('🗑 Canvas cleared')">Clear All</button>
         <button class="canvas-tool-btn" onclick="showToast('💾 Layout saved!')">Save Layout</button>
       </div>
-      <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">Drag items on the canvas to arrange your venue</div>
-     <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+      <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">Drag items · Double-tap chair to assign guest</div>
+      <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
       <div id="canvas-resize-handle" style="
         width:100%;height:22px;display:flex;align-items:center;justify-content:center;
         cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);
@@ -376,10 +372,14 @@
       ">
         <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
       </div>
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Add Furniture</div>
+      <div id="furniture-palette" class="furniture-palette"></div>
+    </div>
+    <div style="padding:0 20px 140px"><div id="seat-assignments"></div></div>
+  </div>
 
   <div id="wed-panel-checklist" class="pad" style="display:none"><div id="wed-checklist-content"></div></div>
   <div id="wed-panel-schedule"  class="pad" style="display:none"><div id="wed-schedule-content"></div></div>
-
   <div class="spacer"></div>
 </section>
 
