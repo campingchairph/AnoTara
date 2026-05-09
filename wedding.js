@@ -280,29 +280,72 @@ function renderGuests() {
       <button onclick="showRSVPCard()" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.28);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer">💌 Send Invites</button>
     </div>
 
-    ${WED.guests.map(g=>`
-      <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
-        <div style="width:38px;height:38px;border-radius:10px;background:${g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)'};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">
-          ${g.name.split(' ').map(n=>n[0]).join('').substring(0,2)}
+${WED.guests.map(g=>{
+      const chair = WED.furniture.find(f => f._chairId === g.id || g._chairId === f.id);
+      // build a shareable RSVP link with seat info encoded
+      const params = new URLSearchParams({
+        name: g.name,
+        table: g.table,
+        seat: g.seat,
+        chair: chair ? chair.label : '',
+        wedding: `${WED.couple.p1} & ${WED.couple.p2}`,
+        date: WED.date,
+        venue: WED.venue,
+      });
+      const rsvpLink = `https://campingchairph.github.io/AnoTara/rsvp.html?${params.toString()}`;
+      return `
+      <div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
+          <div style="width:38px;height:38px;border-radius:10px;background:${g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)'};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">
+            ${g.name.split(' ').map(n=>n[0]).join('').substring(0,2)}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
+              <span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,230,200,0.7);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.2)">🪑 Table ${g.table} · Seat ${g.seat}</span>
+              ${chair?`<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">📍 ${chair.label}</span>`:''}
+              ${g.meal?`<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>`:''}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
+              <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
+              <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
+              <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
+            </select>
+          </div>
         </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
-          <div style="font-size:11px;color:var(--ink-4);margin-top:1px">Table ${g.table} · Seat ${g.seat}${g.meal?' · '+g.meal:''}${g.dietary?' · '+g.dietary:''}</div>
+        <div style="padding:8px 14px 10px;border-top:1px solid rgba(201,169,110,0.1);display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:10.5px;color:var(--ink-4);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${rsvpLink.replace('https://','')}</span>
+          <button onclick="copyGuestLink(${g.id})" style="padding:4px 10px;border-radius:7px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.6);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer;flex-shrink:0">📋 Copy</button>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-          <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
-            <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
-            <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
-            <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
-          </select>
-        </div>
-      </div>`).join('')}`;
+      </div>`;
+    }).join('')}`;
 }
 
 function updateGuestRSVP(id, val) {
   const g = WED.guests.find(g=>g.id===id);
   if (g) { g.rsvp = val; renderGuests(); showToast('✅ RSVP updated for '+g.name); }
 }
+
+function copyGuestLink(guestId) {
+  const g = WED.guests.find(g=>g.id===guestId);
+  if (!g) return;
+  const chair = WED.furniture.find(f => g._chairId === f.id);
+  const params = new URLSearchParams({
+    name: g.name, table: g.table, seat: g.seat,
+    chair: chair ? chair.label : '',
+    wedding: `${WED.couple.p1} & ${WED.couple.p2}`,
+    date: WED.date, venue: WED.venue,
+  });
+  const link = `https://campingchairph.github.io/AnoTara/rsvp.html?${params.toString()}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(link).then(() => showToast('📋 Link copied for '+g.name.split(' ')[0]+'!'));
+  } else {
+    showToast('📋 ' + link);
+  }
+}
+window.copyGuestLink = copyGuestLink;
 
 /* ── INVITATION / RSVP CARD ──────────────────── */
 function showRSVPCard() {
@@ -628,12 +671,16 @@ function bindCanvasEvents() {
       }
       return x>=f.x-8&&x<=f.x+f.w+8&&y>=f.y-8&&y<=f.y+f.h+8;
     });
-    if (hit) {
+if (hit) {
       if (hit.type === 'chair') {
+        const now = Date.now();
+        const key = '_lastTap_' + hit.id;
+        const isDouble = (now - (WED[key] || 0)) < 400;
+        WED[key] = isDouble ? 0 : now;
         WED.selectedFurniture = hit.id;
         drawCanvas();
-        openChairGuestPicker(hit.id);
-        return;
+        if (isDouble) { openChairGuestPicker(hit.id); return; }
+        // single tap — fall through to drag
       }
       WED.dragging = hit;
       WED.dragOffX = x - hit.x;
