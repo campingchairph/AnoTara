@@ -774,20 +774,75 @@ function addTask() {
 }
 
 /* ── POLL ────────────────────────────────────── */
-function vote(el, idx) {
-  document.querySelectorAll('.poll-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  STATE.pollVotes[idx] = Math.min(STATE.pollVotes[idx]+12, 94);
-  const total = STATE.pollVotes.reduce((a,b)=>a+b,0);
-  STATE.pollVotes.forEach((v,i) => {
-    const pct = Math.round((v/total)*100);
-    const fill = document.getElementById('pf'+i);
-    const lbl  = document.getElementById('pp'+i);
-    if (fill) fill.style.width = pct+'%';
-    if (lbl)  lbl.textContent  = pct+'%';
-  });
+let POLLS = [
+  { id:1, q:'Where to eat this Saturday? 🍴', opts:['Yabu Katsu','Manam','Ramen Nagi'], votes:[3,2,1], myVote:null }
+];
+
+function renderPolls() {
+  const el = document.getElementById('polls-container');
+  if (!el) return;
+  if (!POLLS.length) { el.innerHTML = `<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink-4)">No polls yet — create one!</div>`; return; }
+  el.innerHTML = POLLS.map(p => {
+    const total = p.votes.reduce((a,b)=>a+b,0) || 1;
+    return `<div class="poll-card glass" style="margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div class="poll-q" style="margin:0;flex:1">${p.q}</div>
+        <button onclick="deletePoll(${p.id})" style="width:24px;height:24px;border-radius:6px;border:none;background:rgba(224,120,152,0.1);font-size:12px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
+      </div>
+      ${p.opts.map((opt,i)=>{
+        const pct = Math.round((p.votes[i]/total)*100);
+        const isVoted = p.myVote === i;
+        return `<div class="poll-opt${isVoted?' selected':''}" onclick="vote(${p.id},${i})">
+          <div class="poll-bar-wrap">
+            <div class="poll-label">${opt}</div>
+            <div class="poll-bar"><div class="poll-fill" style="width:${pct}%"></div></div>
+          </div>
+          <span class="poll-pct">${pct}%</span>
+        </div>`;
+      }).join('')}
+      <div style="font-size:10.5px;color:var(--ink-4);margin-top:8px;text-align:right">${total} vote${total!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function vote(pollId, optIdx) {
+  const p = POLLS.find(p=>p.id===pollId);
+  if (!p) return;
+  if (p.myVote !== null) p.votes[p.myVote] = Math.max(0, p.votes[p.myVote]-1);
+  p.myVote = optIdx;
+  p.votes[optIdx]++;
+  renderPolls();
   showToast('🗳️ Vote recorded!');
 }
+
+function deletePoll(id) {
+  POLLS = POLLS.filter(p=>p.id!==id);
+  renderPolls();
+  showToast('🗑 Poll deleted');
+}
+
+function createPoll() {
+  const q = (document.getElementById('poll-q-input')?.value||'').trim();
+  const opts = [
+    document.getElementById('poll-opt1')?.value.trim(),
+    document.getElementById('poll-opt2')?.value.trim(),
+    document.getElementById('poll-opt3')?.value.trim(),
+    document.getElementById('poll-opt4')?.value.trim(),
+  ].filter(Boolean);
+  if (!q) { showToast('⚠️ Enter a question'); return; }
+  if (opts.length < 2) { showToast('⚠️ Add at least 2 options'); return; }
+  const newId = (POLLS.reduce((m,p)=>Math.max(m,p.id),0))+1;
+  POLLS.push({ id:newId, q, opts, votes:opts.map(()=>0), myVote:null });
+  closeModalById('add-poll-modal');
+  ['poll-q-input','poll-opt1','poll-opt2','poll-opt3','poll-opt4'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  renderPolls();
+  showToast('🗳️ Poll created!');
+}
+window.vote = vote;
+window.deletePoll = deletePoll;
+window.createPoll = createPoll;
 
 /* ── TOAST ───────────────────────────────────── */
 let _tt = null;
@@ -813,6 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navTo('home');
   animateBars();
   renderPinList();
+  renderPolls();
 
   // Couple sync state
   if (STATE.isPaired) {
