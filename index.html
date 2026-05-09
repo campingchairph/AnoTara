@@ -367,12 +367,15 @@
         <button class="canvas-tool-btn" onclick="showToast('💾 Layout saved!')">Save Layout</button>
       </div>
       <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">Drag items on the canvas to arrange your venue</div>
-      <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
-      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Add Furniture</div>
-      <div id="furniture-palette" class="furniture-palette"></div>
-    </div>
-    <div style="padding:0 20px"><div id="seat-assignments"></div></div>
-  </div>
+     <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+      <div id="canvas-resize-handle" style="
+        width:100%;height:22px;display:flex;align-items:center;justify-content:center;
+        cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);
+        border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;
+        user-select:none;touch-action:none;
+      ">
+        <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
+      </div>
 
   <div id="wed-panel-checklist" class="pad" style="display:none"><div id="wed-checklist-content"></div></div>
   <div id="wed-panel-schedule"  class="pad" style="display:none"><div id="wed-schedule-content"></div></div>
