@@ -122,7 +122,14 @@ function wedTab(name) {
   ['overview','budget','guests','seating','checklist','schedule'].forEach(t => {
     const panel = document.getElementById('wed-panel-'+t);
     const tab   = document.getElementById('wed-tab-'+t);
-    if (panel) panel.style.display = t === name ? 'block' : 'none';
+    if (panel) {
+    panel.style.display = t === name ? 'block' : 'none';
+    if (t === name && t === 'seating') {
+      // let the parent screen scroll rather than clipping
+      const screen = document.getElementById('wedding');
+      if (screen) screen.style.overflowY = 'auto';
+    }
+  }
     if (tab)   tab.classList.toggle('active', t === name);
   });
   if (name === 'seating')  initCanvas();
@@ -827,29 +834,59 @@ function addFurniture(type, label) {
 function renderSeatAssignments() {
   const el = document.getElementById('seat-assignments');
   if (!el) return;
-  const tables = {};
-  WED.guests.forEach(g => {
-    if (!tables[g.table]) tables[g.table]=[];
-    tables[g.table].push(g);
-  });
-  const sel = WED.selectedFurniture;
-  const selF = WED.furniture.find(f=>f.id===sel);
+
+  // Chairs with assignments
+  const assignedChairs = WED.furniture.filter(f => f.type === 'chair' && WED.guests.some(g => g._chairId === f.id));
+  const unassignedChairs = WED.furniture.filter(f => f.type === 'chair' && !WED.guests.some(g => g._chairId === f.id));
+  const unseatedGuests = WED.guests.filter(g => !g._chairId);
 
   el.innerHTML = `
-    <div style="font-size:12px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">
-      ${selF ? 'Selected: '+selF.label : 'Guest Seating — tap a table on canvas'}
+    <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;margin-top:4px">
+      🪑 Chair Assignments
     </div>
-    <button onclick="openWedModal('wed-assign-modal')" style="width:100%;padding:9px;border-radius:var(--r-md);background:rgba(232,245,237,0.65);border:1px solid rgba(90,171,122,0.25);font-size:12.5px;font-weight:700;color:var(--green-deep);cursor:pointer;margin-bottom:12px">👤 Assign Guests to Tables</button>
-    ${Object.entries(tables).map(([tNum,guests])=>`
-      <div style="margin-bottom:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--tan-dark);margin-bottom:5px">Table ${tNum} (${guests.length} guests)</div>
-        ${guests.map(g=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r-sm);margin-bottom:4px;background:rgba(255,253,248,0.65);border:1px solid rgba(255,255,255,0.6)">
-            <div style="width:8px;height:8px;border-radius:50%;background:${g.rsvp==='attending'?'var(--green-accent)':g.rsvp==='declined'?'var(--pink-accent)':'var(--tan)'};flex-shrink:0"></div>
-            <span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1">${g.name}</span>
-            <span style="font-size:10.5px;color:var(--ink-4)">Seat ${g.seat}</span>
+
+    ${assignedChairs.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-bottom:6px">✅ Seated (${assignedChairs.length})</div>
+        ${assignedChairs.map(f => {
+          const g = WED.guests.find(gg => gg._chairId === f.id);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.2)">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(90,171,122,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🪑</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">${g.name}</div>
+              <div style="font-size:10.5px;color:var(--ink-4)">${f.label}</div>
+            </div>
+            <button onclick="assignChairGuest('${f.id}',null)" style="padding:3px 8px;border-radius:6px;border:none;background:rgba(224,120,152,0.12);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer">✕</button>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+
+    ${unassignedChairs.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:6px">🪑 Empty Chairs (${unassignedChairs.length})</div>
+        ${unassignedChairs.map(f => `
+          <div onclick="openChairGuestPicker('${f.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(245,230,200,0.45);border:1px dashed rgba(201,169,110,0.3);cursor:pointer">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(245,230,200,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🪑</div>
+            <span style="font-size:13px;font-weight:600;color:var(--ink-3);flex:1">${f.label}</span>
+            <span style="font-size:11px;color:var(--tan-dark);font-weight:700">+ Assign →</span>
           </div>`).join('')}
-      </div>`).join('')}`;
+      </div>` : ''}
+
+    ${unseatedGuests.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">👤 Not Yet Seated (${unseatedGuests.length})</div>
+        ${unseatedGuests.map(g => `
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(255,253,248,0.65);border:1px solid rgba(201,169,110,0.15)">
+            <div style="width:8px;height:8px;border-radius:50%;background:${g.rsvp==='attending'?'var(--green-accent)':g.rsvp==='declined'?'var(--pink-accent)':'var(--tan)'};flex-shrink:0"></div>
+            <span style="font-size:13px;font-weight:600;color:var(--ink);flex:1">${g.name}</span>
+            <span style="font-size:10.5px;color:var(--ink-4)">${g.rsvp}</span>
+          </div>`).join('')}
+      </div>` : ''}
+
+    ${!assignedChairs.length && !unassignedChairs.length ? `
+      <div style="text-align:center;padding:20px;font-size:13px;color:var(--ink-4)">
+        Add chairs from the palette above, then double-tap a chair to assign a guest.
+      </div>` : ''}`;
 }
 
 /* ── WEDDING MODALS ──────────────────────────── */
