@@ -587,7 +587,8 @@ function initCanvas() {
   resizeCanvas();
   drawCanvas();
   bindCanvasEvents();
-  bindCanvasResize();
+  if (typeof bindCanvasRotate === 'function') bindCanvasRotate();
+  if (typeof bindCanvasResize === 'function') bindCanvasResize();
   renderFurniturePalette();
   renderSeatAssignments();
 }
@@ -960,7 +961,7 @@ function drawFurniture(f) {
     cx.fill();
     cx.strokeStyle = selected ? '#5aab7a' : 'rgba(201,169,110,0.65)';
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
-  } else if (f.type === 'chair') {
+} else if (f.type === 'chair') {
     const assignedGuest = WED.guests.find(g => g._chairId === f.id);
     const isAssigned = !!assignedGuest;
     cx.beginPath(); cx.roundRect(x, y, w, h, 5);
@@ -971,7 +972,7 @@ function drawFurniture(f) {
     if (isAssigned) {
       const firstName = assignedGuest.name.split(' ')[0];
       cx.fillStyle = 'rgba(44,31,14,0.82)';
-      cx.font = '600 8px Figtree,sans-serif';
+      cx.font = '600 7px Figtree,sans-serif';
       cx.textAlign = 'center';
       cx.fillText(firstName, x+w/2, y+h/2+3);
       cx.restore(); return;
@@ -1057,12 +1058,8 @@ function addFurniture(type, label) {
   showToast(type === 'chair' ? '🪑 Chair added! Drag to position.' : '✅ '+label+' added! Drag to position.');
 }
 
-// Patch initCanvas to also bind rotation (run once via cvs._rotBound guard)
-const _origInitCanvas = initCanvas;
-initCanvas = function() {
-  _origInitCanvas();
-  if (cvs && !cvs._rotBound) { cvs._rotBound = true; bindCanvasRotate(); }
-};
+// bindCanvasRotate and bindCanvasResize are called from the original initCanvas above (line ~504)
+// No re-declaration needed — merged there.
 
 /* ── CHAIR GUEST PICKER ──────────────────────── */
 function openChairGuestPicker(chairId) {
