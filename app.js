@@ -105,6 +105,9 @@ function switchMainTab(name) {
   });
   // scroll panel to top on switch
   const panel = document.getElementById('tp-'+name);
+  // scroll to top on every tab switch
+  const tabPanels = document.getElementById('tab-panels');
+  if (tabPanels) tabPanels.scrollTop = 0;
   if (panel) panel.scrollTop = 0;
 }
 
