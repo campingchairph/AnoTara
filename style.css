@@ -87,8 +87,9 @@ body{background:#E8E8E8;}
 @keyframes dotPulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
 
 /* ── SCREENS — sub-page overlays ─────────────── */
-.screen{display:none;flex-direction:column;height:100vh;padding-bottom:80px;
+.screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px;
   animation:fadeUp 0.28s cubic-bezier(0.22,0.61,0.36,1);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   position:fixed;inset:0;z-index:50;background:var(--page-bg);
   max-width:430px;margin:0 auto;}
 .screen.active{display:flex;}
@@ -106,7 +107,7 @@ body{background:#E8E8E8;}
   box-shadow:0 0 40px rgba(0,0,0,0.18);}
 #app-shell.active{display:flex;flex-direction:column;}
 #app-overview{order:1;flex-shrink:0;}
-#tab-panels  {order:2;flex:1;overflow:hidden;min-height:0;}
+#tab-panels  {order:2;flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch;}
 #main-tabs   {order:3;flex-shrink:0;}
 
 /* ── OVERVIEW ────────────────────────────────── */
@@ -131,8 +132,8 @@ body{background:#E8E8E8;}
 #main-tab-wedding{display:none;}
 
 /* ── TAB PANELS ──────────────────────────────── */
-#tab-panels{flex:1;overflow:hidden;position:relative;background:var(--page-bg);}
-.tab-panel{display:none;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:24px;background:var(--page-bg);}
+#tab-panels{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;background:var(--page-bg);}
+.tab-panel{display:none;min-height:100%;overflow-y:visible;padding-bottom:48px;background:var(--page-bg);}
 .tab-panel.active{display:block;}
 
 /* ── TOPBAR (sub-screens) ────────────────────── */
