@@ -1,0 +1,1985 @@
+<!-- New Group -->
+<div id="new-group-modal" class="modal-overlay" onclick="closeModalOutside(event,'new-group-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="newGroupTitle"></div>
+    <div class="input-group"><div class="input-label" data-t="groupNameLabel"></div><input id="ng-name" type="text" class="glass-input" data-t-ph="groupNamePlaceholder"></div>
+    <div class="input-group">
+      <div class="input-label" data-t="groupTypeLabel"></div>
+      <div class="type-grid">
+        <button class="type-btn selected" data-type="berks" onclick="selectType(this)"><div class="type-emoji">🍜</div><div class="type-name" data-t="typeBerks"></div><div class="type-sub" data-t="typeBerksSub"></div></button>
+        <button class="type-btn" data-type="familia" onclick="selectType(this)"><div class="type-emoji">🏠</div><div class="type-name" data-t="typeFamilia"></div><div class="type-sub" data-t="typeFamiliaSub"></div></button>
+        <button class="type-btn" data-type="trip" onclick="selectType(this)"><div class="type-emoji">✈️</div><div class="type-name" data-t="typeTrip"></div><div class="type-sub" data-t="typeTripSub"></div></button>
+        <button class="type-btn" data-type="jowa" onclick="selectType(this)"><div class="type-emoji">💑</div><div class="type-name" data-t="typeJowa"></div><div class="type-sub" data-t="typeJowaSub"></div></button>
+      </div>
+    </div>
+    <div class="input-group"><div class="input-label">Members <span style="font-size:11px;color:var(--ink-4)">(comma-separated names)</span></div><input id="ng-members" type="text" class="glass-input" placeholder="e.g. Carlo, Mark, Ana"></div>
+    <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input id="ng-budget" type="number" class="glass-input" data-t-ph="amountPlaceholder"></div>
+    <button class="cta-btn pink" onclick="createGroup()" data-t="createGroupBtn"></button>
+  </div>
+</div><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Ano Tara?</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="wedding.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════════════════════════
+     SPLASH SCREEN (Image 1 style)
+══════════════════════════════ -->
+<div id="splash-screen" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;overflow:hidden;background:#C6E03F">
+  <!-- Top hero — full bleed gradient with blobs like Image 1 -->
+  <div style="flex:1;background:#C6E03F;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px)">
+    <!-- Blob decorations -->
+    <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.15)"></div>
+    <div style="position:absolute;bottom:-20px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.10)"></div>
+    <div style="position:absolute;top:40px;left:30px;width:60px;height:60px;border-radius:50%;background:rgba(255,235,59,0.3)"></div>
+    <div style="position:absolute;bottom:60px;right:40px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+    <!-- Main emoji + brand -->
+    <div style="text-align:center;animation:splashIn 0.8s cubic-bezier(0.22,0.61,0.36,1) both;position:relative;z-index:1">
+        <!-- Floating 3D emojis — random positions and rotations -->
+      <div style="position:relative;width:260px;height:180px;margin-bottom:8px">
+        <div style="position:absolute;top:10px;left:20px;font-size:52px;animation:floatBob 3.1s ease-in-out infinite;transform:rotate(-15deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😊</div>
+        <div style="position:absolute;top:0px;left:100px;font-size:64px;animation:floatBob 2.7s ease-in-out 0.4s infinite;transform:rotate(8deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">🥰</div>
+        <div style="position:absolute;top:15px;right:10px;font-size:48px;animation:floatBob 3.4s ease-in-out 0.2s infinite;transform:rotate(20deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😄</div>
+        <div style="position:absolute;bottom:0px;left:10px;font-size:44px;animation:floatBob 2.9s ease-in-out 0.6s infinite;transform:rotate(-25deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😎</div>
+        <div style="position:absolute;bottom:10px;right:20px;font-size:50px;animation:floatBob 3.2s ease-in-out 0.3s infinite;transform:rotate(12deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">🤩</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:rgba(0,0,0,0.5);letter-spacing:3px;text-transform:uppercase;margin-top:4px">ANO TARA?</div>
+    </div>
+  </div>
+  <!-- Bottom white card like Image 1 -->
+  <div style="background:#ffffff;border-radius:32px 32px 0 0;padding:32px 28px 48px;box-shadow:0 -4px 32px rgba(0,0,0,0.10)">
+    <div style="font-size:28px;font-weight:900;color:#1a1a1a;line-height:1.2;margin-bottom:10px">Plan Together,<br>Stress Less! 💕</div>
+    <div style="font-size:14px;color:#888888;line-height:1.6;margin-bottom:28px">Groups, Jowa, Wedding Planner, Errand Board — everything you need to plan life together.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:8px" id="splash-dots">
+        <div style="width:24px;height:8px;border-radius:4px;background:linear-gradient(90deg,#ff9a56,#ff6b9d)"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:#e0e0e0"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:#e0e0e0"></div>
+      </div>
+      <div id="splash-loading" style="display:flex;gap:6px;align-items:center">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotPulse 1.2s ease-in-out infinite"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotPulse 1.2s ease-in-out 0.2s infinite"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotPulse 1.2s ease-in-out 0.4s infinite"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PIN LOCK SCREEN
+══════════════════════════════ -->
+<div id="pin-screen" style="display:none;position:fixed;inset:0;z-index:9990;flex-direction:column;background:#F0F0F0;align-items:center;justify-content:center;overflow:hidden">
+  <div style="text-align:left;margin-bottom:32px;padding:0 16px;width:100%;max-width:320px">
+    <div style="font-family:'DM Serif Display',serif;font-size:32px;font-weight:400;color:#111827;margin-bottom:4px;font-style:italic" id="pin-title">ano tara?</div>
+    <div style="font-size:14px;font-weight:600;color:#F5A623" id="pin-subtitle">Enter your PIN</div>
+    <div style="font-size:12px;color:#9CA3AF;margin-top:2px">Test PIN: 123456</div>
+  </div>
+  <!-- PIN dots -->
+  <div style="display:flex;gap:16px;margin-bottom:32px" id="pin-dots">
+    <div style="background:#E5E7EB;border:2px solid #D1D5DB;" class="pin-dot" id="pd-0"></div>
+    <div style="background:#E5E7EB;border:2px solid #D1D5DB;" class="pin-dot" id="pd-1"></div>
+    <div style="background:#E5E7EB;border:2px solid #D1D5DB;" class="pin-dot" id="pd-2"></div>
+    <div style="background:#E5E7EB;border:2px solid #D1D5DB;" class="pin-dot" id="pd-3"></div>
+  </div>
+  <!-- Numpad -->
+  <div style="display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(4,72px);gap:12px">
+    <button class="pin-key" style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);color:#111827;box-shadow:0 2px 8px rgba(0,0,0,0.06)" onclick="pinInput('1')">1</button>
+    <button class="pin-key" onclick="pinInput('2')">2</button>
+    <button class="pin-key" onclick="pinInput('3')">3</button>
+    <button class="pin-key" onclick="pinInput('4')">4</button>
+    <button class="pin-key" onclick="pinInput('5')">5</button>
+    <button class="pin-key" onclick="pinInput('6')">6</button>
+    <button class="pin-key" onclick="pinInput('7')">7</button>
+    <button class="pin-key" onclick="pinInput('8')">8</button>
+    <button class="pin-key" onclick="pinInput('9')">9</button>
+    <button class="pin-key" onclick="pinForgot()" style="font-size:11px;font-weight:700;background:#F3F4F6;border-color:transparent;box-shadow:none">Forgot</button>
+    <button class="pin-key" onclick="pinInput('0')">0</button>
+    <button class="pin-key" onclick="pinDelete()" style="font-size:20px">⌫</button>
+  </div>
+  <button onclick="pinForgot()" style="margin-top:20px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer">Use phone number instead →</button>
+</div>
+
+<!-- PIN Setup screen (first time) -->
+<div id="pin-setup-screen" style="display:none;position:fixed;inset:0;z-index:9997;flex-direction:column;background:#ffffff;align-items:center;justify-content:center;padding:32px">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:48px;margin-bottom:12px">🔐</div>
+    <div style="font-size:22px;font-weight:800;color:#1a1a1a;margin-bottom:8px" id="pin-setup-title">Set up your PIN</div>
+    <div style="font-size:14px;color:#888" id="pin-setup-sub">Choose a 4-digit PIN to quickly unlock the app</div>
+  </div>
+  <div style="display:flex;gap:16px;margin-bottom:32px" id="pin-setup-dots">
+    <div class="pin-dot pin-dot-dark" id="psd-0"></div>
+    <div class="pin-dot pin-dot-dark" id="psd-1"></div>
+    <div class="pin-dot pin-dot-dark" id="psd-2"></div>
+    <div class="pin-dot pin-dot-dark" id="psd-3"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(4,72px);gap:12px">
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('1')">1</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('2')">2</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('3')">3</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('4')">4</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('5')">5</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('6')">6</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('7')">7</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('8')">8</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('9')">9</button>
+    <button class="pin-key pin-key-dark pin-key-alt" onclick="pinSetupSkip()" style="font-size:11px;font-weight:700;color:#888">Skip</button>
+    <button class="pin-key pin-key-dark" onclick="pinSetupInput('0')">0</button>
+    <button class="pin-key pin-key-dark pin-key-alt" onclick="pinSetupDelete()">⌫</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     INTRO / FEATURE TOUR
+══════════════════════════════ -->
+<div id="intro-screen" style="display:none;position:fixed;inset:0;z-index:9998;background:linear-gradient(160deg,#fef6e8 0%,#fce8ee 50%,#e8f5ed 100%);flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:40px">
+  <!-- Cards -->
+  <div id="intro-cards-wrap" style="position:absolute;inset:0;overflow:hidden">
+    <!-- Card 0: Groups -->
+    <div class="intro-card" id="icard-0" style="background:linear-gradient(135deg,#fce8ee,#fef6e8)">
+      <div class="intro-card-inner">
+        <div style="font-size:72px;margin-bottom:20px">👥</div>
+        <div class="intro-card-title">Plan with Your Barkada</div>
+        <div class="intro-card-sub">Split bills, track tasks, and plan outings with your family, friends, or crew — all in one place.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px">
+          <span class="intro-pill">💰 Split expenses</span>
+          <span class="intro-pill">✅ Shared tasks</span>
+          <span class="intro-pill">📍 Map pins</span>
+          <span class="intro-pill">🗺 Place suggestions</span>
+        </div>
+      </div>
+    </div>
+    <!-- Card 1: Jowa -->
+    <div class="intro-card" id="icard-1" style="background:linear-gradient(135deg,#fce8ee,#f0e8f8);transform:translateX(100%)">
+      <div class="intro-card-inner">
+        <div style="font-size:72px;margin-bottom:20px">💑</div>
+        <div class="intro-card-title">Your Jowa, Your Space</div>
+        <div class="intro-card-sub">A private space for you and your partner. Daily tasks, mood check-ins, polls, shared goals, and date ideas.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px">
+          <span class="intro-pill">✅ Daily tasks</span>
+          <span class="intro-pill">💕 Mood board</span>
+          <span class="intro-pill">🗳️ Polls</span>
+          <span class="intro-pill">🛒 Errand board</span>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2: Errand Board -->
+    <div class="intro-card" id="icard-2" style="background:linear-gradient(135deg,#e8f5ed,#fef6e8);transform:translateX(200%)">
+      <div class="intro-card-inner">
+        <div style="font-size:72px;margin-bottom:20px">🛒</div>
+        <div class="intro-card-title">Idiot-Proof Grocery List</div>
+        <div class="intro-card-sub">Build a grocery list with photos, prices, and aisle numbers. Send your jowa — they swipe through each item. No excuses.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px">
+          <span class="intro-pill">📷 Item photos</span>
+          <span class="intro-pill">💰 Price tracker</span>
+          <span class="intro-pill">👆 Swipe to confirm</span>
+        </div>
+      </div>
+    </div>
+    <!-- Card 3: Wedding -->
+    <div class="intro-card" id="icard-3" style="background:linear-gradient(135deg,#fce8ee,#fef6e8);transform:translateX(300%)">
+      <div class="intro-card-inner">
+        <div style="font-size:72px;margin-bottom:20px">💍</div>
+        <div class="intro-card-title">Wedding Planner Built In</div>
+        <div class="intro-card-sub">Guest list, seating canvas, budget tracker, checklist, supplier contacts, and RSVP links — all from your phone.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px">
+          <span class="intro-pill">🪑 Seating canvas</span>
+          <span class="intro-pill">👥 Guest RSVP</span>
+          <span class="intro-pill">📋 Suppliers</span>
+          <span class="intro-pill">💰 Budget</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dots + nav -->
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;padding:0 24px">
+    <div style="display:flex;gap:8px" id="intro-dots">
+      <div class="intro-dot active" id="idot-0"></div>
+      <div class="intro-dot" id="idot-1"></div>
+      <div class="intro-dot" id="idot-2"></div>
+      <div class="intro-dot" id="idot-3"></div>
+    </div>
+    <button id="intro-next-btn" onclick="introNext()" style="width:100%;max-width:360px;padding:16px;border-radius:var(--r-lg);background:linear-gradient(135deg,#c9a96e,#a07840);color:white;border:none;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(201,169,110,0.4)">Next →</button>
+    <button onclick="window.hideIntro();localStorage.setItem('at_seen_intro','1')" style="background:none;border:none;color:#a07840;font-size:13px;font-weight:600;cursor:pointer;padding:4px">Skip intro</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     AUTH SCREEN
+══════════════════════════════ -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:9997;background:#F5F5F5;overflow-y:auto">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px;margin-bottom:8px">💍</div>
+      <div style="font-family:'Lora',serif;font-style:italic;font-size:32px;font-weight:600;color:#2c1f0e">ano tara?</div>
+      <div style="font-size:12px;font-weight:600;color:#a07840;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Plan together, stress less</div>
+    </div>
+
+    <!-- Sign Up panel -->
+    <div id="auth-signup" style="width:100%;max-width:400px">
+      <div class="auth-card">
+        <div class="auth-title">Create Account</div>
+        <div class="auth-sub">Join Ano Tara and start planning.</div>
+        <div class="auth-field">
+          <div class="auth-label">Your Name</div>
+          <input id="su-name" type="text" class="auth-input" placeholder="e.g. Jhoan" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <div class="auth-label">Mobile Number</div>
+          <input id="su-phone" type="tel" class="auth-input" placeholder="+63 917 xxx xxxx" autocomplete="tel">
+        </div>
+        <div id="su-error" class="auth-error"></div>
+        <button id="su-btn" onclick="window.submitSignUp()" class="auth-btn">Get Started →</button>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:#a07840">
+          Already have an account? <span onclick="window.switchAuth('login')" style="font-weight:700;cursor:pointer;text-decoration:underline">Log in</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log In panel -->
+    <div id="auth-login" style="display:none;width:100%;max-width:400px">
+      <div class="auth-card">
+        <div class="auth-title">Welcome Back</div>
+        <div class="auth-sub">Log in to continue planning.</div>
+        <div class="auth-field">
+          <div class="auth-label">Mobile Number</div>
+          <input id="li-phone" type="tel" class="auth-input" placeholder="+63 917 xxx xxxx" autocomplete="tel">
+        </div>
+        <div id="li-error" class="auth-error"></div>
+        <button id="li-btn" onclick="window.submitLogin()" class="auth-btn">Send Code →</button>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:#a07840">
+          New here? <span onclick="window.switchAuth('signup')" style="font-weight:700;cursor:pointer;text-decoration:underline">Create account</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OTP panel -->
+    <div id="auth-otp" style="display:none;width:100%;max-width:400px">
+      <div class="auth-card">
+        <div class="auth-title">Enter Code</div>
+        <div id="otp-hint" class="auth-sub">Code sent to your number</div>
+        <div class="auth-field">
+          <div class="auth-label">6-Digit Code</div>
+          <input id="otp-input" type="number" class="auth-input" placeholder="123456" maxlength="6" style="font-size:24px;font-weight:700;letter-spacing:8px;text-align:center" autocomplete="one-time-code">
+        </div>
+        <div id="otp-error" class="auth-error"></div>
+        <button id="otp-btn" onclick="window.submitOTP()" class="auth-btn">Verify →</button>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:#a07840">
+          Didn't receive it? <span onclick="window.resendOTP()" style="font-weight:700;cursor:pointer;text-decoration:underline">Resend</span>
+        </div>
+        <div style="text-align:center;margin-top:8px">
+          <span onclick="window.switchAuth('signup')" style="font-size:12px;color:#a07840;cursor:pointer">← Back</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     HOME
+══════════════════════════════ -->
+<section id="home" class="screen active">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="app-logo" style="font-family:'DM Serif Display',serif;font-weight:400;font-size:24px;letter-spacing:-0.3px">ano tara?</div>
+      <div class="topbar-right">
+        <button id="lang-toggle" class="lang-btn" onclick="toggleLang()">🇵🇭 Filipino</button>
+        <button class="avatar-btn" onclick="navTo('settings')">JH</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="greeting">
+    <div class="greeting-sub" data-t="greetSub"></div>
+    <div class="greeting-name">Jhoan ✨</div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card" onclick="openBalanceBreakdown()">
+    <div class="bal-label" data-t="netBalance"></div>
+    <div class="bal-amount">₱1,240</div>
+    <div class="bal-pills">
+      <span class="bal-pill owed"><span data-t="owedToYou"></span> ₱1,800</span>
+      <span class="bal-pill owe"><span data-t="youOwe"></span> ₱560</span>
+    </div>
+    <div class="bal-tap-hint">👆 Tap for full breakdown</div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="pad" style="margin-bottom:22px">
+    <div class="quick-grid">
+      <button class="quick-btn" onclick="navTo('groups')">
+        <div class="quick-icon qi-sand glass">👥</div>
+        <span class="quick-label" data-t="quickGroups"></span>
+      </button>
+      <button class="quick-btn" onclick="openModal('group-select-modal')">
+        <div class="quick-icon qi-pink glass">💸</div>
+        <span class="quick-label" data-t="quickExpense"></span>
+      </button>
+      <button class="quick-btn" onclick="navTo('couple')">
+        <div class="quick-icon qi-pink glass">🫶</div>
+        <span class="quick-label" data-t="quickCouple"></span>
+      </button>
+      <button class="quick-btn" onclick="activateWedding()">
+        <div class="quick-icon qi-pink glass" id="wedding-quick-icon">💍</div>
+        <span class="quick-label" data-t="quickWedding"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Wedding Card — only shown after activation -->
+  <div id="home-wedding-card" class="pad" style="margin-bottom:4px;display:none">
+    <div class="wedding-home-card" onclick="navTo('wedding')">
+      <div class="whc-emoji">💍</div>
+      <div class="whc-title" id="whc-title-text">Plan Your Wedding</div>
+      <div class="whc-sub" id="whc-sub-text">Tap to set your wedding details</div>
+      <div class="whc-badges" id="whc-badges">
+        <span class="whc-badge">💰 ₱0 committed</span>
+        <span class="whc-badge">✅ 0/29 tasks</span>
+        <span class="whc-badge">👥 0 guests</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reminder Banner — shown when a date is coming up -->
+  <div id="home-reminder-banner" style="display:none;padding:0 20px;margin-bottom:12px">
+    <div class="glass-pink" style="border-radius:var(--r-md);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="navTo('couple');setTimeout(()=>{window.openRemindersScreen()},200)">
+      <div style="font-size:28px;flex-shrink:0" id="hrb-emoji">💕</div>
+      <div style="flex:1">
+        <div style="font-size:13.5px;font-weight:700;color:var(--ink)" id="hrb-title">Upcoming!</div>
+        <div style="font-size:12px;color:var(--ink-4);margin-top:2px" id="hrb-sub">Tap to see reminders</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--pink-deep);white-space:nowrap" id="hrb-days"></div>
+    </div>
+  </div>
+
+  <!-- Your Groups -->
+  <div class="pad sec-hdr" style="margin-top:16px">
+    <span class="sec-title" data-t="yourGroups"></span>
+    <span class="sec-action" onclick="openModal('new-group-modal')" data-t="newBtn"></span>
+  </div>
+  <div class="groups-scroll" id="groups-scroll-el">
+    <div class="group-card gc-jowa" onclick="openGroup('jowa')">
+      <div class="group-emoji">💑</div>
+      <div class="group-name" data-t="jowaLabel"></div>
+      <div class="group-meta">Jhoan &amp; Seph · Couple</div>
+      <div class="group-balance neg">↓ You owe ₱240</div>
+      <div class="group-badge">₱18,240 this month</div>
+    </div>
+    <div class="group-card gc-familia" onclick="openGroup('familia')">
+      <div class="group-emoji">🎂</div>
+      <div class="group-name" data-t="familiaLabel"></div>
+      <div class="group-meta">6 members · 8 tasks</div>
+      <div class="group-balance pos">↑ Owed ₱673</div>
+      <div class="group-badge">₱4,200 budget</div>
+    </div>
+    <div class="group-card gc-berks" onclick="openGroup('berks')">
+      <div class="group-emoji">🍜</div>
+      <div class="group-name" data-t="berksLabel"></div>
+      <div class="group-meta">5 people · Tonight</div>
+      <div class="group-balance pos">↑ Owed ₱560</div>
+      <div class="group-badge">Split bill</div>
+    </div>
+    <div class="group-card gc-new" onclick="openModal('new-group-modal')">
+      <div class="group-emoji" style="opacity:.4">+</div>
+      <div class="group-name" style="color:var(--ink-3)" data-t="newGroupLabel"></div>
+      <div class="group-meta" style="color:var(--ink-4)" data-t="newGroupSub"></div>
+    </div>
+  </div>
+
+  <!-- Activity -->
+  <div class="pad sec-hdr" style="margin-top:24px">
+    <span class="sec-title" data-t="happening"></span>
+    <span class="sec-action" data-t="seeAll"></span>
+  </div>
+  <div class="pad activity-list">
+    <div class="activity-item glass"><div class="act-dot sand">🛒</div><div class="act-text"><div class="act-title"><strong>Carlo</strong> bought cake ingredients — ₱680</div><div class="act-time">Mifamilia · 12 min ago</div></div></div>
+    <div class="activity-item glass"><div class="act-dot green">📍</div><div class="act-text"><div class="act-title"><strong>Jess</strong> is on the way to Yabu</div><div class="act-time">Berks · 25 min ago</div></div></div>
+    <div class="activity-item glass"><div class="act-dot pink">💰</div><div class="act-text"><div class="act-title"><strong>Seph</strong> paid ₱1,200 for the hotel deposit</div><div class="act-time">Jowa · 2 hrs ago</div></div></div>
+    <div class="activity-item glass"><div class="act-dot sand">✅</div><div class="act-text"><div class="act-title"><strong>Mark</strong> completed "Buy decorations"</div><div class="act-time">Mifamilia · 3 hrs ago</div></div></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     GROUPS
+══════════════════════════════ -->
+<section id="groups" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span style="font-family:var(--f2);font-style:italic;font-size:20px;color:var(--ink)" data-t="groupsTitle"></span>
+      <button class="avatar-btn" style="border-radius:var(--r-sm)" onclick="openModal('new-group-modal')">+</button>
+    </div>
+  </header>
+  <div class="pad" id="groups-list-el">
+    <div class="activity-item glass-pink" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('jowa')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(252,232,238,0.80);border:1px solid rgba(224,120,152,0.22);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">💑</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="jowaLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="coupleFinance"></div><div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:72%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--pink-mid));border-radius:2px"></div></div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--pink-deep)">↓ Owe ₱240</div><div style="font-size:10.5px;color:var(--ink-4)">this month</div></div>
+    </div>
+    <div class="activity-item glass-cream" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('familia')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.80);border:1px solid rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🎂</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="familiaLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="familyEvent"></div><div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:37%;height:100%;background:linear-gradient(90deg,var(--tan),var(--amber));border-radius:2px"></div></div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--green-deep)">↑ Owed ₱673</div><div style="font-size:10.5px;color:var(--ink-4)">₱4,200 budget</div></div>
+    </div>
+    <div class="activity-item glass-green" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('berks')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(208,236,218,0.80);border:1px solid rgba(90,171,122,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🍜</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="berksLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="friendsHangout"></div><div style="margin-top:6px;display:inline-block;background:rgba(232,245,237,0.8);color:var(--green-deep);font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid rgba(90,171,122,0.2)" data-t="tonight"></div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--green-deep)">↑ Owed ₱560</div><div style="font-size:10.5px;color:var(--ink-4)">split bill</div></div>
+    </div>
+    <div class="activity-item" style="border-radius:var(--r-lg);border:1.5px dashed rgba(201,169,110,0.38);background:rgba(255,253,248,0.45);cursor:pointer;margin-bottom:11px" onclick="openModal('new-group-modal')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.50);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:var(--tan);stroke-width:2;fill:none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <div><div style="font-size:15px;font-weight:700;color:var(--tan-dark)" data-t="newGroupLabel"></div><div style="font-size:11.5px;color:var(--ink-4)">Jowa · Mifamilia · Berks · Trip</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     GROUP DETAIL
+══════════════════════════════ -->
+<section id="group-detail" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg><span data-t="backBtn"></span></button>
+      <div style="display:flex;gap:8px">
+        <button style="padding:7px 12px;border-radius:var(--r-sm);background:rgba(232,245,237,0.65);border:1px solid rgba(90,171,122,0.25);font-size:12.5px;font-weight:700;color:var(--green-deep);cursor:pointer" onclick="openShareModal()">🔗 Share</button>
+        <button style="padding:7px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer" data-t="inviteBtn" onclick="openShareModal()"></button>
+      </div>
+    </div>
+  </header>
+  <div id="group-hero-el" class="group-hero gh-familia">
+    <div id="group-hero-emoji" class="group-hero-emoji">🎂</div>
+    <div id="group-hero-name" class="group-hero-name">Ano Tara — Mifamilia</div>
+    <div id="group-hero-sub" class="group-hero-sub">6 members · Family Event · May 15</div>
+    <div class="group-hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val">3/8</div><div class="hero-stat-lbl">Tasks</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="hero-stat-val">₱4,200</div><div class="hero-stat-lbl">Budget</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="hero-stat-val">₱2,840</div><div class="hero-stat-lbl">Spent</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="hero-stat-val" style="color:var(--green-deep)">₱673</div><div class="hero-stat-lbl">Owed</div></div>
+    </div>
+  </div>
+  <nav class="tabs glass">
+    <button class="tab active" id="tab-tasks"    onclick="switchTab('tasks')"    data-t="tabTasks"></button>
+    <button class="tab"        id="tab-expenses" onclick="switchTab('expenses')" data-t="tabExpenses"></button>
+    <button class="tab"        id="tab-members"  onclick="switchTab('members')"  data-t="tabMembers"></button>
+    <button class="tab"        id="tab-settle"   onclick="switchTab('settle')"   data-t="tabSettle"></button>
+    <button class="tab"        id="tab-map"      onclick="switchTab('map')"      data-t="tabMap"></button>
+  </nav>
+
+  <!-- SAAN TAYO CARD — always visible at top of tasks -->
+  <div id="saan-top-card" style="padding:12px 20px 0">
+    <div class="glass" style="border-radius:var(--r-md);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer" onclick="openSaanTayo()">
+        <div style="font-size:28px;width:44px;height:44px;background:rgba(232,245,237,0.6);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(90,171,122,0.2)">🗺</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--ink)" id="saan-card-title">Saan Tayo?</div>
+          <div style="font-size:11.5px;color:var(--ink-4);margin-top:2px">Find a place for your group</div>
+        </div>
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--ink-4);fill:none;stroke-width:2"><polyline points="9,18 15,12 9,6"/></svg>
+      </div>
+      <div style="display:flex;gap:6px;padding:0 14px 12px;flex-wrap:wrap" id="saan-quick-pills"></div>
+    </div>
+  </div>
+  <!-- TASKS -->
+  <div id="panel-tasks" class="pad">
+    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="tasksTitle"></span><span class="sec-action" onclick="openModal('add-task-modal')" data-t="addTask"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check done"></div><div class="task-body"><div class="task-name done-text">Buy birthday cake</div><div class="task-assignee">Carlo · Done 1hr ago</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-done" data-t="statusDone"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check progress"></div><div class="task-body"><div class="task-name">Cook the food</div><div class="task-assignee">Tita Linda · Cooking now 🍳</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-progress" data-t="statusProgress"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check"></div><div class="task-body"><div class="task-name">Set up decorations</div><div class="task-assignee">Mark · Assigned</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-pending" data-t="statusPending"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check done"></div><div class="task-body"><div class="task-name done-text">Book the venue</div><div class="task-assignee">Jhoan · Confirmed ✓</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-done" data-t="statusDone"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check"></div><div class="task-body"><div class="task-name">Pick up relatives from airport</div><div class="task-assignee">Papa · Sunday 2pm</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-pending" data-t="statusPending"></span></div>
+    <div class="task-item glass" onclick="showTaskDropdown(this,event)"><div class="task-check done"></div><div class="task-body"><div class="task-name done-text">Order catering extras</div><div class="task-assignee">Tita Rosa · Confirmed</div></div><button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button><span class="task-status s-done" data-t="statusDone"></span></div>
+  </div>
+  <!-- EXPENSES -->
+  <div id="panel-expenses" class="pad" style="display:none">
+    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="expensesTitle"></span><span class="sec-action" onclick="openModal('add-expense-modal')" data-t="addExpense"></span></div>
+    <div class="expense-item glass"><div class="expense-icon" style="background:rgba(252,232,238,0.7);border:1px solid rgba(224,120,152,0.2)">🎂</div><div class="expense-body"><div class="expense-name">Birthday cake</div><div class="expense-detail">Paid by Carlo · 6 people</div></div><div><div class="expense-amount">₱680</div><div class="expense-split">₱113.33 each</div></div></div>
+    <div class="expense-item glass"><div class="expense-icon" style="background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.22)">🎉</div><div class="expense-body"><div class="expense-name">Decorations</div><div class="expense-detail">Paid by Mark · 6 people</div></div><div><div class="expense-amount">₱960</div><div class="expense-split">₱160 each</div></div></div>
+    <div class="expense-item glass"><div class="expense-icon" style="background:rgba(232,245,237,0.7);border:1px solid rgba(90,171,122,0.2)">🍽️</div><div class="expense-body"><div class="expense-name">Catering</div><div class="expense-detail">Paid by Jhoan · 6 people</div></div><div><div class="expense-amount">₱1,200</div><div class="expense-split">₱200 each</div></div></div>
+    <div class="budget-bar-wrap"><div class="bud-row"><span class="bud-label" data-t="budgetSpent"></span><span class="bud-val">₱2,840</span></div><div class="bud-row" style="margin-top:2px"><span class="bud-label" style="font-size:11.5px" data-t="budgetLabel"></span><span style="font-size:12px;color:var(--ink-3)">₱4,200</span></div><div class="prog-track"><div class="prog-fill" style="width:0" data-width="67.6%"></div></div><div class="bud-remain">₱1,360 <span data-t="budgetRemaining"></span></div></div>
+    <button class="cta-btn dark" onclick="navTo('receipt')" data-t="viewReceipt"></button>
+  </div>
+  <!-- MEMBERS -->
+  <div id="panel-members" class="pad" style="display:none">
+    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="membersTitle"></span><span class="sec-action" onclick="openShareModal()" data-t="inviteMember"></span></div>
+    <div class="member-row glass"><div class="member-av ma-tan">MA</div><div><div class="member-name">Jhoan (You)</div><div class="member-role">Admin · Paid ₱1,200</div></div><span class="member-status ms-here" data-t="msHere"></span></div>
+    <div class="member-row glass"><div class="member-av ma-green">CA</div><div><div class="member-name">Carlo</div><div class="member-role">Member · Paid ₱680</div></div><span class="member-status ms-here" data-t="msHere"></span></div>
+    <div class="member-row glass"><div class="member-av ma-pink">MK</div><div><div class="member-name">Mark</div><div class="member-role">Member · Paid ₱960</div></div><span class="member-status ms-way" data-t="msWay"></span></div>
+    <div class="member-row glass"><div class="member-av ma-sand">TL</div><div><div class="member-name">Tita Linda</div><div class="member-role">Member · Paid ₱0</div></div><span class="member-status ms-here" data-t="msCooking"></span></div>
+    <div class="member-row glass"><div class="member-av ma-green" style="color:var(--green-deep)">AN</div><div><div class="member-name">Ana</div><div class="member-role">Member · Paid ₱0</div></div><span class="member-status ms-late" data-t="msLate"></span></div>
+  </div>
+  <!-- SETTLE -->
+  <div id="panel-settle" class="pad" style="display:none;padding-top:16px">
+    <div class="sec-hdr"><span class="sec-title">Who Pays Who</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#FFF8E1;border:2px solid #F5A623;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#92400E;flex-shrink:0">AN</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Ana</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱473</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#FDF2F8;border:2px solid #EC4899;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#9D174D;flex-shrink:0">TL</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Tita Linda</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Carlo</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱273</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#F5F3FF;border:2px solid #7C3AED;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#5B21B6;flex-shrink:0">MK</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Mark</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱200</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
+    </div>
+    <button class="cta-btn" style="margin-top:16px" onclick="navTo('receipt')">View Receipt →</button>
+  </div>
+  <!-- MAP -->
+  <div id="panel-map" style="display:none;padding:16px">
+    <div style="border-radius:var(--r-xl);overflow:hidden;border:1px solid rgba(0,0,0,0.08);box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:12px"><div id="leaflet-map" style="height:280px"></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-4)">Tap map to add a pin · max 5</div>
+      <button onclick="openModal('add-pin-modal')" style="padding:8px 16px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">+ Add Pin</button>
+    </div>
+    <div id="pin-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     COUPLE / JOWA
+══════════════════════════════ -->
+<section id="couple" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="app-logo"><span>ano <em>tara jowa</em></span><small data-t="coupleSub"></small></div>
+      <div style="display:flex;align-items:center">
+        <div class="avatar-btn" style="z-index:2">MA</div>
+        <div class="avatar-btn" style="background:linear-gradient(135deg,var(--pink-mid),var(--pink-deep));margin-left:-10px;z-index:1">Seph</div>
+      </div>
+    </div>
+  </header>
+  <div class="couple-hero">
+    <div id="couple-sync-indicator" class="couple-sync"><div class="sync-dot"></div><span class="sync-label" data-t="synced"></span></div>
+    <div style="font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:0.9px;margin-top:8px" data-t="thisMonth"></div>
+    <div style="font-family:var(--f2);font-size:38px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-1.5px;margin:5px 0 14px;line-height:1">₱18,240</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="bal-pill owe">Jhoan paid ₱10,840</span><span class="bal-pill owed">Seph paid ₱7,400</span></div>
+    <button onclick="openModal('pair-modal')" style="margin-top:14px;padding:8px 16px;border-radius:var(--r-sm);background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.65);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer" data-t="pairJowa"></button>
+  </div>
+
+  <!-- Important Dates & Reminders — always at top of couple page -->
+  <div class="pad" style="padding-top:12px">
+    <div class="sec-hdr">
+      <span class="sec-title">💕 Important Dates</span>
+      <span class="sec-action" onclick="openModal('add-reminder-modal')">+ Add</span>
+    </div>
+    <div id="reminders-list-couple"></div>
+  </div>
+
+  <!-- Shared Expenses Card — tap to open full expense screen -->
+  <div class="pad" style="margin-top:8px">
+    <div class="sec-hdr"><span class="sec-title">Shared Expenses</span><span class="sec-action" onclick="openModal('add-jowa-expense-modal')">+ Add</span></div>
+    <div class="glass-pink" onclick="navTo('jowa-expenses');window.initJowaExpenses()" style="border-radius:var(--r-md);padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="font-size:32px;width:52px;height:52px;background:rgba(252,232,238,0.7);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(224,120,152,0.2)">💸</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">View All Shared Expenses</div>
+        <div style="font-size:12px;color:var(--ink-4);margin-top:2px" id="jowa-expense-summary">Tap to manage</div>
+      </div>
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--ink-4);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9,18 15,12 9,6"/></svg>
+    </div>
+  </div>
+
+  <!-- Savings Goals — expanded -->
+  <div class="pad sec-hdr"><span class="sec-title" data-t="savingsGoals"></span><span class="sec-action" onclick="openModal('add-goal-modal')" data-t="newGoal"></span></div>
+  <div class="pad">
+    <!-- Japan Goal -->
+    <div class="goal-card glass-pink" style="margin-bottom:12px">
+      <div class="goal-header">
+        <div><div class="goal-emoji">🌏</div><div class="goal-title">Japan 2025</div><div class="goal-sub">Dream vacation · Together · Target: Dec 2025</div></div>
+        <span class="goal-tag gt-green" data-t="onTrack"></span>
+      </div>
+      <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--pink-accent),var(--tan))" data-width="62%"></div></div>
+      <div class="goal-nums-row"><span class="goal-num">₱31,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
+      <!-- Expanded contributions -->
+      <div class="goal-expanded">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Contributions</div>
+        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan</span><span style="font-size:11px;color:var(--ink-4)">₱2,000/mo</span><span class="goal-contrib-amt">₱18,000</span></div>
+        <div class="goal-contrib-row"><span class="goal-contrib-name">Seph</span><span style="font-size:11px;color:var(--ink-4)">₱1,500/mo</span><span class="goal-contrib-amt">₱13,000</span></div>
+        <div style="margin-top:10px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.2)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--ink-3)">Projected completion</span><span style="font-size:12px;font-weight:700;color:var(--green-deep)">Oct 2025 ✓</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--ink-3)">Still needed</span><span style="font-size:12px;font-weight:700;color:var(--ink)">₱19,000</span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="openAddMoneyModal('Japan 2025')" class="goal-add-btn" style="flex:1">+ Add Money</button>
+          <button onclick="openEditGoalModal('Japan 2025',50000,31000)" class="goal-add-btn" style="flex:1;border-style:solid">Edit Goal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Fund Goal -->
+    <div class="goal-card glass-green" style="margin-bottom:12px">
+      <div class="goal-header">
+        <div><div class="goal-emoji">🛡️</div><div class="goal-title">Emergency Fund</div><div class="goal-sub">Safety net · Together</div></div>
+        <span class="goal-tag gt-sand" data-t="almostThere"></span>
+      </div>
+      <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--green-accent),var(--green-deep))" data-width="88%"></div></div>
+      <div class="goal-nums-row"><span class="goal-num">₱44,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
+      <div class="goal-expanded">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Transaction History</div>
+        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan · May 1</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱3,000</span></div>
+        <div class="goal-contrib-row"><span class="goal-contrib-name">Seph · Apr 15</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱2,500</span></div>
+        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan · Apr 1</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱3,000</span></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button onclick="openAddMoneyModal('Emergency Fund')" class="goal-add-btn" style="flex:1">+ Add Money</button><button onclick="openWithdrawModal('Emergency Fund')" class="goal-add-btn" style="flex:1;border-style:solid">Withdraw</button></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Quick Access -->
+  <div class="pad" style="margin-top:16px">
+    <div class="sec-hdr"><span class="sec-title">Quick Access</span></div>
+    <div style="display:flex;gap:10px">
+      <div class="glass" onclick="navTo('daily-tasks');window.initDailyTasks()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center">
+        <div style="font-size:28px;margin-bottom:6px">✅</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">Daily Tasks</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Track together</div>
+      </div>
+      <div class="glass-pink" onclick="navTo('mood-board');window.initMoodBoard()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center">
+        <div style="font-size:28px;margin-bottom:6px">💕</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">Mood Board</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Daily check-in</div>
+      </div>
+      <div class="glass-green" onclick="navTo('errand-board');window.initErrandBoard()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center">
+        <div style="font-size:28px;margin-bottom:6px">🛒</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">Errand Board</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Idiot-proof list</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Poll -->
+  <div class="pad" style="margin-top:16px">
+    <div class="sec-hdr"><span class="sec-title" data-t="activePoll"></span><span class="sec-action" onclick="openModal('add-poll-modal')" data-t="newPoll"></span></div>
+    <div id="polls-container"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     RECEIPT
+══════════════════════════════ -->
+<section id="receipt" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg><span data-t="backBtn"></span></button>
+      <button style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(232,245,237,0.7);border:1px solid rgba(90,171,122,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer" onclick="showToast('📥 Saved!')" data-t="savePDF"></button>
+    </div>
+  </header>
+  <div class="receipt-card">
+    <div class="receipt-logo"><div class="receipt-brand">ano tara?</div><div class="receipt-title" data-t="eventSummary"></div><div class="receipt-sub">Mama's Birthday · May 15, 2025</div></div>
+    <div class="r-divider"></div>
+    <div class="r-row"><span class="r-key">Event</span><span class="r-val">Mama's Birthday</span></div>
+    <div class="r-row"><span class="r-key">Group</span><span class="r-val">6 members</span></div>
+    <div class="r-row"><span class="r-key">Date</span><span class="r-val">May 15, 2025</span></div>
+    <div class="r-divider"></div>
+    <div class="r-sec-title">Expenses</div>
+    <div class="r-row"><span class="r-key">🎂 Birthday cake (Carlo)</span><span class="r-val">₱680</span></div>
+    <div class="r-row"><span class="r-key">🎉 Decorations (Mark)</span><span class="r-val">₱960</span></div>
+    <div class="r-row"><span class="r-key">🍽️ Catering (Jhoan)</span><span class="r-val">₱1,200</span></div>
+    <div class="r-divider"></div>
+    <div class="r-row"><span class="r-key" style="font-weight:700;color:var(--ink)" data-t="totalSpent"></span><span class="r-total">₱2,840</span></div>
+    <div class="r-row"><span class="r-key" data-t="perPerson"></span><span class="r-val">₱473.33</span></div>
+    <div class="r-row"><span class="r-key" data-t="remaining"></span><span class="r-val" style="color:var(--green-deep);font-weight:700">₱1,360</span></div>
+    <div class="r-divider"></div>
+    <div class="r-sec-title" data-t="paymentsNeeded"></div>
+    <div class="r-row"><span class="r-key">Ana → Jhoan</span><span class="r-val">₱473</span></div>
+    <div class="r-row"><span class="r-key">Tita Linda → Carlo</span><span class="r-val">₱273</span></div>
+    <div class="r-row"><span class="r-key">Mark → Jhoan</span><span class="r-val">₱200</span></div>
+    <button class="receipt-share" onclick="shareToMessenger()"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white;flex-shrink:0"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.87 1.397 5.437 3.585 7.12V22l3.348-1.838A11.04 11.04 0 0012 20.485c5.523 0 10-4.145 10-9.242C22 6.145 17.523 2 12 2z"/></svg><span data-t="shareMessengerBtn"></span></button>
+  </div>
+  <div class="spacer"></div><div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     SETTINGS
+══════════════════════════════ -->
+<section id="settings" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span style="font-family:var(--f2);font-style:italic;font-size:20px;color:var(--ink)" data-t="profileTitle"></span>
+      <button id="lang-toggle-2" class="lang-btn" onclick="toggleLang()">🇵🇭 Filipino</button>
+    </div>
+  </header>
+  <div class="pad">
+    <div class="profile-card glass">
+      <div class="profile-av">JH</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-0.3px" class="profile-name-el">Jhoan A.</div>
+        <div style="font-size:13px;color:var(--ink-3);margin-top:2px" class="profile-phone-el">—</div>
+        <div style="margin-top:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:rgba(232,245,237,0.7);color:var(--green-deep);display:inline-block;border:1px solid rgba(90,171,122,0.25)">Verified ✓</div>
+      </div>
+    </div>
+    <div class="settings-list glass">
+      <div class="settings-item" onclick="showToast('🔔 Notifications!')"><div class="si-left"><div class="si-icon sand">🔔</div><span class="si-name" data-t="notifications"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      <div class="settings-item" onclick="showToast('📊 Monthly reports!')"><div class="si-left"><div class="si-icon pink">📊</div><span class="si-name" data-t="monthlyReports"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      <div class="settings-item" onclick="showToast('📆 Coming soon!')"><div class="si-left"><div class="si-icon sand">📆</div><span class="si-name" data-t="calendarSync"></span></div><span class="si-soon" data-t="comingSoon"></span></div>
+      <div class="settings-item" onclick="showToast('✨ AI features!')"><div class="si-left"><div class="si-icon green">✨</div><span class="si-name" data-t="aiSmartLists"></span></div><span class="si-soon" data-t="comingSoon"></span></div>
+      <div class="settings-item" onclick="openModal('pair-modal')"><div class="si-left"><div class="si-icon pink">💑</div><span class="si-name" data-t="pairJowa"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      <div class="settings-item" onclick="navTo('wedding')"><div class="si-left"><div class="si-icon pink">💍</div><span class="si-name">Wedding Planner</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+    </div>
+    <div style="text-align:center;padding:28px 20px 12px;font-size:12px;color:var(--ink-4)">Ano Tara? v3.0<br><span style="color:var(--tan-dark);font-weight:700;cursor:pointer" onclick="showToast('⭐ Thanks!')" data-t="rateApp"></span> · <span style="color:var(--tan-dark);font-weight:700;cursor:pointer" onclick="showToast('📩 Sent!')" data-t="sendFeedback"></span></div>
+  </div>
+</section>
+
+<!-- BOTTOM NAV -->
+<!-- ══════════════════════════════
+     PIN LOCK SCREEN
+══════════════════════════════ -->
+<div id="pin-lock-screen" style="position:fixed;inset:0;z-index:9999;background:#F0F0F0;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;touch-action:none">
+  <!-- App name — top left, DM Serif only here -->
+  <div style="width:100%;max-width:320px;padding:0 0 28px">
+    <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:32px;font-weight:400;color:#111827;line-height:1">ano tara?</div>
+    <div style="font-size:13px;font-weight:600;color:#9CA3AF;margin-top:4px" id="pin-lock-label">Enter your 4-digit PIN</div>
+    <div style="font-size:11px;color:#C6E03F;font-weight:700;margin-top:2px">Test: 1234</div>
+  </div>
+  <!-- Dots -->
+  <div style="display:flex;gap:16px;margin-bottom:36px">
+    <div class="pin-dot" id="pld-0" style="background:#E5E7EB;border:2px solid #D1D5DB;transition:background 0.2s,transform 0.2s,border 0.2s"></div>
+    <div class="pin-dot" id="pld-1" style="background:#E5E7EB;border:2px solid #D1D5DB;transition:background 0.2s,transform 0.2s,border 0.2s"></div>
+    <div class="pin-dot" id="pld-2" style="background:#E5E7EB;border:2px solid #D1D5DB;transition:background 0.2s,transform 0.2s,border 0.2s"></div>
+    <div class="pin-dot" id="pld-3" style="background:#E5E7EB;border:2px solid #D1D5DB;transition:background 0.2s,transform 0.2s,border 0.2s"></div>
+  </div>
+  <!-- Keypad -->
+  <div style="display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(4,72px);gap:12px">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key" style="font-size:18px" onclick="pinKey('clear')">×</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key pin-key-submit" onclick="pinKey('submit')">→</button>
+  </div>
+  <div id="pin-error" style="font-size:12px;font-weight:700;color:#EF4444;min-height:20px;margin-top:16px;text-align:center"></div>
+  <div id="pin-setup-hint" style="display:none;text-align:center;margin-top:16px;font-size:12px;color:#9CA3AF;line-height:1.6">Enter any 4 digits you'll remember.</div>
+</div>
+
+<!-- ══════════════════════════════
+     APP SHELL — main tabbed layout
+══════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- Overview — flat green, Image-1 header style -->
+  <!-- Overview — flat green with grid + blobs like splash -->
+  <div id="app-overview" style="background:#C6E03F;padding:16px 20px 28px;position:relative;overflow:hidden;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px)">
+    <div style="position:absolute;top:-28px;right:-18px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.20);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-18px;left:-12px;width:72px;height:72px;border-radius:50%;background:rgba(0,0,0,0.06);pointer-events:none"></div>
+    <div style="position:absolute;top:12px;right:88px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.25);pointer-events:none"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:rgba(0,0,0,0.5);margin-bottom:2px" id="ov-greet">Good day, Jhoan!</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:34px;font-weight:400;color:#111827;line-height:1.1;letter-spacing:-0.5px" id="ov-name">Today's Plan</div>
+      </div>
+      <div style="position:relative">
+        <div id="ov-reminder-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#EC4899;border:2px solid #C6E03F;z-index:1"></div>
+        <button onclick="switchMainTab('settings')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.12);border:none;font-size:13px;font-weight:800;color:#111827;cursor:pointer;font-family:'Nunito',sans-serif" id="ov-avatar">JH</button>
+      </div>
+    </div>
+    <!-- Balance card -->
+    <div style="margin-top:14px">
+      <div onclick="openBalanceBreakdown()" style="padding:14px 16px;border-radius:var(--r-xl);background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.10);cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Net Balance</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱1,240</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱1,800</span>
+        <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱560</span>
+      </div>
+    </div>
+    <!-- Reminder strip -->
+    <div id="ov-reminder-banner" style="display:none;margin-top:8px">
+      <div style="border-radius:var(--r-lg);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.10)" onclick="switchMainTab('jowa');setTimeout(()=>window.openRemindersScreen(),100)">
+        <span id="ov-hrb-emoji" style="font-size:18px;flex-shrink:0">💕</span>
+        <div style="flex:1;font-size:13px;font-weight:700;color:#111827" id="ov-hrb-title">Upcoming!</div>
+        <div style="font-size:11px;font-weight:800;color:#374151;white-space:nowrap" id="ov-hrb-days"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main tab bar -->
+  <nav id="main-tabs">
+    <button class="main-tab active" id="main-tab-home" onclick="switchMainTab('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z"/></svg>Home
+    </button>
+    <button class="main-tab" id="main-tab-groups" onclick="switchMainTab('groups')">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><circle cx="18" cy="8" r="3"/><path d="M21 21v-1.5a3 3 0 00-3-3"/></svg>Groups
+    </button>
+    <button class="main-tab" id="main-tab-jowa" onclick="switchMainTab('jowa')">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Jowa
+    </button>
+    <button class="main-tab" id="main-tab-wedding" onclick="switchMainTab('wedding')">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke-width="2"/><path d="M12 8C12 8 9 5 6.5 6.5S4 11 4 11" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-1.5 2.5" stroke-width="2" stroke-linecap="round"/><ellipse cx="12" cy="12" rx="8" ry="5" stroke-width="2"/><path d="M8 9.5C9.5 8 11 7.5 12 7.5" stroke-width="1.5" stroke-linecap="round"/></svg>Wed
+    </button>
+    <button class="main-tab" id="main-tab-settings" onclick="switchMainTab('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+    </button>
+  </nav>
+
+  <!-- Tab panels wrapper -->
+  <div id="tab-panels">
+    <!-- HOME tab -->
+    <div class="tab-panel active" id="tp-home">
+      <!-- HOME FEED -->
+      <div>
+        <!-- Jowa Budget Card -->
+        <div class="glass" onclick="switchMainTab('jowa')" style="padding:16px;margin-bottom:12px;cursor:pointer">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">This Month · Jowa</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink)">₱18,240</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#D1FAE5;color:#065F46">Jhoan ₱10,840</span>
+            <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#FCE7F3;color:#9D174D">Seph ₱7,400</span>
+          </div>
+        </div>
+
+        <!-- Upcoming Reminder -->
+        <div id="home-reminder-card" style="display:none;margin-bottom:12px">
+          <div class="glass" onclick="switchMainTab('jowa');setTimeout(()=>window.openRemindersScreen(),100)" style="padding:14px;cursor:pointer;border-left:3px solid #EC4899">
+            <div style="font-size:11px;font-weight:700;color:#EC4899;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Coming Up</div>
+            <div style="font-size:15px;font-weight:800;color:var(--ink)" id="home-reminder-name">—</div>
+            <div style="font-size:12px;color:var(--ink-4);margin-top:2px" id="home-reminder-days">—</div>
+          </div>
+        </div>
+
+        <!-- Daily Jowa Tasks -->
+        <div class="glass" style="padding:16px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:800;color:var(--ink)">Today's Tasks</div>
+            <span onclick="navTo('daily-tasks');window.initDailyTasks()" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">See all →</span>
+          </div>
+          <div id="home-daily-tasks"></div>
+        </div>
+
+        <!-- Mood Check-in -->
+        <div class="glass" style="padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="navTo('mood-board');window.initMoodBoard()">
+          <div style="width:44px;height:44px;border-radius:var(--r-lg);background:#F2FAD8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0" id="home-mood-emoji">🫥</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:800;color:var(--ink)">Mood Board</div>
+            <div style="font-size:12px;color:var(--ink-4);margin-top:1px" id="home-mood-sub">Tap to check in today</div>
+          </div>
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ink-4);fill:none;stroke-width:2.5"><polyline points="9,18 15,12 9,6"/></svg>
+        </div>
+
+        <!-- Expense Trend Chart -->
+        <div class="glass" style="padding:16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Expense Trend</div>
+          <!-- Hovered point details -->
+          <div id="chart-detail" style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)" id="chart-total">₱0</div>
+              <div style="font-size:11px;color:var(--ink-4)" id="chart-label">Total across all groups</div>
+            </div>
+          </div>
+          <canvas id="expense-trend-chart" style="width:100%;height:100px;display:block"></canvas>
+        </div>
+
+        <!-- Happening Now -->
+        <div style="font-size:17px;font-weight:900;color:var(--ink);margin-bottom:10px;font-family:'Nunito',sans-serif">Happening Now</div>
+        <div id="home-activity-list">
+          <div class="activity-item glass" style="margin-bottom:8px"><div class="act-dot sand">🛒</div><div class="act-text"><div class="act-title"><strong>Carlo</strong> added an expense — ₱680</div><div class="act-time">Mifamilia · recently</div></div></div>
+          <div class="activity-item glass" style="margin-bottom:8px"><div class="act-dot pink">💑</div><div class="act-text"><div class="act-title"><strong>Seph</strong> checked in today 💕</div><div class="act-time">Jowa · recently</div></div></div>
+        </div>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- GROUPS tab -->
+    <div class="tab-panel" id="tp-groups">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px">
+        <div style="font-size:18px;font-weight:900;color:var(--ink);font-family:var(--f)">Groups</div>
+        <button style="width:32px;height:32px;border-radius:var(--r-sm);background:rgba(245,230,200,0.6);border:1px solid rgba(201,169,110,0.25);font-size:18px;cursor:pointer;color:var(--tan-dark)" onclick="openModal('new-group-modal')">+</button>
+      </div>
+      <div class="pad" id="groups-list-el" style="padding-top:0"></div>
+    </div>
+
+    <!-- JOWA tab -->
+    <div class="tab-panel" id="tp-jowa" style="background:linear-gradient(160deg,#fef6e8 0%,#fce8ee 60%,#f5e8f5 100%)">
+      <!-- Jowa hero — clean aligned -->
+      <div style="background:var(--flat-pink);padding:24px 20px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px" data-t="thisMonth"></div>
+            <div style="font-family:var(--f2);font-size:34px;color:#fff;letter-spacing:-1px;margin-top:2px;line-height:1">₱18,240</div>
+          </div>
+          <button onclick="openModal('pair-modal')" style="padding:8px 14px;border-radius:99px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.4);font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)" data-t="pairJowa"></button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Jhoan paid<br><strong style="font-size:15px">₱10,840</strong></span>
+          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Seph paid<br><strong style="font-size:15px">₱7,400</strong></span>
+        </div>
+      </div>
+      <!-- Important Dates -->
+      <div class="pad" style="padding-top:12px">
+        <div class="sec-hdr"><span class="sec-title">💕 Important Dates</span><span class="sec-action" onclick="openModal('add-reminder-modal')">+ Add</span></div>
+        <div id="reminders-list-couple"></div>
+      </div>
+      <!-- Shared Expenses Card -->
+      <div class="pad" style="margin-top:4px">
+        <div class="sec-hdr"><span class="sec-title">Shared Expenses</span><span class="sec-action" onclick="openModal('add-jowa-expense-modal')">+ Add</span></div>
+        <div class="glass-pink" onclick="navTo('jowa-expenses');window.initJowaExpenses()" style="border-radius:var(--r-md);padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px">
+          <div style="font-size:32px;width:52px;height:52px;background:rgba(252,232,238,0.7);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(224,120,152,0.2)">💸</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">View All Shared Expenses</div><div style="font-size:12px;color:var(--ink-4);margin-top:2px" id="jowa-expense-summary">Tap to manage</div></div>
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--ink-4);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9,18 15,12 9,6"/></svg>
+        </div>
+      </div>
+      <!-- Savings Goals -->
+      <div class="pad sec-hdr" style="margin-top:8px"><span class="sec-title" data-t="savingsGoals"></span><span class="sec-action" onclick="openModal('add-goal-modal')" data-t="newGoal"></span></div>
+      <div class="pad" id="jowa-goals-section">
+        <div class="goal-card glass-pink" style="margin-bottom:12px">
+          <div class="goal-header"><div><div class="goal-emoji">🌏</div><div class="goal-title">Japan 2025</div><div class="goal-sub">Dream vacation · Together · Target: Dec 2025</div></div><span class="goal-tag gt-green" data-t="onTrack"></span></div>
+          <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--pink-accent),var(--tan))" data-width="62%"></div></div>
+          <div class="goal-nums-row"><span class="goal-num">₱31,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
+          <div class="goal-expanded"><div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Contributions</div><div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan</span><span style="font-size:11px;color:var(--ink-4)">₱2,000/mo</span><span class="goal-contrib-amt">₱18,000</span></div><div class="goal-contrib-row"><span class="goal-contrib-name">Seph</span><span style="font-size:11px;color:var(--ink-4)">₱1,500/mo</span><span class="goal-contrib-amt">₱13,000</span></div><div style="display:flex;gap:8px;margin-top:10px"><button onclick="openAddMoneyModal('Japan 2025')" class="goal-add-btn" style="flex:1">+ Add Money</button><button onclick="openEditGoalModal('Japan 2025',50000,31000)" class="goal-add-btn" style="flex:1;border-style:solid">Edit Goal</button></div></div>
+        </div>
+      </div>
+      <!-- Quick Access -->
+      <div class="pad" style="margin-top:8px">
+        <div class="sec-hdr"><span class="sec-title">Quick Access</span></div>
+        <div style="display:flex;gap:10px">
+          <div class="glass" onclick="navTo('daily-tasks');window.initDailyTasks()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center"><div style="font-size:28px;margin-bottom:6px">✅</div><div style="font-size:13px;font-weight:700;color:var(--ink)">Daily Tasks</div><div style="font-size:11px;color:var(--ink-4);margin-top:2px">Track together</div></div>
+          <div class="glass-pink" onclick="navTo('mood-board');window.initMoodBoard()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center"><div style="font-size:28px;margin-bottom:6px">💕</div><div style="font-size:13px;font-weight:700;color:var(--ink)">Mood Board</div><div style="font-size:11px;color:var(--ink-4);margin-top:2px">Daily check-in</div></div>
+          <div class="glass-green" onclick="navTo('errand-board');window.initErrandBoard()" style="flex:1;padding:16px;border-radius:var(--r-md);cursor:pointer;text-align:center"><div style="font-size:28px;margin-bottom:6px">🛒</div><div style="font-size:13px;font-weight:700;color:var(--ink)">Errand Board</div><div style="font-size:11px;color:var(--ink-4);margin-top:2px">Idiot-proof list</div></div>
+        </div>
+      </div>
+      <!-- Poll -->
+      <div class="pad" style="margin-top:16px">
+        <div class="sec-hdr"><span class="sec-title" data-t="activePoll"></span><span class="sec-action" onclick="openModal('add-poll-modal')" data-t="newPoll"></span></div>
+        <div id="polls-container"></div>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- WEDDING tab -->
+    <div class="tab-panel" id="tp-wedding" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+      <!-- Wedding hero -->
+      <div class="wedding-hero" style="margin:0;border-radius:0">
+        <div class="wedding-hero-ring">💍</div>
+        <div class="wedding-couple-names" id="wed-hero-names">—<span class="wedding-amp">&</span>—</div>
+        <div class="wedding-date-badge" id="wed-hero-date" style="display:none">📅 </div>
+        <div id="wed-hero-venue" style="display:none;margin-top:4px;font-size:12px;color:var(--ink-3);font-weight:600">📍 </div>
+      </div>
+      <!-- Supplier buttons -->
+      <div style="padding:8px 20px 0;display:flex;gap:8px">
+        <button onclick="navTo('supplier-directory');window.initSupplierDirectory()" style="flex:1;padding:11px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(252,232,238,0.7),rgba(245,230,200,0.5));border:1px solid rgba(224,120,152,0.2);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:left">💍 Browse Partner Suppliers →</button>
+        <button onclick="navTo('suppliers');window.initSuppliers()" style="padding:11px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">📋 Quick Dial</button>
+      </div>
+      <!-- Wedding tabs -->
+      <div class="wed-tabs-wrap" style="overflow-x:auto;white-space:nowrap;padding:12px 16px 0;-webkit-overflow-scrolling:touch">
+        <button class="wed-tab active" id="wed-tab-overview"  onclick="window.wedTab('overview')" >🏠 Overview</button>
+        <button class="wed-tab"        id="wed-tab-budget"    onclick="window.wedTab('budget')"   >💰 Budget</button>
+        <button class="wed-tab"        id="wed-tab-guests"    onclick="window.wedTab('guests')"   >👥 Guests</button>
+        <button class="wed-tab"        id="wed-tab-seating"   onclick="window.wedTab('seating')"  >🪑 Seating</button>
+        <button class="wed-tab"        id="wed-tab-checklist" onclick="window.wedTab('checklist')">✅ Checklist</button>
+        <button class="wed-tab"        id="wed-tab-schedule"  onclick="window.wedTab('schedule')" >📅 Schedule</button>
+      </div>
+      <!-- Panels -->
+      <div id="wed-panel-overview"  class="pad"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px"><span class="sec-title">Overview</span><button onclick="openModal('edit-wedding-modal')" style="width:32px;height:32px;border-radius:var(--r-md);background:#F5F5F5;border:1px solid rgba(0,0,0,0.08);font-size:16px;cursor:pointer">✏️</button></div><div id="wed-overview-content"></div></div>
+      <div id="wed-panel-budget"    class="pad" style="display:none"><div id="wed-budget-content"></div></div>
+      <div id="wed-panel-guests"    class="pad" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button onclick="openModal('wed-add-guest-modal')" style="padding:8px 16px;border-radius:var(--r-md);background:rgba(232,245,237,0.7);border:1px solid rgba(90,171,122,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer">+ Add Guest</button>
+        </div>
+        <div id="wed-guests-content"></div>
+      </div>
+      <div id="wed-panel-seating" style="display:none;overflow-y:auto;-webkit-overflow-scrolling:touch">
+        <div class="canvas-section" style="padding-bottom:8px">
+          <div class="canvas-toolbar">
+            <button class="canvas-tool-btn" onclick="WED.furniture=[];window.drawCanvas();showToast('🗑 Canvas cleared')">Clear All</button>
+            <button class="canvas-tool-btn" onclick="showToast('💾 Layout saved!')">Save Layout</button>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">Drag items · Double-tap 🪑 to assign guest</div>
+          <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+          <div id="canvas-resize-handle" style="width:100%;height:22px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;user-select:none;touch-action:none;">
+            <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Add Furniture</div>
+          <div id="furniture-palette" class="furniture-palette"></div>
+        </div>
+        <div style="padding:0 20px 140px"><div id="seat-assignments"></div></div>
+      </div>
+      <div id="wed-panel-checklist" class="pad" style="display:none"><div id="wed-checklist-content"></div></div>
+      <div id="wed-panel-schedule"  class="pad" style="display:none"><div id="wed-schedule-content"></div></div>
+      <div style="height:40px"></div>
+    </div>
+
+    <!-- SETTINGS tab -->
+    <div class="tab-panel" id="tp-settings">
+      <div style="padding:16px 20px 8px;display:flex;align-items:center;gap:14px">
+        <div class="profile-av" style="width:56px;height:56px;font-size:18px">JH</div>
+        <div><div class="profile-name-el" style="font-size:18px;font-weight:700;color:var(--ink)">Jhoan A.</div><div class="profile-phone-el" style="font-size:13px;color:var(--ink-3);margin-top:2px">—</div></div>
+      </div>
+      <div class="settings-section pad">
+        <div class="settings-group glass">
+          <div class="settings-item" onclick="window.openPairModal()"><div class="si-left"><div class="si-icon pink">💑</div><span class="si-name">Pair with Jowa</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="navTo('suppliers');window.initSuppliers()"><div class="si-left"><div class="si-icon sand">📋</div><span class="si-name">Supplier Quick Dial</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="window.openRemindersScreen()"><div class="si-left"><div class="si-icon pink">💕</div><span class="si-name">Important Dates</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="window.setupPIN()"><div class="si-left"><div class="si-icon sand">🔐</div><span class="si-name" id="pin-settings-label">Set Up PIN Lock</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+        </div>
+        <div class="settings-group glass">
+          <div class="settings-item"><div class="si-left"><div class="si-icon sand">🔔</div><span class="si-name" data-t="notifications"></span></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          <div class="settings-item"><div class="si-left"><div class="si-icon sand">📊</div><span class="si-name" data-t="monthlyReports"></span></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          <div class="settings-item"><div class="si-left"><div class="si-icon sand">📅</div><span class="si-name" data-t="calendarSync"></span></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+        </div>
+        <div class="settings-group glass">
+          <div class="settings-item"><div class="si-left"><div class="si-icon pink">⭐</div><span class="si-name" data-t="rateApp"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item"><div class="si-left"><div class="si-icon pink">💬</div><span class="si-name" data-t="sendFeedback"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="window.signOut()"><div class="si-left"><div class="si-icon pink">🚪</div><span class="si-name">Sign Out</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+        </div>
+        <div style="text-align:center;padding:20px 20px 12px;font-size:12px;color:var(--ink-4)">Ano Tara? v3.0 · Made with 💕 in the Philippines</div>
+      </div>
+      <div style="height:24px"></div>
+    </div>
+  </div><!-- end tab-panels -->
+
+  <!-- Swipe hint dots -->
+<div class="tab-swipe-dot" id="mtd-1"></div>
+    <div class="tab-swipe-dot" id="mtd-2"></div>
+    <div class="tab-swipe-dot" id="mtd-3"></div>
+    <div class="tab-swipe-dot" id="mtd-4"></div>
+  </div>
+
+</div><!-- end app-shell -->
+<!-- FAB removed -->
+<div id="toast" class="toast"></div>
+
+<!-- ════════ ALL MODALS ════════ -->
+
+<!-- Group select (for Add Expense from Home) -->
+<div id="group-select-modal" class="modal-overlay" onclick="closeModalOutside(event,'group-select-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add to which group?</div>
+    <div class="group-select-option glass-pink" onclick="closeModalById('group-select-modal');openModal('add-expense-modal')"><div class="gso-icon" style="background:rgba(252,232,238,0.8);border:1px solid rgba(224,120,152,0.22)">💑</div><div><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="jowaLabel"></div><div style="font-size:12px;color:var(--ink-3)" data-t="coupleFinance"></div></div></div>
+    <div class="group-select-option glass-cream" onclick="closeModalById('group-select-modal');openModal('add-expense-modal')"><div class="gso-icon" style="background:rgba(245,230,200,0.8);border:1px solid rgba(201,169,110,0.25)">🎂</div><div><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="familiaLabel"></div><div style="font-size:12px;color:var(--ink-3)" data-t="familyEvent"></div></div></div>
+    <div class="group-select-option glass-green" onclick="closeModalById('group-select-modal');openModal('add-expense-modal')"><div class="gso-icon" style="background:rgba(208,236,218,0.8);border:1px solid rgba(90,171,122,0.25)">🍜</div><div><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="berksLabel"></div><div style="font-size:12px;color:var(--ink-3)" data-t="friendsHangout"></div></div></div>
+    <div class="group-select-option" style="background:rgba(252,232,238,0.55);border:1px solid rgba(224,120,152,0.2)" onclick="closeModalById('group-select-modal');openModal('add-expense-modal')"><div class="gso-icon" style="background:rgba(252,232,238,0.8);border:1px solid rgba(224,120,152,0.22)">💍</div><div><div style="font-size:15px;font-weight:700;color:var(--ink)">Wedding</div><div style="font-size:12px;color:var(--ink-3)">Wedding expenses</div></div></div>
+  </div>
+</div>
+
+<!-- Add Expense -->
+<div id="add-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-expense-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="addExpenseTitle"></div>
+    <div class="input-group"><div class="input-label" data-t="categoryLabel"></div><div id="expense-icon-preview" class="expense-icon-preview">🍽️</div><div class="icon-picker-wrap"><div id="icon-picker-grid"></div></div></div>
+    <div class="input-group"><div class="input-label" data-t="descLabel"></div><input type="text" class="glass-input" data-t-ph="descPlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="amountLabel"></div><input type="number" id="expense-amount-input" class="glass-input" data-t-ph="amountPlaceholder" oninput="renderSplitPreview()"></div>
+    <div class="input-group"><div class="input-label" data-t="paidByLabel"></div><div id="paidby-picker" class="member-pick-row"></div></div>
+    <div class="input-group"><div class="input-label" data-t="splitLabel"></div><div class="split-methods"><button class="split-btn selected" data-method="equal" onclick="setSplitMethod('equal')" data-t="splitEqual"></button><button class="split-btn" data-method="custom" onclick="setSplitMethod('custom')" data-t="splitCustom"></button><button class="split-btn" data-method="two" onclick="setSplitMethod('two')" data-t="splitTwo"></button><button class="split-btn" data-method="full" onclick="setSplitMethod('full')" data-t="splitFull"></button></div><div id="split-preview"></div></div>
+    <div class="input-group"><div class="input-label" data-t="noteLabel"></div><input type="text" class="glass-input" data-t-ph="notePlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="dateLabel"></div><input type="date" class="glass-input"></div>
+    <div class="input-group"><div class="input-label" data-t="photoLabel"></div><div style="padding:14px;border-radius:var(--r-md);border:1.5px dashed rgba(201,169,110,0.35);background:rgba(245,230,200,0.3);text-align:center;cursor:pointer;font-size:22px" onclick="showToast('📷 Camera coming soon!')">📷</div></div>
+    <button class="cta-btn pink" onclick="addExpense()" data-t="addEntryBtn"></button>
+  </div>
+</div>
+
+<!-- Add Task -->
+<div id="add-task-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-task-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="addTaskTitle"></div>
+    <div class="input-group"><div class="input-label" data-t="taskLabel"></div><input type="text" class="glass-input" data-t-ph="taskPlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="assignLabel"></div><div id="task-assign-picker" class="task-member-row"></div></div>
+    <div class="input-group"><div class="input-label" data-t="dueDateLabel"></div><input type="date" class="glass-input"></div>
+    <button class="cta-btn green" onclick="addTask()" data-t="addTaskBtn"></button>
+  </div>
+</div>
+
+<!-- New Group -->
+<div id="new-group-modal" class="modal-overlay" onclick="closeModalOutside(event,'new-group-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="newGroupTitle"></div>
+    <div class="input-group"><div class="input-label" data-t="groupNameLabel"></div><input type="text" class="glass-input" data-t-ph="groupNamePlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="groupTypeLabel"></div><div class="type-grid"><button class="type-btn selected" onclick="selectType(this)"><span class="type-emoji">💑</span><div class="type-name" data-t="typeJowa"></div><div class="type-desc" data-t="typeJowaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">👨‍👩‍👧‍👦</span><div class="type-name" data-t="typeFamilia"></div><div class="type-desc" data-t="typeFamiliaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">🎉</span><div class="type-name" data-t="typeBerks"></div><div class="type-desc" data-t="typeBerksSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">✈️</span><div class="type-name" data-t="typeTrip"></div><div class="type-desc" data-t="typeTripSub"></div></button></div></div>
+    <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <button class="cta-btn" onclick="createGroup()" data-t="createGroupBtn"></button>
+  </div>
+</div>
+
+<!-- Add Map Pin -->
+<div id="add-pin-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-pin-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="mapPinTitle"></div>
+    <div class="input-group"><div class="input-label" data-t="pinNameLabel"></div><input type="text" id="pin-name-input" class="glass-input" data-t-ph="pinNamePlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="pinTypeLabel"></div><div class="pin-type-grid"><button class="pin-type-btn selected" data-type="pinMeetup" onclick="selectPinType(this)" data-t="pinMeetup"></button><button class="pin-type-btn" data-type="pinParking" onclick="selectPinType(this)" data-t="pinParking"></button><button class="pin-type-btn" data-type="pinEntrance" onclick="selectPinType(this)" data-t="pinEntrance"></button><button class="pin-type-btn" data-type="pinFood" onclick="selectPinType(this)" data-t="pinFood"></button><button class="pin-type-btn" data-type="pinPhoto" onclick="selectPinType(this)" data-t="pinPhoto"></button><button class="pin-type-btn" data-type="pinOther" onclick="selectPinType(this)" data-t="pinOther"></button></div></div>
+    <div class="input-group"><div class="input-label" data-t="pinNoteLabel"></div><input type="text" id="pin-note-input" class="glass-input" data-t-ph="pinNotePlaceholder"></div>
+    <button class="cta-btn" onclick="submitPin()" data-t="addPinBtn"></button>
+  </div>
+</div>
+
+<!-- Balance Breakdown -->
+<div id="balance-modal" class="modal-overlay" onclick="closeModalOutside(event,'balance-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="balBreakdownTitle"></div>
+    <div class="bal-tabs glass"><button class="bal-tab active" onclick="showBalTab(this,'by-group')" data-t="balPerGroup"></button><button class="bal-tab" onclick="showBalTab(this,'by-person')" data-t="balPerPerson"></button></div>
+    <div id="by-group"><div id="bal-by-group"></div></div>
+    <div id="by-person" style="display:none"><div id="bal-by-person"></div></div>
+  </div>
+</div>
+
+<!-- Share -->
+<div id="share-modal" class="modal-overlay" onclick="closeModalOutside(event,'share-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" data-t="shareTitle"></div>
+    <div class="share-option glass-cream" onclick="copyShareLink()"><div class="share-opt-icon" style="background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.22)">🔗</div><div><div class="share-opt-label" data-t="copyLink"></div><div class="share-opt-sub">anotara.app/join/GROUP_XYZ123</div></div></div>
+    <div class="share-option glass" style="background:rgba(24,119,242,0.08);border-color:rgba(24,119,242,0.2)" onclick="shareToMessenger()"><div class="share-opt-icon" style="background:rgba(24,119,242,0.12);border:1px solid rgba(24,119,242,0.2)">💬</div><div><div class="share-opt-label" style="color:#1877F2" data-t="shareMessenger"></div><div class="share-opt-sub">Opens Facebook Messenger</div></div></div>
+    <div style="margin-top:8px;text-align:center"><div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px" data-t="shareQR"></div><div id="qr-container"></div></div>
+  </div>
+</div>
+
+<!-- Add Guest -->
+<div id="wed-add-guest-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-guest-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 Add Guest</div>
+    <div class="input-group"><div class="input-label">Full Name</div><input type="text" id="new-guest-name" class="glass-input" placeholder="e.g. Juan dela Cruz"></div>
+    <div class="input-group"><div class="input-label">Table #</div><input type="number" id="new-guest-table" class="glass-input" placeholder="1" min="1"></div>
+    <div class="input-group"><div class="input-label">Seat #</div><input type="number" id="new-guest-seat" class="glass-input" placeholder="1" min="1"></div>
+    <div class="input-group"><div class="input-label">Role / Title</div><input type="text" id="new-guest-role" class="glass-input" placeholder="e.g. Ninong, Ninang, Best Man…"></div>
+    <div class="input-group"><div class="input-label">Dietary Note</div><input type="text" id="new-guest-dietary" class="glass-input" placeholder="e.g. vegetarian, halal…"></div>
+    <button class="cta-btn pink" onclick="window.submitAddGuest()">Add Guest →</button>
+  </div>
+</div>
+
+<!-- Couple Pairing -->
+<div id="pair-modal" class="modal-overlay" onclick="closeModalOutside(event,'pair-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💑 Pair with Jowa</div>
+    <div class="input-group">
+      <div class="input-label">Your Code</div>
+      <div class="glass" style="padding:14px;border-radius:var(--r-md);text-align:center;font-size:28px;font-weight:800;color:var(--tan-dark);letter-spacing:6px" id="my-pair-code">------</div>
+      <div style="text-align:center;font-size:11px;color:var(--ink-4);margin-top:6px">Share this code with your jowa</div>
+    </div>
+    <div id="pair-status"></div>
+    <div class="input-group">
+      <div class="input-label">Partner's Code</div>
+      <input type="text" id="partner-code" class="glass-input" placeholder="Enter their 6-character code" style="text-transform:uppercase;letter-spacing:3px;font-weight:700">
+    </div>
+    <button class="cta-btn pink" onclick="window.submitPair()">Pair Now →</button>
+  </div>
+</div>
+
+<!-- Wedding: Add Guest -->
+<div id="wed-add-guest-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-guest-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Guest 👤</div>
+    <div class="input-group"><div class="input-label">Full Name</div><input type="text" id="new-guest-name" class="glass-input" placeholder="e.g. Juan dela Cruz"></div>
+    <div class="input-group"><div class="input-label">Table Number</div><input type="number" id="new-guest-table" class="glass-input" value="1" min="1"></div>
+    <div class="input-group"><div class="input-label">Seat Number</div><input type="number" id="new-guest-seat" class="glass-input" value="1" min="1"></div>
+    <div class="input-group"><div class="input-label">Meal Preference</div><select class="glass-input"><option value="">No preference</option><option>chicken</option><option>fish</option><option>beef</option><option>vegetarian</option></select></div>
+    <button class="cta-btn pink" onclick="window.addWedGuest()">Add Guest →</button>
+  </div>
+</div>
+
+<!-- Wedding: Add Expense -->
+<div id="wed-add-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-expense-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Wedding Expense 💐</div>
+    <div class="input-group"><div class="input-label">Description</div><input type="text" id="wed-exp-label" class="glass-input" placeholder="e.g. Florist deposit, Videographer…"></div>
+    <div class="input-group"><div class="input-label">Amount</div><input type="number" id="wed-exp-amount" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Category</div>
+      <select id="wed-exp-category" class="glass-input">
+        <option value="venue">🏛️ Venue</option><option value="catering">🍽️ Catering</option><option value="florals">💐 Florals</option><option value="photography">📸 Photography</option><option value="attire">👗 Attire</option><option value="music">🎵 Music</option><option value="cake">🎂 Cake</option><option value="invites">💌 Invites</option><option value="other">📦 Other</option>
+      </select>
+    </div>
+    <button class="cta-btn" onclick="window.addWedExpense()">Add Expense →</button>
+  </div>
+</div>
+
+<!-- Wedding: Add Schedule Item -->
+<div id="wed-add-sched-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-sched-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Schedule Item 📅</div>
+    <div class="input-group"><div class="input-label">Time</div><input type="time" id="sched-time" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Event</div><input type="text" id="sched-event" class="glass-input" placeholder="e.g. Ceremony, Reception…"></div>
+    <div class="input-group"><div class="input-label">Assigned to</div><input type="text" id="sched-assignee" class="glass-input" placeholder="e.g. Coordinator, Emcee…"></div>
+    <button class="cta-btn green" onclick="window.addWedSched()">Add to Schedule →</button>
+  </div>
+</div>
+
+<!-- Wedding: Assign guests modal -->
+<div id="wed-assign-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-assign-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Assign Seats 🪑</div>
+    <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px;font-size:12.5px;color:var(--ink-3)">Select a table on the canvas first, then tap a guest to assign them to it.</div>
+    <div id="wed-assign-list"></div>
+    <button class="cta-btn" onclick="closeModalById('wed-assign-modal');renderSeatAssignments()">Done ✓</button>
+  </div>
+</div>
+
+<!-- RSVP Invitation Card -->
+<div id="rsvp-card-modal" class="modal-overlay" onclick="closeModalOutside(event,'rsvp-card-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💌 Wedding Invitation</div>
+    <canvas id="rsvp-canvas" width="380" height="560"></canvas>
+    <div style="text-align:center;margin-top:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Scan to RSVP</div>
+      <div id="rsvp-qr-target" style="display:inline-block;padding:8px;background:white;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)"></div>
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px dashed rgba(201,169,110,0.3)">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">Upload Custom Invitation Card</div>
+      <input type="file" id="custom-card-upload" accept="image/*" style="display:none" onchange="window.loadCustomCard(this)">
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('custom-card-upload').click()" style="flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.8);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">📷 Upload Card</button>
+        <button onclick="window.clearCustomCard()" id="clear-card-btn" style="display:none;padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer">✕ Remove</button>
+      </div>
+    </div>
+    <div class="rsvp-actions">
+      <button class="rsvp-action-btn rsvp-btn-save" onclick="showToast('📥 Invitation saved to gallery!')">💾 Save Image</button>
+      <button class="rsvp-action-btn rsvp-btn-share" onclick="shareToMessenger()">📲 Share</button>
+    </div>
+    <div style="margin-top:12px;padding:12px 14px;border-radius:var(--r-md);background:rgba(232,245,237,0.55);border:1px solid rgba(90,171,122,0.2)">
+      <div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-bottom:4px">RSVP Link</div>
+      <div style="font-size:12.5px;color:var(--ink-2);font-weight:600">anotara.app/rsvp/WEDDING_2025</div>
+      <button onclick="showToast('🔗 RSVP link copied!')" style="margin-top:8px;width:100%;padding:9px;border-radius:var(--r-md);background:rgba(90,171,122,0.15);border:1px solid rgba(90,171,122,0.25);font-size:12.5px;font-weight:700;color:var(--green-deep);cursor:pointer">Copy RSVP Link</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ MODAL: ACTIVATE WEDDING ═══ -->
+<div id="activate-wedding-modal" class="modal-overlay" onclick="closeModalOutside(event,'activate-wedding-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💍 Start Wedding Planner</div>
+    <div style="padding:14px;border-radius:var(--r-md);background:rgba(252,232,238,0.55);border:1px solid rgba(224,120,152,0.2);margin-bottom:16px;font-size:13px;color:var(--ink-3);line-height:1.5">Once activated, your Wedding Planner card will appear on the Home screen and in the nav.</div>
+    <div class="input-group"><div class="input-label">Partner 1 Name</div><input id="wed-p1" type="text" class="glass-input" placeholder="e.g. Jhoan" value=""></div>
+    <div class="input-group"><div class="input-label">Partner 2 Name</div><input id="wed-p2" type="text" class="glass-input" placeholder="e.g. Seph" value=""></div>
+    <div class="input-group"><div class="input-label">Wedding Date</div><input id="wed-date-input" type="date" class="glass-input" value="2025-12-15"></div>
+    <div class="input-group"><div class="input-label">Venue</div><input id="wed-venue-input" type="text" class="glass-input" placeholder="e.g. The Ruins, Bacolod" value="The Ruins, Bacolod"></div>
+    <div class="input-group"><div class="input-label">Total Budget</div><input id="wed-budget-input" type="number" class="glass-input" placeholder="₱ 0" value="350000"></div>
+    <button class="cta-btn pink" onclick="doActivateWedding()">Activate Wedding Planner 💍</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD GOAL ═══ -->
+<div id="add-goal-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-goal-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Savings Goal 🎯</div>
+    <div class="input-group"><div class="input-label">Goal Name</div><input id="goal-name" type="text" class="glass-input" placeholder="e.g. Bahay, Japan Trip, New Car…"></div>
+    <div class="input-group"><div class="input-label">Target Amount</div><input id="goal-target" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Jhoan's Monthly Contribution</div><input id="goal-contrib-p1" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Seph's Monthly Contribution</div><input id="goal-contrib-p2" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Target Date (optional)</div><input id="goal-date" type="date" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Goal Emoji</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="icon-pick-btn selected" onclick="selectGoalEmoji(this,'🌏')">🌏</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'🏠')">🏠</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'🚗')">🚗</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'💒')">💒</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'👶')">👶</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'📱')">📱</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'🛡️')">🛡️</button>
+        <button class="icon-pick-btn" onclick="selectGoalEmoji(this,'✈️')">✈️</button>
+      </div>
+    </div>
+    <button class="cta-btn green" onclick="submitNewGoal()">Create Goal →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD MONEY TO GOAL ═══ -->
+<div id="add-money-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-money-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Money 💰</div>
+    <div id="add-money-goal-name" style="font-size:13px;color:var(--ink-3);margin-bottom:16px;padding:10px 14px;background:rgba(245,230,200,0.5);border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)">Goal: —</div>
+    <div class="input-group"><div class="input-label">Amount</div><input id="add-money-amount" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Who is contributing?</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn selected" id="contrib-btn-p1" onclick="selectContributor('p1')">👤 Jhoan</button>
+        <button class="split-btn" id="contrib-btn-p2" onclick="selectContributor('p2')">👤 Seph</button>
+        <button class="split-btn" id="contrib-btn-both" onclick="selectContributor('both')">👥 Both</button>
+      </div>
+    </div>
+    <div class="input-group"><div class="input-label">Note (optional)</div><input id="add-money-note" type="text" class="glass-input" placeholder="e.g. May contribution…"></div>
+    <button class="cta-btn" onclick="submitAddMoney()">Add Money →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: WITHDRAW FROM GOAL ═══ -->
+<div id="withdraw-modal" class="modal-overlay" onclick="closeModalOutside(event,'withdraw-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Withdraw 💸</div>
+    <div id="withdraw-goal-name" style="font-size:13px;color:var(--ink-3);margin-bottom:16px;padding:10px 14px;background:rgba(252,232,238,0.5);border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.2)">Goal: —</div>
+    <div class="input-group"><div class="input-label">Amount to Withdraw</div><input id="withdraw-amount" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Reason</div><input id="withdraw-reason" type="text" class="glass-input" placeholder="e.g. Used for emergency…"></div>
+    <button class="cta-btn pink" onclick="submitWithdraw()">Withdraw →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: EDIT GOAL ═══ -->
+<div id="edit-goal-modal" class="modal-overlay" onclick="closeModalOutside(event,'edit-goal-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Goal ✏️</div>
+    <div class="input-group"><div class="input-label">Goal Name</div><input id="edit-goal-name" type="text" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">New Target Amount</div><input id="edit-goal-target" type="number" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Current Saved</div><input id="edit-goal-saved" type="number" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Target Date</div><input id="edit-goal-date" type="date" class="glass-input"></div>
+    <button class="cta-btn" onclick="submitEditGoal()">Save Changes →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: COUPLE ADD EXPENSE (no group picker) ═══ -->
+<div id="couple-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'couple-expense-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Shared Expense 💑</div>
+    <div style="padding:10px 14px;border-radius:var(--r-md);background:rgba(252,232,238,0.55);border:1px solid rgba(224,120,152,0.2);margin-bottom:14px;font-size:12.5px;color:var(--pink-deep);font-weight:600">Goes to: Ano Tara — Jowa 💑</div>
+    <div class="input-group"><div class="input-label">Category</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <button class="icon-pick-btn selected" onclick="selectCoupleIcon(this,'🍽️')">🍽️</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'🛒')">🛒</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'🏠')">🏠</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'🚗')">🚗</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'🎬')">🎬</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'✈️')">✈️</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'💊')">💊</button>
+        <button class="icon-pick-btn" onclick="selectCoupleIcon(this,'📦')">📦</button>
+      </div>
+    </div>
+    <div class="input-group"><div class="input-label">Description</div><input type="text" class="glass-input" placeholder="e.g. Dinner, Grocery run…"></div>
+    <div class="input-group"><div class="input-label">Amount</div><input type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Paid by</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn selected" id="cpaid-maria" onclick="selectCouplePayer('maria')">👤 Jhoan</button>
+        <button class="split-btn" id="cpaid-jc" onclick="selectCouplePayer('jc')">👤 Seph</button>
+      </div>
+    </div>
+    <div class="input-group"><div class="input-label">Split</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="split-btn selected" id="csplit-equal" onclick="selectCoupleSplit('equal')">50/50</button>
+        <button class="split-btn" id="csplit-6040" onclick="selectCoupleSplit('6040')">60/40</button>
+        <button class="split-btn" id="csplit-full" onclick="selectCoupleSplit('full')">One pays all</button>
+      </div>
+    </div>
+    <button class="cta-btn pink" onclick="submitCoupleExpense()">Add Expense →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD POLL ═══ -->
+<div id="add-poll-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-poll-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Poll 📊</div>
+    <div class="input-group"><div class="input-label">Question</div><input id="poll-q-input" type="text" class="glass-input" placeholder="e.g. Where to eat this Saturday?"></div>
+    <div class="input-group"><div class="input-label">Option 1</div><input id="poll-opt1" type="text" class="glass-input" placeholder="e.g. Yabu Katsu"></div>
+    <div class="input-group"><div class="input-label">Option 2</div><input id="poll-opt2" type="text" class="glass-input" placeholder="e.g. Manam"></div>
+    <div class="input-group"><div class="input-label">Option 3 (optional)</div><input id="poll-opt3" type="text" class="glass-input" placeholder="e.g. Ramen Nagi"></div>
+    <div class="input-group"><div class="input-label">Option 4 (optional)</div><input id="poll-opt4" type="text" class="glass-input" placeholder="Leave blank to skip"></div>
+    <button class="cta-btn pink" onclick="createPoll()">Create Poll →</button>
+  </div>
+</div>
+
+
+<!-- ═══ MODAL: EDIT WEDDING OVERVIEW ═══ -->
+<div id="wed-edit-overview-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-edit-overview-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Wedding Details ✏️</div>
+    <div class="input-group"><div class="input-label">Partner 1</div><input id="ov-p1" type="text" class="glass-input" placeholder="Name"></div>
+    <div class="input-group"><div class="input-label">Partner 2</div><input id="ov-p2" type="text" class="glass-input" placeholder="Name"></div>
+    <div class="input-group"><div class="input-label">Wedding Date</div><input id="ov-date" type="date" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Venue</div><input id="ov-venue" type="text" class="glass-input" placeholder="e.g. The Ruins, Bacolod"></div>
+    <div class="input-group"><div class="input-label">Total Budget</div><input id="ov-budget" type="number" class="glass-input" placeholder="₱ 0"></div>
+    <button class="cta-btn" onclick="submitEditOverview()">Save Changes →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: EDIT SCHEDULE ITEM ═══ -->
+<div id="wed-edit-sched-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-edit-sched-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Schedule Item ✏️</div>
+    <div style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);margin-bottom:14px;font-size:12.5px;color:var(--ink-3)">Changing the time will automatically re-sort the schedule.</div>
+    <div class="input-group"><div class="input-label">Time</div><input id="edit-sched-time" type="time" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Event</div><input id="edit-sched-event" type="text" class="glass-input" placeholder="e.g. Ceremony, Reception…"></div>
+    <div class="input-group"><div class="input-label">Assigned to</div><input id="edit-sched-assignee" type="text" class="glass-input" placeholder="e.g. Coordinator, Emcee…"></div>
+    <button class="cta-btn green" onclick="submitEditSched()">Save & Re-sort →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD CHECKLIST ITEM ═══ -->
+<div id="wed-add-checklist-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-checklist-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Task ✅</div>
+    <div class="input-group"><div class="input-label">Task description</div><input id="checklist-item-text" type="text" class="glass-input" placeholder="e.g. Book hair and makeup…"></div>
+    <button class="cta-btn" onclick="window.submitChecklistItem()">Add Task →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: SET TIMELINE ═══ -->
+<div id="wed-timeline-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-timeline-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Set Planning Timeline 📅</div>
+    <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);margin-bottom:16px;font-size:12.5px;color:var(--ink-3);line-height:1.5">Choose a preset or set how many months out your planning starts. The checklist phases will be labeled accordingly.</div>
+    <div class="input-group"><div class="input-label">Preset</div>
+      <select id="timeline-preset" class="glass-input">
+        <option value="12 Months">12 Months (Standard)</option>
+        <option value="9 Months">9 Months</option>
+        <option value="6 Months">6 Months (Short engagement)</option>
+        <option value="3 Months">3 Months (Quick)</option>
+        <option value="Custom">Custom (set below)</option>
+      </select>
+    </div>
+    <div class="input-group"><div class="input-label">Or set custom span</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="timeline-custom-months" type="number" class="glass-input" placeholder="e.g. 8" style="width:80px;flex-shrink:0">
+        <span style="font-size:13px;color:var(--ink-3)">months before wedding</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--ink-4)">Phases will auto-generate:</span>
+      <span style="font-size:11px;font-weight:700;color:var(--tan-dark)">X months out → weeks → day of</span>
+    </div>
+    <button class="cta-btn" onclick="submitTimeline()">Apply Timeline →</button>
+  </div>
+</div>
+
+</div><!-- /#app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+<script src="wedding.js"></script>
+<script>
+/* ── PAGE-LEVEL HELPERS ── */
+
+// Balance tab switcher
+function showBalTab(btn, panel) {
+  document.querySelectorAll('.bal-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('by-group').style.display  = panel === 'by-group'  ? 'block' : 'none';
+  document.getElementById('by-person').style.display = panel === 'by-person' ? 'block' : 'none';
+}
+
+// Keep both lang toggle buttons in sync
+window.toggleLang = (function() {
+  const _orig = window.toggleLang || function(){};
+  return function() {
+    _orig();
+    const lbl = (typeof STATE !== 'undefined' && STATE.lang === 'fil') ? '🇺🇸 English' : '🇵🇭 Filipino';
+    ['lang-toggle', 'lang-toggle-2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = lbl;
+    });
+  };
+})();
+
+// Pair code display tap — generate or copy
+document.addEventListener('DOMContentLoaded', () => {
+  const pcd = document.getElementById('pair-code-display');
+  if (pcd) {
+    pcd.addEventListener('click', () => {
+      if (!STATE.pairedCode || pcd.textContent.includes('TAP')) return generatePairCode();
+      if (navigator.clipboard) navigator.clipboard.writeText(STATE.pairedCode).catch(() => {});
+      showToast(t('codeCopied') + ' ' + STATE.pairedCode);
+    });
+  }
+});
+</script>
+<!-- ══════════════════════════════
+     DAILY TASKS SCREEN
+══════════════════════════════ -->
+<section id="daily-tasks" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--tan-dark)">✅ Daily Tasks</span>
+    </div>
+  </header>
+
+  <!-- Today banner -->
+  <div class="pad" style="padding-top:16px;padding-bottom:4px">
+    <div class="glass-cream" style="border-radius:var(--r-md);padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Today</div>
+        <div style="font-size:15px;font-weight:800;color:var(--ink)" id="daily-today-label"></div>
+      </div>
+      <div id="daily-streak" style="font-size:11px;font-weight:700;color:var(--tan-dark)">🔥 0 day streak</div>
+    </div>
+  </div>
+
+  <!-- Today's tasks -->
+  <div class="pad" style="padding-top:12px">
+    <div class="sec-hdr"><span class="sec-title">Today's Tasks</span></div>
+    <div id="daily-tasks-list"></div>
+  </div>
+
+  <!-- Weekly setup -->
+  <div class="pad" style="margin-top:8px">
+    <div class="sec-hdr">
+      <span class="sec-title">Weekly Setup</span>
+      <span class="sec-action" onclick="openModal('add-dtask-modal')">+ Add Task</span>
+    </div>
+    <div id="weekly-setup-list"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- Add Daily Task Modal -->
+<div id="add-dtask-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-dtask-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✅ New Daily Task</div>
+    <div class="input-group"><div class="input-label">Task Name</div><input type="text" id="dtask-title" class="glass-input" placeholder="e.g. Drink water, Take meds…"></div>
+    <div class="input-group">
+      <div class="input-label">Type</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn dtask-type-btn selected" data-type="check" onclick="window.selectDTaskType('check')">✅ Yes / No</button>
+        <button class="split-btn dtask-type-btn" data-type="milestone" onclick="window.selectDTaskType('milestone')">🎯 Milestone</button>
+      </div>
+    </div>
+    <div id="dtask-milestone-fields" style="display:none">
+      <div class="input-group"><div class="input-label">Target Count</div><input type="number" id="dtask-target" class="glass-input" placeholder="8" min="1" value="8"></div>
+      <div class="input-group"><div class="input-label">Unit</div><input type="text" id="dtask-unit" class="glass-input" placeholder="glasses, km, pages…" value="glasses"></div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Repeat on</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="dtask-days-picker">
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'mon')">Mon</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'tue')">Tue</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'wed')">Wed</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'thu')">Thu</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'fri')">Fri</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'sat')">Sat</button>
+        <button class="split-btn selected" onclick="window.toggleDTaskDay(this,'sun')">Sun</button>
+      </div>
+    </div>
+    <button class="cta-btn pink" onclick="window.submitDailyTask()">Add Task →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MOOD BOARD SCREEN
+══════════════════════════════ -->
+<section id="mood-board" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--pink-deep)">💕 Mood Board</span>
+    </div>
+  </header>
+  <div class="pad" style="padding-top:16px">
+    <div id="mood-board-content"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     SUPPLIERS SCREEN
+══════════════════════════════ -->
+<section id="suppliers" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--tan-dark)">📋 Suppliers</span>
+      <button onclick="openModal('add-supplier-modal')" style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add</button>
+    </div>
+  </header>
+  <div class="pad" style="padding-top:16px">
+    <div id="suppliers-list"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- Add Supplier Modal -->
+<div id="add-supplier-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-supplier-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 Add Supplier</div>
+    <div class="input-group"><div class="input-label">Supplier Name</div><input type="text" id="sup-name" class="glass-input" placeholder="e.g. Studio Eight Photography"></div>
+    <div class="input-group"><div class="input-label">Category</div>
+      <select id="sup-cat" class="glass-input" style="appearance:auto">
+        <option>Venue</option><option>Catering</option><option>Photography</option><option>Videography</option>
+        <option>Florals</option><option>Music</option><option>Attire</option><option>Cake</option>
+        <option>Transport</option><option>Makeup</option><option>Invitations</option><option>Coordination</option><option>Other</option>
+      </select>
+    </div>
+    <div class="input-group"><div class="input-label">Phone Number</div><input type="tel" id="sup-phone" class="glass-input" placeholder="+63 917 xxx xxxx"></div>
+    <div class="input-group"><div class="input-label">Email (optional)</div><input type="email" id="sup-email" class="glass-input" placeholder="supplier@email.com"></div>
+    <div class="input-group"><div class="input-label">Contract Total (₱)</div><input type="number" id="sup-total" class="glass-input" placeholder="0.00"></div>
+    <div class="input-group"><div class="input-label">Notes</div><input type="text" id="sup-notes" class="glass-input" placeholder="e.g. 50% deposit due June…"></div>
+    <button class="cta-btn pink" onclick="window.submitSupplier()">Add Supplier →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     ERRAND BOARD SCREEN
+══════════════════════════════ -->
+<section id="errand-board" class="screen">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" id="errand-back-btn" onclick="errandBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span id="errand-topbar-title" style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--tan-dark)">🛒 Errand Board</span>
+      <button id="errand-add-btn" onclick="openModal('add-errand-list-modal')" style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ New List</button>
+    </div>
+  </header>
+
+  <!-- HOME: all lists -->
+  <div id="errand-home">
+    <div class="pad" style="padding-top:16px">
+      <div id="errand-list-container"></div>
+    </div>
+  </div>
+
+  <!-- BUILDER: build/edit a list -->
+  <div id="errand-builder" style="display:none">
+    <div class="pad" style="padding-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:18px;font-weight:800;color:var(--ink)" id="errand-builder-title">List</div>
+        <div style="font-size:13px;font-weight:700;color:var(--tan-dark)" id="errand-builder-total">₱0 est.</div>
+      </div>
+      <button onclick="openModal('add-errand-item-modal')" style="width:100%;padding:11px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1.5px dashed rgba(201,169,110,0.35);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:14px">+ Add Item</button>
+      <div id="errand-items-list"></div>
+      <button onclick="if(_errandActiveList){startSwipe(_errandActiveList);}else{initErrandBoard();}" style="width:100%;padding:11px;border-radius:var(--r-md);background:rgba(232,245,237,0.6);border:1px solid rgba(90,171,122,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer;margin-top:8px" id="errand-start-swipe-btn">🛍 Start Shopping →</button>
+    </div>
+  </div>
+
+  <!-- SWIPER: Tinder-style shopping mode -->
+  <div id="errand-swiper" style="display:none">
+    <div class="pad" style="padding-top:12px">
+      <!-- Progress bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="flex:1;height:6px;background:rgba(245,230,200,0.5);border-radius:4px;overflow:hidden">
+          <div id="swipe-progress-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--tan),var(--green-accent));width:0%;transition:width 0.4s"></div>
+        </div>
+        <span id="swipe-progress" style="font-size:12px;font-weight:700;color:var(--ink-4);white-space:nowrap">0 / 0</span>
+      </div>
+      <!-- Hint label -->
+      <div id="swipe-hint" style="text-align:center;font-size:15px;font-weight:700;min-height:24px;margin-bottom:8px"></div>
+      <!-- Cards -->
+      <div id="swipe-card-wrap"></div>
+      <!-- Action buttons -->
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button onclick="swipeAction('left', getCurrentSwipeItemId())" style="flex:1;padding:14px;border-radius:var(--r-md);background:rgba(252,232,238,0.7);border:1.5px solid rgba(224,120,152,0.3);font-size:20px;cursor:pointer">⏭</button>
+        <button onclick="swipeAction('right', getCurrentSwipeItemId())" style="flex:1;padding:14px;border-radius:var(--r-md);background:rgba(232,245,237,0.7);border:1.5px solid rgba(90,171,122,0.3);font-size:20px;cursor:pointer">✅</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <span style="font-size:11.5px;color:var(--ink-4)">← Skip</span>
+        <span style="font-size:11.5px;color:var(--ink-4)">·</span>
+        <span style="font-size:11.5px;color:var(--ink-4)">Got it →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY: after shopping done -->
+  <div id="errand-summary" style="display:none">
+    <div class="pad" style="padding-top:16px">
+      <div id="errand-summary-content"></div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+</section>
+
+<!-- New Grocery Run Modal -->
+<div id="add-errand-list-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-errand-list-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🛒 New Grocery Run</div>
+    <div class="input-group"><div class="input-label">List Name</div><input type="text" id="el-name" class="glass-input" placeholder="e.g. Weekly Groceries, Inday's List…"></div>
+    <div class="input-group"><div class="input-label">Emoji</div><input type="text" id="el-emoji" class="glass-input" placeholder="🛒" value="🛒" maxlength="2" style="width:80px"></div>
+    <button class="cta-btn pink" onclick="window.submitErrandList()">Create List →</button>
+  </div>
+</div>
+
+<!-- Add Item Modal -->
+<div id="add-errand-item-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-errand-item-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📦 Add Item</div>
+    <div class="input-group"><div class="input-label">Item Name</div><input type="text" id="ei-name" class="glass-input" placeholder="e.g. Whole milk, Eggs…"></div>
+    <div style="display:flex;gap:10px">
+      <div class="input-group" style="flex:1"><div class="input-label">Qty</div><input type="number" id="ei-qty" class="glass-input" placeholder="1" min="1" value="1"></div>
+      <div class="input-group" style="flex:2"><div class="input-label">Est. Price (₱)</div><input type="number" id="ei-price" class="glass-input" placeholder="0.00" min="0"></div>
+    </div>
+    <div class="input-group"><div class="input-label">Aisle / Section</div><input type="text" id="ei-aisle" class="glass-input" placeholder="e.g. 3, Dairy, Produce…"></div>
+    <div class="input-group"><div class="input-label">Note / Brand</div><input type="text" id="ei-note" class="glass-input" placeholder="e.g. Full cream, not low fat!"></div>
+    <div class="input-group">
+      <div class="input-label">Reference Photo <span style="font-size:11px;color:var(--ink-4)">(optional)</span></div>
+      <div id="ei-photo-preview" style="display:none;margin-bottom:8px"><img id="ei-photo-img" style="width:100%;max-height:120px;object-fit:cover;border-radius:var(--r-md)"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="errandPhotoUpload()" style="flex:1;padding:9px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.25);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">📷 Upload</button>
+        <button onclick="errandPhotoSearch()" style="flex:1;padding:9px;border-radius:var(--r-md);background:rgba(232,245,237,0.5);border:1px solid rgba(90,171,122,0.25);font-size:12.5px;font-weight:700;color:var(--green-deep);cursor:pointer">🔍 Search Web</button>
+        <button id="ei-photo-clear" onclick="clearErrandPhoto()" style="display:none;padding:9px 12px;border-radius:var(--r-md);background:rgba(252,232,238,0.5);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer">✕</button>
+      </div>
+    </div>
+    <button class="cta-btn pink" onclick="window.submitErrandItem()">Add to List →</button>
+  </div>
+</div>
+
+<!-- Add Member -->
+<div id="add-member-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-member-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 Add Member</div>
+    <div class="input-group"><div class="input-label">Name</div><input type="text" id="new-member-name" class="glass-input" placeholder="e.g. Carlo, Ate Joy…"></div>
+    <button class="cta-btn pink" onclick="window.addMember()">Add Member →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SAAN TAYO SCREEN
+══════════════════════════════ -->
+<section id="saan-tayo" class="screen" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span id="saan-screen-title" style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--green-deep)">🗺 Saan Tayo?</span>
+    </div>
+  </header>
+  <!-- Category view -->
+  <div id="saan-categories" class="pad" style="padding-top:16px;padding-bottom:100px">
+    <div style="font-size:13px;color:var(--ink-4);margin-bottom:16px" id="saan-context-label">Find the perfect place for your group</div>
+    <div id="saan-cat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+  </div>
+  <!-- Places list view -->
+  <div id="saan-places" style="display:none">
+    <div style="padding:14px 20px 0;display:flex;align-items:center;gap:10px">
+      <button onclick="closeSaanPlaces()" style="background:none;border:none;font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;padding:0">← Categories</button>
+      <span id="saan-places-title" style="font-size:15px;font-weight:700;color:var(--ink)"></span>
+    </div>
+    <div id="saan-places-list" class="pad" style="padding-top:12px"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     WEDDING SUPPLIER DIRECTORY
+══════════════════════════════ -->
+<section id="supplier-directory" class="screen" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--tan-dark)">💍 Partner Suppliers</span>
+    </div>
+  </header>
+  <!-- Category grid -->
+  <div id="supdir-categories" class="pad" style="padding-top:16px;padding-bottom:100px">
+    <div style="font-size:13px;color:var(--ink-4);margin-bottom:16px">Browse our curated list of wedding suppliers. Contact them directly or add to your quick dial.</div>
+    <div id="supdir-cat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+  </div>
+  <!-- Suppliers list -->
+  <div id="supdir-list-view" style="display:none">
+    <div style="padding:14px 20px 0;display:flex;align-items:center;gap:10px">
+      <button onclick="closeSupDirList()" style="background:none;border:none;font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;padding:0">← Categories</button>
+      <span id="supdir-list-title" style="font-size:15px;font-weight:700;color:var(--ink)"></span>
+    </div>
+    <div id="supdir-supplier-list" class="pad" style="padding-top:12px;padding-bottom:100px"></div>
+  </div>
+  <div class="spacer"></div>
+</section>
+
+<!-- ══════════════════════════════
+     JOWA SHARED EXPENSES SCREEN
+══════════════════════════════ -->
+<section id="jowa-expenses" class="screen" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--pink-deep)">💸 Shared Expenses</span>
+      <button onclick="openModal('add-jowa-expense-modal')" style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(252,232,238,0.7);border:1px solid rgba(224,120,152,0.25);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer">+ New</button>
+    </div>
+  </header>
+  <div class="pad" style="padding-top:16px;padding-bottom:120px">
+    <!-- Summary bar -->
+    <div class="glass-pink" style="border-radius:var(--r-md);padding:14px 16px;margin-bottom:16px;display:flex;gap:16px">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Total</div>
+        <div style="font-size:20px;font-weight:800;color:var(--ink)" id="je-total">₱0</div>
+      </div>
+      <div style="width:1px;background:rgba(201,169,110,0.2)"></div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px" id="je-p1-label">Jhoan</div>
+        <div style="font-size:20px;font-weight:800;color:var(--tan-dark)" id="je-p1-total">₱0</div>
+      </div>
+      <div style="width:1px;background:rgba(201,169,110,0.2)"></div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px" id="je-p2-label">Seph</div>
+        <div style="font-size:20px;font-weight:800;color:var(--pink-deep)" id="je-p2-total">₱0</div>
+      </div>
+    </div>
+    <!-- Expense cards list -->
+    <div id="jowa-expense-cards"></div>
+  </div>
+</section>
+
+<!-- Jowa Expense Detail Modal (per card breakdown) -->
+<div id="jowa-expense-detail-modal" class="modal-overlay" onclick="closeModalOutside(event,'jowa-expense-detail-modal')">
+  <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="modal-title" id="je-detail-title" style="margin:0">Expense</div>
+      <button onclick="openModal('add-je-entry-modal')" style="padding:6px 12px;border-radius:var(--r-sm);background:rgba(252,232,238,0.7);border:1px solid rgba(224,120,152,0.25);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer">+ Entry</button>
+    </div>
+    <div id="je-detail-content"></div>
+  </div>
+</div>
+
+<!-- Add Jowa Expense Card Modal -->
+<div id="add-jowa-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-jowa-expense-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💸 New Shared Expense</div>
+    <div class="input-group"><div class="input-label">Expense Name</div><input type="text" id="je-name" class="glass-input" placeholder="e.g. Rent, Groceries, Date Night…"></div>
+    <div class="input-group"><div class="input-label">Category</div>
+      <select id="je-cat" class="glass-input" style="appearance:auto">
+        <option>🏠 Housing</option><option>🍽 Food & Dining</option><option>🛒 Groceries</option>
+        <option>🚗 Transport</option><option>💊 Health</option><option>🎉 Leisure</option>
+        <option>💡 Utilities</option><option>✈️ Travel</option><option>🎁 Gifts</option><option>📦 Other</option>
+      </select>
+    </div>
+    <div class="input-group"><div class="input-label">Split</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn selected" id="je-split-50" onclick="selectJeSplit('50/50')">50/50</button>
+        <button class="split-btn" id="je-split-60" onclick="selectJeSplit('60/40')">60/40</button>
+        <button class="split-btn" id="je-split-full" onclick="selectJeSplit('Full')">One pays</button>
+      </div>
+    </div>
+    <button class="cta-btn pink" onclick="window.submitJowaExpense()">Create Expense →</button>
+  </div>
+</div>
+
+<!-- Add Entry to Expense Modal -->
+<div id="add-je-entry-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-je-entry-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Add Entry</div>
+    <div class="input-group"><div class="input-label">Description</div><input type="text" id="jee-desc" class="glass-input" placeholder="e.g. May rent payment"></div>
+    <div class="input-group"><div class="input-label">Amount (₱)</div><input type="number" id="jee-amount" class="glass-input" placeholder="0.00"></div>
+    <div class="input-group"><div class="input-label">Paid by</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn selected" id="jee-paid-p1" onclick="selectJeePaidBy('p1')">Jhoan</button>
+        <button class="split-btn" id="jee-paid-p2" onclick="selectJeePaidBy('p2')">Seph</button>
+      </div>
+    </div>
+    <div class="input-group"><div class="input-label">Date</div><input type="date" id="jee-date" class="glass-input"></div>
+    <button class="cta-btn pink" onclick="window.submitJowaEntry()">Add Entry →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     REMINDERS SCREEN
+══════════════════════════════ -->
+<section id="reminders" class="screen" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back</button>
+      <span style="font-family:var(--f2);font-style:italic;font-size:16px;color:var(--pink-deep)">💕 Important Dates</span>
+      <button onclick="openModal('add-reminder-modal')" style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(252,232,238,0.7);border:1px solid rgba(224,120,152,0.25);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer">+ Add</button>
+    </div>
+  </header>
+  <div class="pad" style="padding-top:16px;padding-bottom:120px">
+    <div id="reminders-full-list"></div>
+  </div>
+</section>
+
+<!-- Add Reminder Modal -->
+<div id="add-reminder-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-reminder-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💕 Add Important Date</div>
+    <div class="input-group"><div class="input-label">Event</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="reminder-type-btns">
+        <button class="split-btn selected" onclick="selectReminderType(this,'birthday_p1')">🎂 Jhoan's Birthday</button>
+        <button class="split-btn" onclick="selectReminderType(this,'birthday_p2')">🎂 Seph's Birthday</button>
+        <button class="split-btn" onclick="selectReminderType(this,'monthsary')">💑 Monthsary</button>
+        <button class="split-btn" onclick="selectReminderType(this,'anniversary')">💍 Anniversary</button>
+        <button class="split-btn" onclick="selectReminderType(this,'custom')">✨ Custom</button>
+      </div>
+    </div>
+    <div id="reminder-custom-name-group" style="display:none" class="input-group">
+      <div class="input-label">Event Name</div>
+      <input type="text" id="reminder-custom-name" class="glass-input" placeholder="e.g. First Date Anniversary">
+    </div>
+    <div class="input-group"><div class="input-label">Date</div><input type="date" id="reminder-date" class="glass-input"></div>
+    <div class="input-group"><div class="input-label">Alert me</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="split-btn selected" id="rr-7" onclick="toggleReminderAlert(this,'7')">7 days before</button>
+        <button class="split-btn selected" id="rr-2" onclick="toggleReminderAlert(this,'2')">2 days before</button>
+        <button class="split-btn" id="rr-1" onclick="toggleReminderAlert(this,'1')">Day of</button>
+        <button class="split-btn" id="rr-30" onclick="toggleReminderAlert(this,'30')">1 month before</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Repeats</div>
+      <div style="display:flex;gap:8px">
+        <button class="split-btn selected" id="rrep-yearly" onclick="selectReminderRepeat(this,'yearly')">Yearly</button>
+        <button class="split-btn" id="rrep-monthly" onclick="selectReminderRepeat(this,'monthly')">Monthly</button>
+        <button class="split-btn" id="rrep-once" onclick="selectReminderRepeat(this,'once')">Once</button>
+      </div>
+    </div>
+    <button class="cta-btn pink" onclick="window.submitReminder()">Save Reminder →</button>
+  </div>
+</div>
+
+<!-- Reminder Detail Modal (suggestions + shop selection) -->
+<div id="reminder-detail-modal" class="modal-overlay" onclick="closeModalOutside(event,'reminder-detail-modal')">
+  <div class="modal-sheet" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="rd-title">Reminder</div>
+    <div id="rd-countdown" style="text-align:center;padding:10px;margin-bottom:12px;border-radius:var(--r-md);background:rgba(252,232,238,0.4)"></div>
+
+    <!-- Shop suggestions -->
+    <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">💡 Suggested Partners</div>
+    <div id="rd-shops"></div>
+
+    <!-- Selected shops -->
+    <div id="rd-selected-shops-section" style="display:none;margin-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--green-deep);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">✅ Your Selected Shops</div>
+      <div id="rd-selected-shops"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="closeModalById('reminder-detail-modal')" style="flex:1;padding:11px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">Done</button>
+      <button onclick="window.deleteActiveReminder()" style="padding:11px 16px;border-radius:var(--r-md);background:rgba(252,232,238,0.5);border:1px solid rgba(224,120,152,0.25);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
