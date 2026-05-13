@@ -46,8 +46,15 @@
     <div style="position:absolute;bottom:60px;right:40px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
     <!-- Main emoji + brand -->
     <div style="text-align:center;animation:splashIn 0.8s cubic-bezier(0.22,0.61,0.36,1) both;position:relative;z-index:1">
-      <div style="font-size:80px;animation:floatBob 3s ease-in-out infinite">💍</div>
-      <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.85);letter-spacing:3px;text-transform:uppercase;margin-top:12px">ANO TARA?</div>
+        <!-- Floating 3D emojis — random positions and rotations -->
+      <div style="position:relative;width:260px;height:180px;margin-bottom:8px">
+        <div style="position:absolute;top:10px;left:20px;font-size:52px;animation:floatBob 3.1s ease-in-out infinite;transform:rotate(-15deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😊</div>
+        <div style="position:absolute;top:0px;left:100px;font-size:64px;animation:floatBob 2.7s ease-in-out 0.4s infinite;transform:rotate(8deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">🥰</div>
+        <div style="position:absolute;top:15px;right:10px;font-size:48px;animation:floatBob 3.4s ease-in-out 0.2s infinite;transform:rotate(20deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😄</div>
+        <div style="position:absolute;bottom:0px;left:10px;font-size:44px;animation:floatBob 2.9s ease-in-out 0.6s infinite;transform:rotate(-25deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">😎</div>
+        <div style="position:absolute;bottom:10px;right:20px;font-size:50px;animation:floatBob 3.2s ease-in-out 0.3s infinite;transform:rotate(12deg);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">🤩</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:rgba(0,0,0,0.5);letter-spacing:3px;text-transform:uppercase;margin-top:4px">ANO TARA?</div>
     </div>
   </div>
   <!-- Bottom white card like Image 1 -->
@@ -520,22 +527,38 @@
     <div class="member-row glass"><div class="member-av ma-green" style="color:var(--green-deep)">AN</div><div><div class="member-name">Ana</div><div class="member-role">Member · Paid ₱0</div></div><span class="member-status ms-late" data-t="msLate"></span></div>
   </div>
   <!-- SETTLE -->
-  <div id="panel-settle" class="pad" style="display:none">
-    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="settleTitle"></span></div>
-    <div style="padding:12px 15px;border-radius:var(--r-md);background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.22);margin-bottom:16px"><div style="font-size:11.5px;color:var(--tan-dark);font-weight:700;margin-bottom:3px" data-t="settleHint"></div><div style="font-size:12.5px;color:var(--ink-3);line-height:1.5" data-t="settleDesc"></div></div>
-    <div class="settle-wrap glass"><div class="settle-hint" data-t="settleOwes"></div>
-      <div class="settle-row glass-cream"><div class="s-avatar ma-sand">AN</div><span style="font-size:13px;color:var(--ink-3)">Ana</span><span style="font-size:12px;color:var(--ink-4);margin:0 4px">→</span><div class="s-avatar ma-tan">MA</div><span style="font-size:13px;color:var(--ink-3)">Jhoan</span><div class="settle-amount">₱473</div></div>
-      <div class="settle-row glass-green"><div class="s-avatar ma-pink">TL</div><span style="font-size:13px;color:var(--ink-3)">Tita Linda</span><span style="font-size:12px;color:var(--ink-4);margin:0 4px">→</span><div class="s-avatar ma-green">CA</div><span style="font-size:13px;color:var(--ink-3)">Carlo</span><div class="settle-amount">₱273</div></div>
-      <div class="settle-row glass-pink"><div class="s-avatar ma-sand">MK</div><span style="font-size:13px;color:var(--ink-3)">Mark</span><span style="font-size:12px;color:var(--ink-4);margin:0 4px">→</span><div class="s-avatar ma-tan">MA</div><span style="font-size:13px;color:var(--ink-3)">Jhoan</span><div class="settle-amount">₱200</div></div>
-      <button class="cta-btn" style="margin-top:12px" onclick="showToast('📲 Reminders sent!')" data-t="sendReminders"></button>
+  <div id="panel-settle" class="pad" style="display:none;padding-top:16px">
+    <div class="sec-hdr"><span class="sec-title">Who Pays Who</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#FFF8E1;border:2px solid #F5A623;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#92400E;flex-shrink:0">AN</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Ana</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱473</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#FDF2F8;border:2px solid #EC4899;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#9D174D;flex-shrink:0">TL</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Tita Linda</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Carlo</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱273</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
+      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:#F5F3FF;border:2px solid #7C3AED;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#5B21B6;flex-shrink:0">MK</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Mark</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱200</div>
+        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>
     </div>
-    <button class="cta-btn dark" onclick="navTo('receipt')" style="margin-top:10px" data-t="genReceipt"></button>
+    <button class="cta-btn" style="margin-top:16px" onclick="navTo('receipt')">View Receipt →</button>
   </div>
   <!-- MAP -->
-  <div id="panel-map" style="display:none">
-    <div class="map-container"><div id="leaflet-map"></div></div>
-    <div class="map-controls"><span class="map-hint" data-t="tapMapHint"></span><button class="map-add-btn" onclick="openModal('add-pin-modal')" data-t="addPin"></button></div>
-    <div id="pin-list"></div>
+  <div id="panel-map" style="display:none;padding:16px">
+    <div style="border-radius:var(--r-xl);overflow:hidden;border:1px solid rgba(0,0,0,0.08);box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:12px"><div id="leaflet-map" style="height:280px"></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-4)">Tap map to add a pin · max 5</div>
+      <button onclick="openModal('add-pin-modal')" style="padding:8px 16px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">+ Add Pin</button>
+    </div>
+    <div id="pin-list" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </section>
 
@@ -782,10 +805,9 @@
         <button onclick="switchMainTab('settings')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.12);border:none;font-size:13px;font-weight:800;color:#111827;cursor:pointer;font-family:'Nunito',sans-serif" id="ov-avatar">JH</button>
       </div>
     </div>
-    <!-- Wedding + Balance row -->
-    <div style="display:flex;gap:10px;margin-top:14px;align-items:stretch">
-      <button onclick="switchMainTab('wedding')" style="padding:14px 16px;border-radius:var(--r-xl);background:rgba(0,0,0,0.12);border:none;cursor:pointer;font-size:13px;font-weight:800;color:var(--ink);font-family:var(--f);white-space:nowrap;display:flex;align-items:center;gap:6px">💍 Wedding</button>
-      <div onclick="openBalanceBreakdown()" style="flex:1;padding:14px 16px;border-radius:var(--r-xl);background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.10);cursor:pointer;display:flex;align-items:center;gap:12px">
+    <!-- Balance card -->
+    <div style="margin-top:14px">
+      <div onclick="openBalanceBreakdown()" style="padding:14px 16px;border-radius:var(--r-xl);background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.10);cursor:pointer;display:flex;align-items:center;gap:12px">
       <div style="flex:1">
         <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Net Balance</div>
         <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱1,240</div>
@@ -794,7 +816,6 @@
         <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱1,800</span>
         <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱560</span>
       </div>
-      </div><!-- end balance+wedding row -->
     </div>
     <!-- Reminder strip -->
     <div id="ov-reminder-banner" style="display:none;margin-top:8px">
@@ -895,7 +916,7 @@
     <!-- GROUPS tab -->
     <div class="tab-panel" id="tp-groups">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px">
-        <div style="font-family:var(--f2);font-style:italic;font-size:20px;color:var(--ink)">Groups</div>
+        <div style="font-size:18px;font-weight:900;color:var(--ink);font-family:var(--f)">Groups</div>
         <button style="width:32px;height:32px;border-radius:var(--r-sm);background:rgba(245,230,200,0.6);border:1px solid rgba(201,169,110,0.25);font-size:18px;cursor:pointer;color:var(--tan-dark)" onclick="openModal('new-group-modal')">+</button>
       </div>
       <div class="pad" id="groups-list-el" style="padding-top:0"></div>
@@ -903,13 +924,19 @@
 
     <!-- JOWA tab -->
     <div class="tab-panel" id="tp-jowa" style="background:linear-gradient(160deg,#fef6e8 0%,#fce8ee 60%,#f5e8f5 100%)">
-      <!-- Jowa hero -->
-      <div class="couple-hero" style="margin:0">
-        <div id="couple-sync-indicator" class="couple-sync"><div class="sync-dot"></div><span class="sync-label" data-t="synced"></span></div>
-        <div style="font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:0.9px;margin-top:8px" data-t="thisMonth"></div>
-        <div style="font-family:var(--f2);font-size:32px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-1px;margin:5px 0 10px;line-height:1">₱18,240</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="bal-pill owe">Jhoan paid ₱10,840</span><span class="bal-pill owed">Seph paid ₱7,400</span></div>
-        <button onclick="openModal('pair-modal')" style="margin-top:12px;padding:7px 14px;border-radius:var(--r-sm);background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.65);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer" data-t="pairJowa"></button>
+      <!-- Jowa hero — clean aligned -->
+      <div style="background:var(--flat-pink);padding:24px 20px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px" data-t="thisMonth"></div>
+            <div style="font-family:var(--f2);font-size:34px;color:#fff;letter-spacing:-1px;margin-top:2px;line-height:1">₱18,240</div>
+          </div>
+          <button onclick="openModal('pair-modal')" style="padding:8px 14px;border-radius:99px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.4);font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)" data-t="pairJowa"></button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Jhoan paid<br><strong style="font-size:15px">₱10,840</strong></span>
+          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Seph paid<br><strong style="font-size:15px">₱7,400</strong></span>
+        </div>
       </div>
       <!-- Important Dates -->
       <div class="pad" style="padding-top:12px">
@@ -976,7 +1003,7 @@
         <button class="wed-tab"        id="wed-tab-schedule"  onclick="window.wedTab('schedule')" >📅 Schedule</button>
       </div>
       <!-- Panels -->
-      <div id="wed-panel-overview"  class="pad"><div id="wed-overview-content"></div></div>
+      <div id="wed-panel-overview"  class="pad"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px"><span class="sec-title">Overview</span><button onclick="openModal('edit-wedding-modal')" style="width:32px;height:32px;border-radius:var(--r-md);background:#F5F5F5;border:1px solid rgba(0,0,0,0.08);font-size:16px;cursor:pointer">✏️</button></div><div id="wed-overview-content"></div></div>
       <div id="wed-panel-budget"    class="pad" style="display:none"><div id="wed-budget-content"></div></div>
       <div id="wed-panel-guests"    class="pad" style="display:none">
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
