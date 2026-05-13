@@ -73,12 +73,12 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
 html,body{width:100%;margin:0;padding:0;overflow-x:hidden;font-family:var(--f);font-size:16px;color:var(--ink);}
 *{scrollbar-width:none;-ms-overflow-style:none;}*::-webkit-scrollbar{display:none;}
-body{background:#fff;}
+body{background:#F5F5F5;}
 
 #app{width:100%;}
 
 /* ── APP SHELL ───────────────────────────────── */
-#app-shell{display:none;flex-direction:column;height:100dvh;width:100%;position:relative;background:var(--page-bg);}
+#app-shell{display:none;flex-direction:column;height:100dvh;width:100%;position:relative;background:#F5F5F5;overflow:hidden;}
 @keyframes fadeUp {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes popIn  {0%{transform:scale(0.92);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -106,12 +106,9 @@ body{background:#fff;}
 #app-shell.active{display:flex;flex-direction:column;}
 #app-overview{order:1;flex-shrink:0;}
 #main-tabs   {order:2;flex-shrink:0;}
-#tab-panels  {order:3;flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch;}
+#tab-panels  {order:3;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 
-/* Overview card — always visible */
-#app-overview {
-  padding-bottom: 14px;
-}
+/* Overview bottom gap */
 
 /* ── MAIN TABS ───────────────────────────────── */
 #main-tabs{
@@ -133,8 +130,8 @@ body{background:#fff;}
 #main-tab-wedding{display:none;}
 
 /* ── TAB PANELS ──────────────────────────────── */
-#tab-panels{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#F5F5F5;width:100%;}
-.tab-panel{display:none;width:100%;overflow-y:visible;padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));background:#F5F5F5;}
+#tab-panels{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#F5F5F5;width:100%;}
+.tab-panel{display:none;width:100%;min-height:100%;overflow-y:visible;padding-bottom:40px;background:#F5F5F5;}
 .tab-panel.active{display:block;}
 
 /* ── TOPBAR (sub-screens) ────────────────────── */
@@ -590,6 +587,7 @@ body{background:#fff;}
 /* ── OVERVIEW HEADER PANEL ───────────────────── */
 #app-overview {
   background: var(--flat-green) !important;
+  padding-bottom: 14px !important;
 }
 #app-overview .greeting-sub { color: rgba(0,0,0,0.55); }
 #app-overview .greeting-name { color: var(--ink); }
@@ -742,4 +740,3 @@ nav.tabs .tab.active {
   margin-right: 0;
 }
 /* Overview bottom gap */
-#app-overview { margin-bottom: 0; padding-bottom: 14px; }
