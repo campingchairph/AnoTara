@@ -643,7 +643,9 @@ function navTo(id) {
 function goBack() {
   if (STATE.navHistory.length > 1) {
     STATE.navHistory.pop();
-    navTo(STATE.navHistory[STATE.navHistory.length-1]);
+    const dest = STATE.navHistory[STATE.navHistory.length-1];
+    navTo(dest);
+    if (dest === 'groups') renderGroupsList();
   }
 }
 
