@@ -546,15 +546,11 @@ body{background:var(--page-bg);}
 /* ── DISPLAY FONT (Recoleta-style) ──────────────
    Use DM Serif Display for: greeting name,
    section titles, balance amount, modal titles  */
+/* DM Serif only for top hierarchy */
 .greeting-name,
-.modal-title,
 .auth-title,
 .intro-card-title,
-.bal-amount,
-.sec-title,
-.poll-q,
-.goal-title,
-.wed-stat-val {
+.bal-amount {
   font-family: var(--f2) !important;
 }
 
@@ -597,10 +593,10 @@ body{background:var(--page-bg);}
 #app-overview .greeting-sub { color: rgba(0,0,0,0.55); }
 #app-overview .greeting-name { color: var(--ink); }
 
-/* ── SECTION TITLES ──────────────────────────── */
+/* ── SECTION TITLES — Nunito bold ───────────── */
 .sec-title {
-  font-family: var(--f2) !important;
-  font-size: 20px; font-weight: 400; color: var(--ink);
+  font-family: var(--f) !important;
+  font-size: 17px; font-weight: 900; color: var(--ink); letter-spacing: -0.2px;
 }
 
 /* ── PIN key submit (→ key) ────────────────── */
@@ -645,3 +641,83 @@ body{background:var(--page-bg);}
   font-size: 20px !important;
   box-shadow: 0 4px 12px rgba(198,224,63,0.4) !important;
 }
+
+/* ── GROUP HERO ──────────────────────────────── */
+.group-hero {
+  padding: 20px 20px 16px;
+  position: relative;
+}
+.gh-familia { background: #FFF8E1; }
+.gh-jowa    { background: #FDF2F8; }
+.gh-berks   { background: #F0FAF2; }
+.gh-trip    { background: #F5F3FF; }
+.group-hero-emoji { font-size: 36px; margin-bottom: 8px; }
+.group-hero-name  { font-family: var(--f); font-size: 20px; font-weight: 900; color: var(--ink); margin-bottom: 3px; }
+.group-hero-sub   { font-size: 12px; font-weight: 600; color: var(--ink-4); margin-bottom: 14px; }
+.group-hero-stats { display: flex; align-items: center; gap: 0; background: rgba(255,255,255,0.6); border-radius: var(--r-lg); padding: 12px 16px; border: 1px solid rgba(0,0,0,0.06); }
+.hero-stat        { flex: 1; text-align: center; }
+.hero-stat-val    { font-size: 16px; font-weight: 900; color: var(--ink); }
+.hero-stat-lbl    { font-size: 10px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+.hero-divider     { width: 1px; height: 32px; background: rgba(0,0,0,0.08); flex-shrink: 0; }
+
+/* Group detail tabs */
+.tabs-wrap, nav.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px 0;
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+nav.tabs { padding: 8px 12px; gap: 4px; }
+nav.tabs .tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  font-size: 13px; font-weight: 800;
+  color: var(--ink-4);
+  border: none; background: none;
+  cursor: pointer;
+  border-radius: 99px;
+  transition: all 0.18s;
+  font-family: var(--f);
+}
+nav.tabs .tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Task items in group */
+.task-item { margin-bottom: 8px; display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+.task-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(0,0,0,0.15); flex-shrink: 0; background: #fff; transition: all 0.2s; }
+.task-check.done { background: var(--flat-green); border-color: var(--flat-green); }
+.task-check.progress { background: #FFF8E1; border-color: #F5A623; }
+.task-body { flex: 1; min-width: 0; }
+.task-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+.task-name.done-text { text-decoration: line-through; color: var(--ink-4); }
+.task-assignee { font-size: 11.5px; color: var(--ink-4); font-weight: 600; margin-top: 2px; }
+.task-assign-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #F5F5F5; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.task-status { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; flex-shrink: 0; }
+.s-done     { background: #D1FAE5; color: #065F46; }
+.s-progress { background: #FEF9C3; color: #854D0E; }
+.s-pending  { background: #F3F4F6; color: #6B7280; }
+
+/* Budget bar */
+.budget-bar-wrap { margin-top: 16px; padding: 14px 16px; background: #fff; border-radius: var(--r-lg); border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--shadow); }
+.bud-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.bud-label { font-size: 12px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.4px; }
+.bud-val { font-size: 18px; font-weight: 900; color: var(--ink); }
+.prog-fill { height: 100%; border-radius: 99px; background: var(--flat-green); transition: width 1.2s cubic-bezier(0.34,1.36,0.64,1); }
+.bud-remain { font-size: 13px; font-weight: 700; color: var(--green-deep); margin-top: 8px; }
+
+/* Settle tab */
+.settle-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: #fff; border-radius: var(--r-lg); border: 1px solid rgba(0,0,0,0.06); box-shadow: var(--shadow); margin-bottom: 8px; }
+.settle-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.settle-info { flex: 1; min-width: 0; }
+.settle-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+.settle-amount { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.settle-amount.owes { color: #BE185D; }
+.settle-amount.owed { color: #065F46; }
+.settle-btn { padding: 7px 14px; border-radius: 99px; border: none; background: var(--flat-green); font-size: 12px; font-weight: 800; color: var(--ink); cursor: pointer; font-family: var(--f); }
+
+/* Remove tab-swipe-dot remnants in group detail */
