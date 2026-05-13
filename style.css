@@ -75,9 +75,12 @@ html,body{width:100%;min-height:100vh;overflow-x:hidden;font-family:var(--f);fon
 *{scrollbar-width:none;-ms-overflow-style:none;}*::-webkit-scrollbar{display:none;}
 body{background:var(--page-bg);}
 
-#app{position:relative;z-index:1;max-width:430px;margin:0 auto;min-height:100vh;}
+#app{position:relative;z-index:1;width:100%;min-height:100vh;}
 
-/* ── ANIMATIONS ──────────────────────────────── */
+/* ── APP SHELL ───────────────────────────────── */
+#app-shell{display:none;flex-direction:column;height:100vh;width:100%;
+  position:relative;background:var(--page-bg);
+  padding-bottom:env(safe-area-inset-bottom,0px);}
 @keyframes fadeUp {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes popIn  {0%{transform:scale(0.92);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -90,8 +93,7 @@ body{background:var(--page-bg);}
 .screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px;
   animation:fadeUp 0.28s cubic-bezier(0.22,0.61,0.36,1);overflow-y:auto;
   -webkit-overflow-scrolling:touch;
-  position:fixed;inset:0;z-index:50;background:var(--page-bg);
-  max-width:430px;margin:0 auto;}
+  position:fixed;inset:0;z-index:50;background:var(--page-bg);}
 .screen.active{display:flex;}
 
 /* ── CARD CLASSES ────────────────────────────── */
@@ -102,16 +104,17 @@ body{background:var(--page-bg);}
 .glass-heavy{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:var(--r-lg);box-shadow:var(--shadow-hvy);}
 
 /* ── APP SHELL ───────────────────────────────── */
-#app-shell{display:none;flex-direction:column;height:100vh;max-width:430px;
-  margin:0 auto;position:relative;background:var(--page-bg);
-  padding-bottom:env(safe-area-inset-bottom,0px);}
+#app-shell-old-removed{}
 #app-shell.active{display:flex;flex-direction:column;}
 #app-overview{order:1;flex-shrink:0;}
 #main-tabs   {order:2;flex-shrink:0;}
 #tab-panels  {order:3;flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch;}
 
-/* ── OVERVIEW ────────────────────────────────── */
-/* Styled per-screen in HTML — keep bg override */
+/* Overview card — always visible */
+#app-overview {
+  background: var(--flat-green) !important;
+  padding-bottom: 14px;
+}
 
 /* ── MAIN TABS ───────────────────────────────── */
 #main-tabs{
