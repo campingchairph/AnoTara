@@ -725,3 +725,47 @@ nav.tabs .tab.active {
 .settle-btn { padding: 7px 14px; border-radius: 99px; border: none; background: var(--flat-green); font-size: 12px; font-weight: 800; color: var(--ink); cursor: pointer; font-family: var(--f); }
 
 /* Remove tab-swipe-dot remnants in group detail */
+
+/* ── EDGE-TO-EDGE CARDS IN TAB PANELS ────────── */
+.tab-panel .glass,
+.tab-panel .glass-pink,
+.tab-panel .glass-green,
+.tab-panel .glass-cream {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+/* Keep rounded corners only for pills/badges inside cards */
+.tab-panel .glass span,
+.tab-panel .glass button,
+.tab-panel .glass div[style*="border-radius:99px"],
+.tab-panel .glass div[style*="border-radius: 99px"] {
+  border-radius: inherit;
+}
+
+/* Vertical gap between cards — use margin-bottom only */
+.tab-panel .glass,
+.tab-panel .glass-pink,
+.tab-panel .glass-green,
+.tab-panel .glass-cream {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Overview bottom padding — gap between balance card and tabs */
+#app-overview {
+  padding-bottom: 14px !important;
+}
+
+/* .pad inside tab panels — no side padding, cards go edge to edge */
+.tab-panel .pad {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.tab-panel .sec-hdr {
+  padding: 0 16px !important;
+}
