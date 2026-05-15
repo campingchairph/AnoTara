@@ -730,3 +730,102 @@ nav.tabs .tab.active {
 .bal-tabs{display:flex;gap:4px;padding:4px;border-radius:var(--r-md);margin-bottom:14px;}
 .bal-tab{flex:1;padding:8px 12px;border-radius:var(--r-sm);border:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f);transition:all 0.18s;}
 .bal-tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,0.10);}
+
+/* ── RECEIPT SCREEN ──────────────────────────── */
+.receipt-card {
+  margin: 16px;
+  background: #fff;
+  border-radius: var(--r-xl);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.receipt-logo {
+  background: var(--flat-green);
+  padding: 24px 20px 20px;
+  text-align: center;
+}
+.receipt-brand {
+  font-family: var(--f2);
+  font-style: italic;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+}
+.receipt-title {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: rgba(0,0,0,0.5);
+  margin-bottom: 4px;
+}
+.receipt-sub {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.r-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.07);
+  margin: 0 16px;
+}
+.r-divider:first-of-type { margin-top: 0; }
+.r-sec-title {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-4);
+  padding: 14px 20px 6px;
+}
+.r-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 20px;
+  gap: 12px;
+}
+.r-key {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-3);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.r-total {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.receipt-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 32px);
+  margin: 16px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  border: none;
+  background: #0084FF;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: var(--f);
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 14px rgba(0,132,255,0.3);
+}
