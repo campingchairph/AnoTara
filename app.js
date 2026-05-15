@@ -19,7 +19,10 @@ const STATE = {
   isPaired: localStorage.getItem('at_paired') === '1',
   expenseIconSelected: '🍽️',
   splitMethod: 'equal',
+  selectedPayer: null,
   assignedMember: null,
+  editSelectedPayer: null,
+  editAssignedMember: null,
   activeTaskDropdown: null,
 };
 
@@ -672,6 +675,8 @@ function openGroup(id) {
   renderGroupSuggestions(group);
 
   renderSaanTopCard(group);
+  renderTasksPanel(group);
+  renderExpensesPanel(group);
   navTo('group-detail');
   switchTab('tasks');
   setTimeout(initTabSwipe, 100);
@@ -886,6 +891,15 @@ function setTaskStatus(btnEl, status) {
 
   const toasts = { done: '✅ '+t('statusDone')+'!', progress: '🔄 '+t('statusProgress'), pending: '⏸ '+t('statusPending') };
   showToast(toasts[status]);
+  // Persist to GROUPS
+  const taskId = taskEl.dataset.taskId;
+  if (taskId) {
+    const group = getActiveGroup();
+    if (group) {
+      const task = group.tasks.find(t => t.id === taskId);
+      if (task) { task.status = status; saveGroups(); }
+    }
+  }
   closeAllDropdowns();
 }
 
@@ -919,7 +933,16 @@ function openAssignPicker(taskEl) {
     btn.title = m.name;
     btn.onclick = () => {
       const assignEl = taskEl.querySelector('.task-assignee');
-      if (assignEl) assignEl.textContent = m.name;
+      if (assignEl) assignEl.textContent = m.name.split(' ')[0];
+      // Persist assignment
+      const taskId = taskEl.dataset.taskId;
+      if (taskId) {
+        const group = getActiveGroup();
+        if (group) {
+          const task = group.tasks.find(t => t.id === taskId);
+          if (task) { task.assigneeId = m.id; saveGroups(); }
+        }
+      }
       picker.remove();
       showToast('👤 Assigned to '+m.name);
     };
@@ -1278,6 +1301,7 @@ function renderMemberPicker() {
 }
 
 function selectPayer(btn, id) {
+  STATE.selectedPayer = id;
   document.querySelectorAll('.member-pick-btn').forEach(b => {
     b.classList.remove('selected');
     b.style.borderColor = 'rgba(255,255,255,0.5)';
@@ -1340,8 +1364,8 @@ function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   // Render dynamic content before opening
-  if (id === 'add-expense-modal') { renderIconPicker(); renderMemberPicker(); renderSplitPreview(); }
-  if (id === 'add-task-modal')    { renderTaskMemberPicker(); }
+  if (id === 'add-expense-modal') { renderIconPicker(); renderMemberPicker(); renderSplitPreview(); STATE.selectedPayer = null; }
+  if (id === 'add-task-modal')    { renderTaskMemberPicker(); STATE.assignedMember = null; }
   el.classList.add('open');
 }
 
@@ -1457,13 +1481,316 @@ function renderGroupsList() {
 }
 
 function addExpense() {
+  const group = getActiveGroup();
+  if (!group) return;
+  const descEl   = document.getElementById('expense-desc-input');
+  const amtEl    = document.getElementById('expense-amount-input');
+  const noteEl   = document.getElementById('expense-note-input');
+  const dateEl   = document.getElementById('expense-date-input');
+  const name     = (descEl?.value || '').trim();
+  const amount   = parseFloat(amtEl?.value) || 0;
+  if (!name || !amount) { showToast('⚠️ Enter a description and amount'); return; }
+  const payerId  = STATE.selectedPayer || (group.members[0]?.id);
+  const expense  = {
+    id: 'exp_' + Date.now(),
+    icon: STATE.expenseIconSelected || '🍽️',
+    name, amount, payerId,
+    splitMethod: STATE.splitMethod || 'equal',
+    note: noteEl?.value.trim() || '',
+    date: dateEl?.value || '',
+    createdAt: Date.now(),
+  };
+  group.expenses.push(expense);
+  saveGroups();
+  renderExpensesPanel(group);
+  if (descEl) descEl.value = '';
+  if (amtEl)  amtEl.value  = '';
+  if (noteEl) noteEl.value = '';
+  if (dateEl) dateEl.value = '';
   closeModalById('add-expense-modal');
   showToast(t('expenseAdded'));
 }
 
 function addTask() {
+  const group = getActiveGroup();
+  if (!group) return;
+  const nameEl = document.getElementById('task-name-input');
+  const dueEl  = document.getElementById('task-due-input');
+  const name   = (nameEl?.value || '').trim();
+  if (!name) { showToast('⚠️ Enter a task name'); return; }
+  const task = {
+    id: 'task_' + Date.now(),
+    name,
+    assigneeId: STATE.assignedMember || (group.members[0]?.id),
+    dueDate: dueEl?.value || '',
+    status: 'pending',
+    createdAt: Date.now(),
+  };
+  group.tasks.push(task);
+  saveGroups();
+  renderTasksPanel(group);
+  if (nameEl) nameEl.value = '';
+  if (dueEl)  dueEl.value  = '';
   closeModalById('add-task-modal');
   showToast(t('taskAdded'));
+}
+
+function renderTasksPanel(group) {
+  const container = document.getElementById('tasks-list');
+  if (!container) return;
+  if (!group.tasks || group.tasks.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px;font-weight:600">No tasks yet — tap + Add to create one</div>';
+    return;
+  }
+  const statusClass = { done:'done', progress:'progress', pending:'' };
+  const badgeClass  = { done:'s-done', progress:'s-progress', pending:'s-pending' };
+  const badgeText   = { done:'Done', progress:'In Progress', pending:'Pending' };
+  container.innerHTML = group.tasks.map(task => {
+    const member  = group.members.find(m => m.id === task.assigneeId);
+    const mName   = member ? member.name.split(' ')[0] : 'Unassigned';
+    const isDone  = task.status === 'done';
+    const due     = task.dueDate ? ' · ' + task.dueDate : '';
+    return `<div class="task-item glass" onclick="showTaskDropdown(this,event)" data-task-id="${task.id}">
+      <div class="task-check ${statusClass[task.status] || ''}"></div>
+      <div class="task-body">
+        <div class="task-name ${isDone ? 'done-text' : ''}">${task.name}</div>
+        <div class="task-assignee">${mName}${due}</div>
+      </div>
+      <button class="task-edit-btn" onclick="event.stopPropagation();openEditTask('${task.id}')">✏️</button>
+      <button class="task-assign-btn" onclick="event.stopPropagation();openAssignPicker(this.closest('.task-item'))">👤</button>
+      <span class="task-status ${badgeClass[task.status] || 's-pending'}">${badgeText[task.status] || 'Pending'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderExpensesPanel(group) {
+  const container = document.getElementById('expenses-list');
+  if (!container) return;
+  if (!group.expenses || group.expenses.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px;font-weight:600">No expenses yet — tap + Add to log one</div>';
+    return;
+  }
+  container.innerHTML = group.expenses.map(exp => {
+    const payer    = group.members.find(m => m.id === exp.payerId);
+    const pName    = payer ? payer.name.split(' ')[0] : exp.payerId || '—';
+    const perPerson = exp.splitMethod === 'equal' && group.members.length > 0
+      ? (exp.amount / group.members.length).toFixed(2) : null;
+    return `<div class="expense-item glass" onclick="openExpenseActions('${exp.id}')">
+      <div class="expense-icon" style="background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.22)">${exp.icon}</div>
+      <div class="expense-body">
+        <div class="expense-name">${exp.name}</div>
+        <div class="expense-detail">Paid by ${pName} · ${group.members.length} people</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="expense-amount">₱${parseFloat(exp.amount).toLocaleString()}</div>
+        ${perPerson ? `<div class="expense-split">₱${perPerson} each</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openExpenseActions(expId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  const exp = group.expenses.find(e => e.id === expId);
+  if (!exp) return;
+  document.getElementById('expense-actions-id').value = expId;
+  const title = document.getElementById('expense-actions-title');
+  if (title) title.textContent = exp.icon + ' ' + exp.name + ' — ₱' + parseFloat(exp.amount).toLocaleString();
+  openModal('expense-actions-modal');
+}
+
+function openEditExpense(expId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  const exp = group.expenses.find(e => e.id === expId);
+  if (!exp) return;
+  closeModalById('expense-actions-modal');
+  document.getElementById('edit-expense-id').value      = expId;
+  document.getElementById('edit-expense-desc').value    = exp.name;
+  document.getElementById('edit-expense-amount').value  = exp.amount;
+  document.getElementById('edit-expense-note').value    = exp.note || '';
+  STATE.editSelectedPayer = exp.payerId;
+  // Render icon picker
+  const iconPreview = document.getElementById('edit-expense-icon-preview');
+  if (iconPreview) iconPreview.textContent = exp.icon;
+  STATE.expenseIconSelected = exp.icon;
+  const grid = document.getElementById('edit-icon-picker-grid');
+  if (grid) renderIconPickerInto(grid, 'edit-expense-icon-preview');
+  // Render payer picker
+  const picker = document.getElementById('edit-paidby-picker');
+  if (picker) {
+    picker.innerHTML = group.members.map(m => {
+      const sel = m.id === exp.payerId;
+      return `<button class="member-pick-btn edit-payer-btn${sel?' selected':''}"
+        onclick="selectEditPayer(this,'${m.id}')"
+        style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:var(--r-md);cursor:pointer;border:1.5px solid ${sel?'rgba(201,169,110,0.45)':'rgba(255,255,255,0.5)'};background:${sel?'rgba(245,230,200,0.55)':'rgba(255,255,255,0.45)'}">
+        <div class="member-av ${m.color}" style="width:28px;height:28px;border-radius:8px;font-size:10px">${m.id}</div>
+        <span style="font-size:12.5px;font-weight:600;color:var(--ink)">${m.name}</span>
+      </button>`;
+    }).join('');
+  }
+  openModal('edit-expense-modal');
+}
+
+function selectEditPayer(btn, id) {
+  STATE.editSelectedPayer = id;
+  document.querySelectorAll('.edit-payer-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = 'rgba(255,255,255,0.5)';
+    b.style.background  = 'rgba(255,255,255,0.45)';
+  });
+  btn.classList.add('selected');
+  btn.style.borderColor = 'rgba(201,169,110,0.45)';
+  btn.style.background  = 'rgba(245,230,200,0.55)';
+}
+
+function saveEditExpense() {
+  const group  = getActiveGroup();
+  if (!group) return;
+  const expId  = document.getElementById('edit-expense-id').value;
+  const exp    = group.expenses.find(e => e.id === expId);
+  if (!exp) return;
+  const name   = document.getElementById('edit-expense-desc').value.trim();
+  const amount = parseFloat(document.getElementById('edit-expense-amount').value) || 0;
+  if (!name || !amount) { showToast('⚠️ Enter a description and amount'); return; }
+  exp.name    = name;
+  exp.amount  = amount;
+  exp.note    = document.getElementById('edit-expense-note').value.trim();
+  exp.payerId = STATE.editSelectedPayer || exp.payerId;
+  exp.icon    = STATE.expenseIconSelected || exp.icon;
+  saveGroups();
+  renderExpensesPanel(group);
+  closeModalById('edit-expense-modal');
+  showToast('✅ Expense updated!');
+}
+
+function deleteExpense(expId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  group.expenses = group.expenses.filter(e => e.id !== expId);
+  saveGroups();
+  renderExpensesPanel(group);
+  closeModalById('expense-actions-modal');
+  closeModalById('edit-expense-modal');
+  showToast('🗑 Expense deleted');
+}
+
+function openEditTask(taskId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  const task = group.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  document.getElementById('edit-task-id').value   = taskId;
+  document.getElementById('edit-task-name').value = task.name;
+  document.getElementById('edit-task-due').value  = task.dueDate || '';
+  STATE.editAssignedMember = task.assigneeId;
+  const picker = document.getElementById('edit-task-assign-picker');
+  if (picker) {
+    picker.innerHTML = group.members.map(m => {
+      const sel = m.id === task.assigneeId;
+      return `<button class="task-member-btn edit-assign-btn${sel?' selected':''}"
+        onclick="selectEditAssign(this,'${m.id}')"
+        style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:var(--r-md);cursor:pointer;border:1.5px solid ${sel?'rgba(201,169,110,0.45)':'rgba(255,255,255,0.5)'};background:${sel?'rgba(245,230,200,0.55)':'rgba(255,255,255,0.45)'}">
+        <div class="member-av ${m.color}" style="width:36px;height:36px;border-radius:10px;font-size:12px">${m.id}</div>
+        <span style="font-size:10px;font-weight:600;color:var(--ink-2);text-align:center;max-width:52px">${m.name.split(' ')[0]}</span>
+      </button>`;
+    }).join('');
+  }
+  openModal('edit-task-modal');
+}
+
+function selectEditAssign(btn, id) {
+  STATE.editAssignedMember = id;
+  document.querySelectorAll('.edit-assign-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = 'rgba(255,255,255,0.5)';
+    b.style.background  = 'rgba(255,255,255,0.45)';
+  });
+  btn.classList.add('selected');
+  btn.style.borderColor = 'rgba(201,169,110,0.45)';
+  btn.style.background  = 'rgba(245,230,200,0.55)';
+}
+
+function saveEditTask() {
+  const group  = getActiveGroup();
+  if (!group) return;
+  const taskId = document.getElementById('edit-task-id').value;
+  const task   = group.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  const name   = document.getElementById('edit-task-name').value.trim();
+  if (!name) { showToast('⚠️ Enter a task name'); return; }
+  task.name       = name;
+  task.dueDate    = document.getElementById('edit-task-due').value;
+  task.assigneeId = STATE.editAssignedMember || task.assigneeId;
+  saveGroups();
+  renderTasksPanel(group);
+  closeModalById('edit-task-modal');
+  showToast('✅ Task updated!');
+}
+
+function deleteTask(taskId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  group.tasks = group.tasks.filter(t => t.id !== taskId);
+  saveGroups();
+  renderTasksPanel(group);
+  closeModalById('edit-task-modal');
+  showToast('🗑 Task deleted');
+}
+
+function renderIconPickerInto(container, previewId) {
+  const ICONS = {
+    'Food & Drink': ['🍽️','🍜','🍕','🍔','🍣','🥗','🍱','☕','🧋','🍺','🥩','🍗'],
+    'Shopping':     ['🛒','👗','👟','💄','🎁','🛍️','💍','⌚'],
+    'Transport':    ['🚗','✈️','🚌','⛽','🚕','🛵','🚂'],
+    'Fun':          ['🎉','🎬','🎮','🎤','🎨','🏖️','🎯','🎳'],
+    'Home':         ['🏠','💡','🔧','🛋️','🧹','🌿'],
+    'Health':       ['💊','🏥','💉','🩺'],
+    'Other':        ['📦','💰','🎂','📝','🔑','🧾'],
+  };
+  let html = '';
+  for (const [cat, icons] of Object.entries(ICONS)) {
+    html += `<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">${cat}</div><div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    icons.forEach(icon => {
+      html += `<button class="icon-pick-btn${icon===STATE.expenseIconSelected?' selected':''}" onclick="selectEditIcon(this,'${icon}','${previewId}')">${icon}</button>`;
+    });
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function selectEditIcon(btn, icon, previewId) {
+  STATE.expenseIconSelected = icon;
+  document.querySelectorAll('#edit-icon-picker-grid .icon-pick-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const preview = document.getElementById(previewId);
+  if (preview) preview.textContent = icon;
+}
+
+function shareReceiptAsImage() {
+  const card = document.querySelector('.receipt-card');
+  if (!card) return;
+  showToast('📸 Capturing receipt…');
+  html2canvas(card, { backgroundColor: '#ffffff', scale: 2, useCORS: true }).then(canvas => {
+    const img = canvas.toDataURL('image/png');
+    if (navigator.share) {
+      canvas.toBlob(blob => {
+        const file = new File([blob], 'receipt-anotara.png', { type: 'image/png' });
+        navigator.share({ files: [file], title: 'Ano Tara Receipt' }).catch(() => downloadReceiptImage(img));
+      });
+    } else {
+      downloadReceiptImage(img);
+    }
+  }).catch(() => showToast('⚠️ Could not capture receipt'));
+}
+
+function downloadReceiptImage(dataUrl) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = 'receipt-anotara.png';
+  a.click();
+  showToast('✅ Receipt saved!');
 }
 
 /* ── DAILY TASKS ─────────────────────────────── */

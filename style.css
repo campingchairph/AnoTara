@@ -699,6 +699,7 @@ nav.tabs .tab.active {
 .task-name.done-text { text-decoration: line-through; color: var(--ink-4); }
 .task-assignee { font-size: 11.5px; color: var(--ink-4); font-weight: 600; margin-top: 2px; }
 .task-assign-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #F5F5F5; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.task-edit-btn   { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #F5F5F5; font-size: 13px; cursor: pointer; flex-shrink: 0; }
 .task-status { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; flex-shrink: 0; }
 .s-done     { background: #D1FAE5; color: #065F46; }
 .s-progress { background: #FEF9C3; color: #854D0E; }
