@@ -104,9 +104,9 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 /* ── APP SHELL ───────────────────────────────── */
 #app-shell-old-removed{}
 #app-shell.active{display:flex;flex-direction:column;width:100vw;}
-#app-overview{order:1;flex-shrink:0;width:100%;}
-#main-tabs   {order:2;flex-shrink:0;width:100%;}
-#tab-panels  {order:3;flex:1;width:100%;}
+#app-overview{order:1;flex-shrink:0;width:100vw;}
+#main-tabs   {order:2;flex-shrink:0;width:100vw;}
+#tab-panels  {order:3;flex:1;width:100vw;}
 
 /* Overview bottom gap */
 
@@ -133,7 +133,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 
 /* ── TAB PANELS ──────────────────────────────── */
 #tab-panels{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#F5F5F5;width:100vw;box-sizing:border-box;}
-.tab-panel{display:none;width:100%;min-height:100%;overflow-y:visible;padding:16px 16px 40px;background:#F5F5F5;box-sizing:border-box;}
+.tab-panel{display:none;width:100%;min-height:100%;padding:16px 16px 80px;background:#F5F5F5;box-sizing:border-box;}
 .tab-panel.active{display:block;}
 
 /* ── TOPBAR (sub-screens) ────────────────────── */
@@ -156,9 +156,9 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 .greeting-name{font-size:28px;font-weight:900;color:var(--ink);letter-spacing:-0.5px;line-height:1.1;}
 
 /* ── BALANCE CARD ────────────────────────────── */
-.balance-card{background:#fff;border:none;border-radius:var(--r-xl);
-  padding:20px 20px 18px;margin:12px 0 0;
-  box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.balance-card{background:var(--flat-green);border:none;border-radius:var(--r-xl);
+  padding:20px 20px 18px;margin:0 16px 20px;
+  box-shadow:0 4px 16px rgba(198,224,63,0.35);}
 .bal-label{font-size:12px;font-weight:700;color:rgba(0,0,0,0.55);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
 .bal-amount{font-size:36px;font-weight:900;color:var(--ink);letter-spacing:-1.5px;line-height:1;}
 .bal-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
@@ -167,6 +167,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 
 /* ── SECTION HEADERS ─────────────────────────── */
 .pad{padding:0 16px;}
+.tab-panel .pad{padding-left:0;padding-right:0;}
 .tab-panel .pad{padding-left:0;padding-right:0;}
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 16px;}
 .sec-title{font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-0.3px;}
@@ -587,12 +588,6 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 }
 
 /* ── OVERVIEW HEADER PANEL ───────────────────── */
-#app-overview {
-  background: var(--flat-green) !important;
-  padding: 16px 20px 20px !important;
-  width: 100vw;
-  box-sizing: border-box;
-}
 #app-overview .greeting-sub { color: rgba(0,0,0,0.55); }
 #app-overview .greeting-name { color: var(--ink); }
 
