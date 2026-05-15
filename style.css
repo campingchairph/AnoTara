@@ -120,7 +120,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 }
 .main-tab{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  gap:3px;padding:10px 4px 8px;border:none;background:none;
+  gap:3px;padding:8px 4px 7px;border:none;background:none;
   cursor:pointer;transition:all 0.18s;border-radius:var(--r-xl);
   color:#AAAAAA;font-size:10px;font-weight:800;font-family:var(--f);
   min-width:0;
@@ -587,7 +587,10 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 }
 
 /* ── OVERVIEW HEADER PANEL ───────────────────── */
-#app-overview { background: var(--flat-green) !important; width:100vw; box-sizing:border-box; }
+#app-overview {
+  background: var(--flat-green) !important;
+  width:100vw;box-sizing:border-box;
+}
 #app-overview .greeting-sub { color: rgba(0,0,0,0.55); }
 #app-overview .greeting-name { color: var(--ink); }
 
@@ -720,6 +723,8 @@ nav.tabs .tab.active {
 .settle-btn { padding: 7px 14px; border-radius: 99px; border: none; background: var(--flat-green); font-size: 12px; font-weight: 800; color: var(--ink); cursor: pointer; font-family: var(--f); }
 
 /* Remove tab-swipe-dot remnants in group detail */
+
+/* edge-to-edge removed */
 
 /* ── BALANCE BREAKDOWN TABS ──────────────────── */
 .bal-tabs{display:flex;gap:4px;padding:4px;border-radius:var(--r-md);margin-bottom:14px;}
