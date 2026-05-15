@@ -78,7 +78,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 #app{width:100%;}
 
 /* ── APP SHELL ───────────────────────────────── */
-#app-shell{display:none;flex-direction:column;height:100dvh;width:100%;position:fixed;top:0;left:0;right:0;bottom:0;background:#F5F5F5;overflow-x:hidden;overflow-y:hidden;margin:0;padding:0;}
+#app-shell{display:none;flex-direction:column;height:100dvh;width:100%;position:fixed;top:0;left:0;right:0;bottom:0;background:#F5F5F5;overflow:hidden;box-sizing:border-box;}
 @keyframes fadeUp {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes popIn  {0%{transform:scale(0.92);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -114,14 +114,14 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 #main-tabs{
   display:flex;background:#fff;
   border-bottom:1px solid rgba(0,0,0,0.07);
-  padding:6px 0;gap:0;z-index:10;
+  padding:8px 8px 6px;gap:4px;z-index:10;
   box-shadow:0 2px 8px rgba(0,0,0,0.04);
-  width:100%;
+  width:100%;box-sizing:border-box;
 }
 .main-tab{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  gap:3px;padding:8px 0 7px;border:none;background:none;
-  cursor:pointer;transition:all 0.18s;border-radius:var(--r-md);
+  gap:3px;padding:10px 8px 8px;border:none;background:none;
+  cursor:pointer;transition:all 0.18s;border-radius:var(--r-xl);
   color:#AAAAAA;font-size:10px;font-weight:800;font-family:var(--f);
   min-width:0;
 }
@@ -132,8 +132,8 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 #main-tab-wedding{display:none;}
 
 /* ── TAB PANELS ──────────────────────────────── */
-#tab-panels{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#F5F5F5;width:100%;margin:0;padding:0;}
-.tab-panel{display:none;width:100%;min-height:100%;overflow-y:visible;padding-bottom:40px;background:#F5F5F5;margin:0;}
+#tab-panels{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#F5F5F5;width:100%;box-sizing:border-box;}
+.tab-panel{display:none;width:100%;min-height:100%;overflow-y:visible;padding:16px 16px 40px;background:#F5F5F5;box-sizing:border-box;}
 .tab-panel.active{display:block;}
 
 /* ── TOPBAR (sub-screens) ────────────────────── */
@@ -727,19 +727,4 @@ nav.tabs .tab.active {
 
 /* edge-to-edge removed */
 
-/* ── EDGE TO EDGE CARDS ─────────────────────── */
-.tab-panel .glass,
-.tab-panel .glass-pink,
-.tab-panel .glass-green,
-.tab-panel .glass-cream {
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  box-shadow: none;
-  border-top: none;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
-  width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-}
 /* Overview bottom gap */
