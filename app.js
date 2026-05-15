@@ -1430,28 +1430,30 @@ function renderGroupsList() {
       </div>`;
   }
 
-  // Full groups list — renders into both home screen and groups tab panel
-  const listIds = ['groups-list-el', 'groups-tab-list-el'];
+  // Full groups list — render into both home screen list and groups tab panel
   const listHtml = GROUPS.map(g => {
-      const budgetBar = g.budget ? `<div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:30%;height:100%;background:linear-gradient(90deg,var(--tan),var(--tan-dark));border-radius:2px"></div></div>` : '';
-      return `<div class="activity-item ${bgMap[g.type]||'glass'}" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('${g.id}')">
-        <div style="width:52px;height:52px;border-radius:var(--r-md);background:${icMap[g.type]||'rgba(232,245,237,0.80)'};border:1px solid ${brMap[g.type]||'rgba(90,171,122,0.25)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${g.emoji}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:700;color:var(--ink)">${g.name}</div>
-          <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${g.members.map(m=>m.name.split(' ')[0]).join(', ')}</div>
-          ${budgetBar}
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:11px;font-weight:700;color:var(--ink-4)">${g.members.length} members</div>
-          ${g.budget?'<div style="font-size:10.5px;color:var(--ink-4)">₱'+g.budget.toLocaleString()+'</div>':''}
-        </div>
-      </div>`;
-    }).join('')
-    + `<div class="activity-item glass" style="border-radius:var(--r-lg);cursor:pointer;opacity:0.7" onclick="openModal('new-group-modal')">
-        <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">➕</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--ink)">New Group</div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">Start planning together</div></div>
-      </div>`;
-  listIds.forEach(lid => { const el = document.getElementById(lid); if (el) el.innerHTML = listHtml; });
+    const budgetBar = g.budget ? `<div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:30%;height:100%;background:linear-gradient(90deg,var(--tan),var(--tan-dark));border-radius:2px"></div></div>` : '';
+    return `<div class="activity-item ${bgMap[g.type]||'glass'}" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('${g.id}')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:${icMap[g.type]||'rgba(232,245,237,0.80)'};border:1px solid ${brMap[g.type]||'rgba(90,171,122,0.25)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${g.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:var(--ink)">${g.name}</div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${g.members.map(m=>m.name.split(' ')[0]).join(', ')}</div>
+        ${budgetBar}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4)">${g.members.length} members</div>
+        ${g.budget?'<div style="font-size:10.5px;color:var(--ink-4)">\u20b1'+g.budget.toLocaleString()+'</div>':''}
+      </div>
+    </div>`;
+  }).join('')
+  + `<div class="activity-item glass" style="border-radius:var(--r-lg);cursor:pointer;opacity:0.7" onclick="openModal('new-group-modal')">
+      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">➕</div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--ink)">New Group</div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">Start planning together</div></div>
+    </div>`;
+  ['groups-list-el','groups-tab-list-el'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = listHtml;
+  });
 }
 
 function addExpense() {
