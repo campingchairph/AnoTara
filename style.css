@@ -587,11 +587,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 }
 
 /* ── OVERVIEW HEADER PANEL ───────────────────── */
-#app-overview {
-  background: var(--flat-green) !important;
-  width: 100vw;
-  box-sizing: border-box;
-}
+#app-overview { background: var(--flat-green) !important; width:100vw; box-sizing:border-box; }
 #app-overview .greeting-sub { color: rgba(0,0,0,0.55); }
 #app-overview .greeting-name { color: var(--ink); }
 
@@ -672,7 +668,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-nav.tabs { padding: 8px 12px; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
+nav.tabs { padding: 8px 12px; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; position:sticky; top:0; z-index:10; flex-shrink:0; }
 nav.tabs .tab {
   flex-shrink: 0;
   padding: 8px 18px;
