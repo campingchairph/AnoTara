@@ -791,9 +791,7 @@
 
   <!-- Overview — flat green, Image-1 header style -->
   <!-- Overview — flat green with grid + blobs like splash -->
-  <div id="app-overview" style="width:100%;background:#C6E03F;padding:16px 20px 28px;position:relative;overflow:hidden;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 28px)">
-    <div style="position:absolute;top:-28px;right:-18px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.20);pointer-events:none"></div>
-    <div style="position:absolute;top:12px;right:88px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.25);pointer-events:none"></div>
+  <div id="app-overview" style="background:#C6E03F;padding:16px 20px 20px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between">
       <div style="flex:1">
         <div style="font-size:14px;font-weight:600;color:rgba(0,0,0,0.5);margin-bottom:2px" id="ov-greet">Good day, Jhoan!</div>
@@ -807,21 +805,22 @@
     <!-- Balance card -->
     <div style="margin-top:14px">
       <div onclick="openBalanceBreakdown()" style="padding:14px 16px;border-radius:var(--r-xl);background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.10);cursor:pointer;display:flex;align-items:center;gap:12px">
-      <div style="flex:1">
-        <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Net Balance</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱1,240</div>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Net Balance</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱1,240</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱1,800</span>
+          <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱560</span>
+        </div>
       </div>
-      <div style="display:flex;gap:6px">
-        <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱1,800</span>
-        <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱560</span>
-      </div>
-    </div>
-    <!-- Reminder strip -->
-    <div id="ov-reminder-banner" style="display:none;margin-top:8px">
-      <div style="border-radius:var(--r-lg);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.10)" onclick="switchMainTab('jowa');setTimeout(()=>window.openRemindersScreen(),100)">
-        <span id="ov-hrb-emoji" style="font-size:18px;flex-shrink:0">💕</span>
-        <div style="flex:1;font-size:13px;font-weight:700;color:#111827" id="ov-hrb-title">Upcoming!</div>
-        <div style="font-size:11px;font-weight:800;color:#374151;white-space:nowrap" id="ov-hrb-days"></div>
+      <!-- Reminder strip -->
+      <div id="ov-reminder-banner" style="display:none;margin-top:8px">
+        <div style="border-radius:var(--r-lg);padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.10)" onclick="switchMainTab('jowa');setTimeout(()=>window.openRemindersScreen(),100)">
+          <span id="ov-hrb-emoji" style="font-size:18px;flex-shrink:0">💕</span>
+          <div style="flex:1;font-size:13px;font-weight:700;color:#111827" id="ov-hrb-title">Upcoming!</div>
+          <div style="font-size:11px;font-weight:800;color:#374151;white-space:nowrap" id="ov-hrb-days"></div>
+        </div>
       </div>
     </div>
   </div>
