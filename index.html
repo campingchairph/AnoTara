@@ -457,8 +457,8 @@
     <div class="topbar-inner">
       <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg><span data-t="backBtn"></span></button>
       <div style="display:flex;gap:8px">
+        <button style="padding:7px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer" onclick="openEditGroup()">✏️ Edit</button>
         <button style="padding:7px 12px;border-radius:var(--r-sm);background:rgba(232,245,237,0.65);border:1px solid rgba(90,171,122,0.25);font-size:12.5px;font-weight:700;color:var(--green-deep);cursor:pointer" onclick="openShareModal()">🔗 Share</button>
-        <button style="padding:7px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer" data-t="inviteBtn" onclick="openShareModal()"></button>
       </div>
     </div>
   </header>
@@ -484,8 +484,8 @@
     <button class="tab"        id="tab-map"      onclick="switchTab('map')"      data-t="tabMap"></button>
   </nav>
 
-  <!-- SAAN TAYO CARD — always visible at top of tasks -->
-  <div id="saan-top-card" style="padding:12px 20px 0">
+  <!-- SAAN TAYO CARD — hidden for now -->
+  <div id="saan-top-card" style="padding:12px 20px 0;display:none">
     <div class="glass" style="border-radius:var(--r-md);overflow:hidden">
       <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer" onclick="openSaanTayo()">
         <div style="font-size:28px;width:44px;height:44px;background:rgba(232,245,237,0.6);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(90,171,122,0.2)">🗺</div>
@@ -508,7 +508,7 @@
     <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="expensesTitle"></span><span class="sec-action" onclick="openModal('add-expense-modal')" data-t="addExpense"></span></div>
     <div id="expenses-list"></div>
     <div class="budget-bar-wrap"><div class="bud-row"><span class="bud-label" data-t="budgetSpent"></span><span class="bud-val">₱2,840</span></div><div class="bud-row" style="margin-top:2px"><span class="bud-label" style="font-size:11.5px" data-t="budgetLabel"></span><span style="font-size:12px;color:var(--ink-3)">₱4,200</span></div><div class="prog-track"><div class="prog-fill" style="width:0" data-width="67.6%"></div></div><div class="bud-remain">₱1,360 <span data-t="budgetRemaining"></span></div></div>
-    <button class="cta-btn dark" onclick="navTo('receipt')" data-t="viewReceipt"></button>
+    <button class="cta-btn dark" onclick="renderReceipt();navTo('receipt')" data-t="viewReceipt"></button>
   </div>
   <!-- MEMBERS -->
   <div id="panel-members" class="pad" style="display:none">
@@ -522,27 +522,8 @@
   <!-- SETTLE -->
   <div id="panel-settle" class="pad" style="display:none;padding-top:16px">
     <div class="sec-hdr"><span class="sec-title">Who Pays Who</span></div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
-        <div style="width:38px;height:38px;border-radius:50%;background:#FFF8E1;border:2px solid #F5A623;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#92400E;flex-shrink:0">AN</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Ana</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
-        <div style="font-size:18px;font-weight:900;color:#BE185D">₱473</div>
-        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
-      </div>
-      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
-        <div style="width:38px;height:38px;border-radius:50%;background:#FDF2F8;border:2px solid #EC4899;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#9D174D;flex-shrink:0">TL</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Tita Linda</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Carlo</div></div>
-        <div style="font-size:18px;font-weight:900;color:#BE185D">₱273</div>
-        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
-      </div>
-      <div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
-        <div style="width:38px;height:38px;border-radius:50%;background:#F5F3FF;border:2px solid #7C3AED;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#5B21B6;flex-shrink:0">MK</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ink)">Mark</div><div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes Jhoan</div></div>
-        <div style="font-size:18px;font-weight:900;color:#BE185D">₱200</div>
-        <button style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
-      </div>
-    </div>
-    <button class="cta-btn" style="margin-top:16px" onclick="navTo('receipt')">View Receipt →</button>
+    <div id="settle-list"></div>
+    <button class="cta-btn" style="margin-top:16px" onclick="renderReceipt();navTo('receipt')">View Receipt →</button>
   </div>
   <!-- MAP -->
   <div id="panel-map" style="display:none;padding:16px">
@@ -684,27 +665,8 @@
       <button style="padding:7px 14px;border-radius:var(--r-sm);background:rgba(232,245,237,0.7);border:1px solid rgba(90,171,122,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer" onclick="showToast('📥 Saved!')" data-t="savePDF"></button>
     </div>
   </header>
-  <div class="receipt-card">
-    <div class="receipt-logo"><div class="receipt-brand">ano tara?</div><div class="receipt-title" data-t="eventSummary"></div><div class="receipt-sub">Mama's Birthday · May 15, 2025</div></div>
-    <div class="r-divider"></div>
-    <div class="r-row"><span class="r-key">Event</span><span class="r-val">Mama's Birthday</span></div>
-    <div class="r-row"><span class="r-key">Group</span><span class="r-val">6 members</span></div>
-    <div class="r-row"><span class="r-key">Date</span><span class="r-val">May 15, 2025</span></div>
-    <div class="r-divider"></div>
-    <div class="r-sec-title">Expenses</div>
-    <div class="r-row"><span class="r-key">🎂 Birthday cake (Carlo)</span><span class="r-val">₱680</span></div>
-    <div class="r-row"><span class="r-key">🎉 Decorations (Mark)</span><span class="r-val">₱960</span></div>
-    <div class="r-row"><span class="r-key">🍽️ Catering (Jhoan)</span><span class="r-val">₱1,200</span></div>
-    <div class="r-divider"></div>
-    <div class="r-row"><span class="r-key" style="font-weight:700;color:var(--ink)" data-t="totalSpent"></span><span class="r-total">₱2,840</span></div>
-    <div class="r-row"><span class="r-key" data-t="perPerson"></span><span class="r-val">₱473.33</span></div>
-    <div class="r-row"><span class="r-key" data-t="remaining"></span><span class="r-val" style="color:var(--green-deep);font-weight:700">₱1,360</span></div>
-    <div class="r-divider"></div>
-    <div class="r-sec-title" data-t="paymentsNeeded"></div>
-    <div class="r-row"><span class="r-key">Ana → Jhoan</span><span class="r-val">₱473</span></div>
-    <div class="r-row"><span class="r-key">Tita Linda → Carlo</span><span class="r-val">₱273</span></div>
-    <div class="r-row"><span class="r-key">Mark → Jhoan</span><span class="r-val">₱200</span></div>
-    <button class="receipt-share" onclick="shareToMessenger()"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white;flex-shrink:0"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.87 1.397 5.437 3.585 7.12V22l3.348-1.838A11.04 11.04 0 0012 20.485c5.523 0 10-4.145 10-9.242C22 6.145 17.523 2 12 2z"/></svg><span data-t="shareMessengerBtn"></span></button>
+  <div class="receipt-card" id="receipt-card-el">
+    <!-- dynamically populated by renderReceipt() -->
   </div>
   <div style="display:flex;gap:10px;margin:0 16px 16px">
     <button onclick="shareReceiptAsImage()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:var(--r-lg);border:none;background:var(--ink);color:#fff;font-size:14px;font-weight:800;font-family:var(--f);cursor:pointer">📸 Save as Image</button>
@@ -1118,6 +1080,20 @@
     <div class="input-group"><div class="input-label" data-t="groupTypeLabel"></div><div class="type-grid"><button class="type-btn selected" onclick="selectType(this)"><span class="type-emoji">💑</span><div class="type-name" data-t="typeJowa"></div><div class="type-desc" data-t="typeJowaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">👨‍👩‍👧‍👦</span><div class="type-name" data-t="typeFamilia"></div><div class="type-desc" data-t="typeFamiliaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">🎉</span><div class="type-name" data-t="typeBerks"></div><div class="type-desc" data-t="typeBerksSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">✈️</span><div class="type-name" data-t="typeTrip"></div><div class="type-desc" data-t="typeTripSub"></div></button></div></div>
     <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input type="number" class="glass-input" placeholder="₱ 0.00"></div>
     <button class="cta-btn" onclick="createGroup()" data-t="createGroupBtn"></button>
+  </div>
+</div>
+
+<!-- Edit Group -->
+<div id="edit-group-modal" class="modal-overlay" onclick="closeModalOutside(event,'edit-group-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Group</div>
+    <div class="input-group"><div class="input-label">Group Name</div><input type="text" id="edit-group-name" class="glass-input" placeholder="e.g. Bday ni Carlo"></div>
+    <div class="input-group"><div class="input-label">Emoji</div><input type="text" id="edit-group-emoji" class="glass-input" placeholder="🎂" maxlength="2"></div>
+    <div class="input-group"><div class="input-label">Budget (optional)</div><input type="number" id="edit-group-budget" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Members</div><div id="edit-group-members-list" style="display:flex;flex-direction:column;gap:6px"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px"><input type="text" id="edit-group-new-member" class="glass-input" placeholder="Add member name…" style="flex:1"><button onclick="editGroupAddMember()" style="padding:11px 16px;border-radius:var(--r-md);border:none;background:var(--flat-green);font-size:13px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f);flex-shrink:0">+ Add</button></div>
+    <button class="cta-btn" onclick="saveEditGroup()">Save Changes →</button>
   </div>
 </div>
 

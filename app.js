@@ -677,6 +677,7 @@ function openGroup(id) {
   renderSaanTopCard(group);
   renderTasksPanel(group);
   renderExpensesPanel(group);
+  renderSettlePanel(group);
   navTo('group-detail');
   switchTab('tasks');
   setTimeout(initTabSwipe, 100);
@@ -1503,6 +1504,7 @@ function addExpense() {
   group.expenses.push(expense);
   saveGroups();
   renderExpensesPanel(group);
+  renderSettlePanel(group);
   if (descEl) descEl.value = '';
   if (amtEl)  amtEl.value  = '';
   if (noteEl) noteEl.value = '';
@@ -1671,6 +1673,7 @@ function deleteExpense(expId) {
   group.expenses = group.expenses.filter(e => e.id !== expId);
   saveGroups();
   renderExpensesPanel(group);
+  renderSettlePanel(group);
   closeModalById('expense-actions-modal');
   closeModalById('edit-expense-modal');
   showToast('🗑 Expense deleted');
@@ -1739,6 +1742,190 @@ function deleteTask(taskId) {
   showToast('🗑 Task deleted');
 }
 
+/* ── RECEIPT RENDER ──────────────────────────── */
+function renderReceipt() {
+  const card = document.getElementById('receipt-card-el');
+  if (!card) return;
+  const group = getActiveGroup();
+  if (!group) { card.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-4)">No group selected</div>'; return; }
+
+  const expenses   = group.expenses || [];
+  const total      = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const perPerson  = group.members.length > 0 ? total / group.members.length : 0;
+  const remaining  = group.budget ? group.budget - total : null;
+  const settlements = calcSettlement(group);
+  const today      = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const expenseRows = expenses.length === 0
+    ? '<div style="padding:12px 20px;color:var(--ink-4);font-size:13px">No expenses logged yet</div>'
+    : expenses.map(e => {
+        const payer = group.members.find(m => m.id === e.payerId);
+        const pName = payer ? payer.name.split(' ')[0] : '—';
+        return `<div class="r-row"><span class="r-key">${e.icon} ${e.name} (${pName})</span><span class="r-val">₱${parseFloat(e.amount).toLocaleString()}</span></div>`;
+      }).join('');
+
+  const settlementRows = settlements.length === 0
+    ? '<div style="padding:8px 20px;color:var(--ink-4);font-size:13px">Everyone is settled up ✓</div>'
+    : settlements.map(s => `<div class="r-row"><span class="r-key">${s.fromName.split(' ')[0]} → ${s.toName.split(' ')[0]}</span><span class="r-val">₱${s.amount.toLocaleString()}</span></div>`).join('');
+
+  card.innerHTML = `
+    <div class="receipt-logo">
+      <div class="receipt-brand">ano tara?</div>
+      <div class="receipt-title">Event Summary</div>
+      <div class="receipt-sub">${group.name}</div>
+    </div>
+    <div class="r-divider"></div>
+    <div class="r-row"><span class="r-key">Group</span><span class="r-val">${group.members.length} members</span></div>
+    <div class="r-row"><span class="r-key">Date</span><span class="r-val">${today}</span></div>
+    <div class="r-divider"></div>
+    <div class="r-sec-title">Expenses</div>
+    ${expenseRows}
+    <div class="r-divider"></div>
+    <div class="r-row"><span class="r-key" style="font-weight:700;color:var(--ink)">Total Spent</span><span class="r-total">₱${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+    <div class="r-row"><span class="r-key">Per person</span><span class="r-val">₱${perPerson.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+    ${remaining !== null ? `<div class="r-row"><span class="r-key">Remaining</span><span class="r-val" style="color:var(--green-deep);font-weight:700">₱${remaining.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>` : ''}
+    <div class="r-divider"></div>
+    <div class="r-sec-title">Who Pays Who</div>
+    ${settlementRows}
+    <button class="receipt-share" onclick="shareToMessenger()">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white;flex-shrink:0"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.87 1.397 5.437 3.585 7.12V22l3.348-1.838A11.04 11.04 0 0012 20.485c5.523 0 10-4.145 10-9.242C22 6.145 17.523 2 12 2z"/></svg>
+      Share via Messenger
+    </button>
+  `;
+}
+
+/* ── SETTLEMENT ALGORITHM ────────────────────── */
+function calcSettlement(group) {
+  if (!group.expenses || group.expenses.length === 0 || group.members.length < 2) return [];
+  const balances = {};
+  group.members.forEach(m => balances[m.id] = 0);
+  group.expenses.forEach(exp => {
+    const amount = parseFloat(exp.amount) || 0;
+    if (!amount) return;
+    if (exp.splitMethod === 'equal') {
+      const share = amount / group.members.length;
+      group.members.forEach(m => {
+        balances[m.id] = (balances[m.id] || 0) - share;
+        if (m.id === exp.payerId) balances[m.id] += amount;
+      });
+    } else {
+      if (balances[exp.payerId] !== undefined) balances[exp.payerId] += amount;
+    }
+  });
+  const creditors = group.members.filter(m => balances[m.id] > 0.01).map(m => ({ ...m, bal: balances[m.id] }));
+  const debtors   = group.members.filter(m => balances[m.id] < -0.01).map(m => ({ ...m, bal: -balances[m.id] }));
+  const result = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amt = Math.min(debtors[i].bal, creditors[j].bal);
+    result.push({ fromName: debtors[i].name, toName: creditors[j].name, amount: Math.round(amt * 100) / 100 });
+    debtors[i].bal -= amt;
+    creditors[j].bal -= amt;
+    if (debtors[i].bal < 0.01) i++;
+    if (creditors[j].bal < 0.01) j++;
+  }
+  return result;
+}
+
+/* ── SETTLE PANEL RENDER ─────────────────────── */
+function renderSettlePanel(group) {
+  const container = document.getElementById('settle-list');
+  if (!container) return;
+  const settlements = calcSettlement(group);
+  const avColors = ['ma-tan','ma-pink','ma-green','ma-sand'];
+  if (settlements.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px;font-weight:600">${(group.expenses||[]).length === 0 ? 'No expenses yet — add some first' : 'Everyone is settled up ✓'}</div>`;
+    return;
+  }
+  container.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">`
+    + settlements.map((s, idx) => {
+      const fromM = group.members.find(m => m.name === s.fromName) || {};
+      const toM   = group.members.find(m => m.name === s.toName)   || {};
+      const avFrom = fromM.color || avColors[idx % avColors.length];
+      return `<div style="background:#fff;border-radius:var(--r-lg);padding:14px 16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px">
+        <div class="member-av ${avFrom}" style="width:38px;height:38px;border-radius:50%;font-size:12px;flex-shrink:0">${(fromM.id||s.fromName.substring(0,2)).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--ink)">${s.fromName.split(' ')[0]}</div>
+          <div style="font-size:12px;color:var(--ink-4);margin-top:1px">owes ${s.toName.split(' ')[0]}</div>
+        </div>
+        <div style="font-size:18px;font-weight:900;color:#BE185D">₱${s.amount.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <button onclick="settleDebt(${idx})" style="padding:6px 14px;border-radius:99px;background:var(--flat-green);border:none;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:var(--f)">Settle</button>
+      </div>`;
+    }).join('')
+    + '</div>';
+}
+
+function settleDebt(idx) { showToast('✅ Marked as settled!'); }
+
+/* ── GROUP EDIT ──────────────────────────────── */
+function openEditGroup() {
+  const group = getActiveGroup();
+  if (!group) return;
+  document.getElementById('edit-group-name').value   = group.name;
+  document.getElementById('edit-group-emoji').value  = group.emoji;
+  document.getElementById('edit-group-budget').value = group.budget || '';
+  renderEditGroupMembers(group);
+  openModal('edit-group-modal');
+}
+
+function renderEditGroupMembers(group) {
+  const el = document.getElementById('edit-group-members-list');
+  if (!el) return;
+  el.innerHTML = group.members.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.6);border-radius:var(--r-md);border:1px solid rgba(0,0,0,0.06)">
+      <div class="member-av ${m.color}" style="width:32px;height:32px;border-radius:9px;font-size:11px;flex-shrink:0">${m.id}</div>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${m.name}</span>
+      ${!m.isOwner ? `<button onclick="editGroupRemoveMember('${m.id}')" style="border:none;background:none;color:var(--danger);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">×</button>` : '<span style="font-size:10px;font-weight:700;color:var(--ink-4);padding:2px 8px;background:rgba(0,0,0,0.05);border-radius:99px">You</span>'}
+    </div>`).join('');
+}
+
+function editGroupRemoveMember(memberId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  group.members = group.members.filter(m => m.id !== memberId);
+  saveGroups();
+  renderEditGroupMembers(group);
+  renderMembersTab(group);
+}
+
+function editGroupAddMember() {
+  const input = document.getElementById('edit-group-new-member');
+  const name  = (input?.value || '').trim();
+  if (!name) return;
+  const group = getActiveGroup();
+  if (!group) return;
+  const colors = ['ma-green','ma-pink','ma-sand','ma-tan'];
+  const newId  = name.substring(0,2).toUpperCase() + group.members.length;
+  group.members.push({ id:newId, name, color:colors[group.members.length % colors.length], isOwner:false });
+  saveGroups();
+  if (input) input.value = '';
+  renderEditGroupMembers(group);
+  renderMembersTab(group);
+}
+
+function saveEditGroup() {
+  const group  = getActiveGroup();
+  if (!group) return;
+  const name   = document.getElementById('edit-group-name').value.trim();
+  const emoji  = document.getElementById('edit-group-emoji').value.trim();
+  const budget = parseFloat(document.getElementById('edit-group-budget').value) || 0;
+  if (!name) { showToast('⚠️ Enter a group name'); return; }
+  group.name   = name;
+  group.emoji  = emoji || group.emoji;
+  group.budget = budget;
+  saveGroups();
+  // Refresh hero
+  const heroName  = document.getElementById('group-hero-name');
+  const heroEmoji = document.getElementById('group-hero-emoji');
+  const heroSub   = document.getElementById('group-hero-sub');
+  if (heroName)  heroName.textContent  = group.name;
+  if (heroEmoji) heroEmoji.textContent = group.emoji;
+  if (heroSub)   heroSub.textContent   = group.members.map(m=>m.name.split(' ')[0]).join(', ') + ' · ' + group.members.length + ' members';
+  renderGroupsList();
+  closeModalById('edit-group-modal');
+  showToast('✅ Group updated!');
+}
+
 function renderIconPickerInto(container, previewId) {
   const ICONS = {
     'Food & Drink': ['🍽️','🍜','🍕','🍔','🍣','🥗','🍱','☕','🧋','🍺','🥩','🍗'],
@@ -1769,7 +1956,7 @@ function selectEditIcon(btn, icon, previewId) {
 }
 
 function shareReceiptAsImage() {
-  const card = document.querySelector('.receipt-card');
+  const card = document.getElementById('receipt-card-el');
   if (!card) return;
   showToast('📸 Capturing receipt…');
   html2canvas(card, { backgroundColor: '#ffffff', scale: 2, useCORS: true }).then(canvas => {
