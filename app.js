@@ -678,6 +678,7 @@ function openGroup(id) {
   renderTasksPanel(group);
   renderExpensesPanel(group);
   renderSettlePanel(group);
+  updateGroupHeroStats(group);
   navTo('group-detail');
   switchTab('tasks');
   setTimeout(initTabSwipe, 100);
@@ -898,7 +899,7 @@ function setTaskStatus(btnEl, status) {
     const group = getActiveGroup();
     if (group) {
       const task = group.tasks.find(t => t.id === taskId);
-      if (task) { task.status = status; saveGroups(); }
+      if (task) { task.status = status; saveGroups(); updateGroupHeroStats(group); }
     }
   }
   closeAllDropdowns();
@@ -1365,8 +1366,16 @@ function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   // Render dynamic content before opening
-  if (id === 'add-expense-modal') { renderIconPicker(); renderMemberPicker(); renderSplitPreview(); STATE.selectedPayer = null; }
-  if (id === 'add-task-modal')    { renderTaskMemberPicker(); STATE.assignedMember = null; }
+  if (id === 'add-expense-modal') {
+    renderIconPicker();
+    const g = getActiveGroup();
+    if (g) renderExpensePaymentInputs(g, 'expense-member-payments', 'expense-total-preview');
+  }
+  if (id === 'add-task-modal') {
+    const g = getActiveGroup();
+    if (g) renderTaskMemberPickerFor(g);
+    STATE.assignedMember = null;
+  }
   el.classList.add('open');
 }
 
@@ -1484,19 +1493,19 @@ function renderGroupsList() {
 function addExpense() {
   const group = getActiveGroup();
   if (!group) return;
-  const descEl   = document.getElementById('expense-desc-input');
-  const amtEl    = document.getElementById('expense-amount-input');
-  const noteEl   = document.getElementById('expense-note-input');
-  const dateEl   = document.getElementById('expense-date-input');
-  const name     = (descEl?.value || '').trim();
-  const amount   = parseFloat(amtEl?.value) || 0;
-  if (!name || !amount) { showToast('⚠️ Enter a description and amount'); return; }
-  const payerId  = STATE.selectedPayer || (group.members[0]?.id);
-  const expense  = {
+  const descEl = document.getElementById('expense-desc-input');
+  const noteEl = document.getElementById('expense-note-input');
+  const dateEl = document.getElementById('expense-date-input');
+  const name   = (descEl?.value || '').trim();
+  if (!name) { showToast('⚠️ Enter a description'); return; }
+  const payInputs     = document.querySelectorAll('#expense-member-payments .expense-pay-input');
+  const memberPayments = Array.from(payInputs).map(inp => ({ memberId: inp.dataset.memberId, amount: parseFloat(inp.value) || 0 }));
+  const total         = memberPayments.reduce((s, p) => s + p.amount, 0);
+  if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
+  const expense = {
     id: 'exp_' + Date.now(),
     icon: STATE.expenseIconSelected || '🍽️',
-    name, amount, payerId,
-    splitMethod: STATE.splitMethod || 'equal',
+    name, memberPayments, total,
     note: noteEl?.value.trim() || '',
     date: dateEl?.value || '',
     createdAt: Date.now(),
@@ -1505,10 +1514,13 @@ function addExpense() {
   saveGroups();
   renderExpensesPanel(group);
   renderSettlePanel(group);
+  updateGroupHeroStats(group);
   if (descEl) descEl.value = '';
-  if (amtEl)  amtEl.value  = '';
   if (noteEl) noteEl.value = '';
   if (dateEl) dateEl.value = '';
+  payInputs.forEach(i => i.value = '');
+  const prev = document.getElementById('expense-total-preview');
+  if (prev) prev.style.display = 'none';
   closeModalById('add-expense-modal');
   showToast(t('expenseAdded'));
 }
@@ -1531,6 +1543,7 @@ function addTask() {
   group.tasks.push(task);
   saveGroups();
   renderTasksPanel(group);
+  updateGroupHeroStats(group);
   if (nameEl) nameEl.value = '';
   if (dueEl)  dueEl.value  = '';
   closeModalById('add-task-modal');
@@ -1573,19 +1586,29 @@ function renderExpensesPanel(group) {
     return;
   }
   container.innerHTML = group.expenses.map(exp => {
-    const payer    = group.members.find(m => m.id === exp.payerId);
-    const pName    = payer ? payer.name.split(' ')[0] : exp.payerId || '—';
-    const perPerson = exp.splitMethod === 'equal' && group.members.length > 0
-      ? (exp.amount / group.members.length).toFixed(2) : null;
+    let total, payerLine;
+    if (exp.memberPayments) {
+      total = exp.memberPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+      const payers = exp.memberPayments.filter(p => p.amount > 0).map(p => {
+        const m = group.members.find(m => m.id === p.memberId);
+        return m ? `${m.name.split(' ')[0]} ₱${parseFloat(p.amount).toLocaleString()}` : '';
+      }).filter(Boolean);
+      payerLine = payers.length ? payers.join(', ') : '—';
+    } else {
+      total = parseFloat(exp.amount) || 0;
+      const payer = group.members.find(m => m.id === exp.payerId);
+      payerLine = `Paid by ${payer ? payer.name.split(' ')[0] : '—'}`;
+    }
+    const share = group.members.length > 0 ? (total / group.members.length).toFixed(2) : 0;
     return `<div class="expense-item glass" onclick="openExpenseActions('${exp.id}')">
       <div class="expense-icon" style="background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.22)">${exp.icon}</div>
       <div class="expense-body">
         <div class="expense-name">${exp.name}</div>
-        <div class="expense-detail">Paid by ${pName} · ${group.members.length} people</div>
+        <div class="expense-detail">${payerLine}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div class="expense-amount">₱${parseFloat(exp.amount).toLocaleString()}</div>
-        ${perPerson ? `<div class="expense-split">₱${perPerson} each</div>` : ''}
+        <div class="expense-amount">₱${total.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+        <div class="expense-split">₱${share} each</div>
       </div>
     </div>`;
   }).join('');
@@ -1602,67 +1625,79 @@ function openExpenseActions(expId) {
   openModal('expense-actions-modal');
 }
 
+function renderExpensePaymentInputs(group, containerId, totalPreviewId) {
+  const container = document.getElementById(containerId);
+  if (!container || !group) return;
+  container.innerHTML = group.members.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <div class="member-av ${m.color}" style="width:32px;height:32px;border-radius:9px;font-size:11px;flex-shrink:0">${m.id}</div>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
+        <span style="padding:8px 6px 8px 10px;font-size:13px;font-weight:700;color:var(--ink-3)">₱</span>
+        <input type="number" class="expense-pay-input" data-member-id="${m.id}" placeholder="0" min="0"
+          oninput="updateExpenseTotalPreview('${containerId}','${totalPreviewId}')"
+          style="width:80px;padding:8px 10px 8px 0;border:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink);text-align:right;outline:none;-moz-appearance:textfield">
+      </div>
+    </div>`).join('');
+}
+
+function updateExpenseTotalPreview(containerId, previewId) {
+  const preview   = document.getElementById(previewId);
+  const container = document.getElementById(containerId);
+  if (!preview || !container) return;
+  const total = Array.from(container.querySelectorAll('.expense-pay-input')).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+  preview.style.display = total > 0 ? 'block' : 'none';
+  preview.textContent = 'Total: ₱' + total.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
 function openEditExpense(expId) {
   const group = getActiveGroup();
   if (!group) return;
   const exp = group.expenses.find(e => e.id === expId);
   if (!exp) return;
   closeModalById('expense-actions-modal');
-  document.getElementById('edit-expense-id').value      = expId;
-  document.getElementById('edit-expense-desc').value    = exp.name;
-  document.getElementById('edit-expense-amount').value  = exp.amount;
-  document.getElementById('edit-expense-note').value    = exp.note || '';
-  STATE.editSelectedPayer = exp.payerId;
-  // Render icon picker
+  document.getElementById('edit-expense-id').value   = expId;
+  document.getElementById('edit-expense-desc').value = exp.name;
+  document.getElementById('edit-expense-note').value = exp.note || '';
+  STATE.expenseIconSelected = exp.icon;
   const iconPreview = document.getElementById('edit-expense-icon-preview');
   if (iconPreview) iconPreview.textContent = exp.icon;
-  STATE.expenseIconSelected = exp.icon;
   const grid = document.getElementById('edit-icon-picker-grid');
   if (grid) renderIconPickerInto(grid, 'edit-expense-icon-preview');
-  // Render payer picker
-  const picker = document.getElementById('edit-paidby-picker');
-  if (picker) {
-    picker.innerHTML = group.members.map(m => {
-      const sel = m.id === exp.payerId;
-      return `<button class="member-pick-btn edit-payer-btn${sel?' selected':''}"
-        onclick="selectEditPayer(this,'${m.id}')"
-        style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:var(--r-md);cursor:pointer;border:1.5px solid ${sel?'rgba(201,169,110,0.45)':'rgba(255,255,255,0.5)'};background:${sel?'rgba(245,230,200,0.55)':'rgba(255,255,255,0.45)'}">
-        <div class="member-av ${m.color}" style="width:28px;height:28px;border-radius:8px;font-size:10px">${m.id}</div>
-        <span style="font-size:12.5px;font-weight:600;color:var(--ink)">${m.name}</span>
-      </button>`;
-    }).join('');
-  }
+  renderExpensePaymentInputs(group, 'edit-expense-member-payments', 'edit-expense-total-preview');
+  // Pre-fill amounts
+  const payments = exp.memberPayments || (exp.payerId ? [{ memberId: exp.payerId, amount: exp.amount }] : []);
+  payments.forEach(p => {
+    const inp = document.querySelector(`#edit-expense-member-payments .expense-pay-input[data-member-id="${p.memberId}"]`);
+    if (inp && p.amount) inp.value = p.amount;
+  });
+  updateExpenseTotalPreview('edit-expense-member-payments', 'edit-expense-total-preview');
   openModal('edit-expense-modal');
 }
 
-function selectEditPayer(btn, id) {
-  STATE.editSelectedPayer = id;
-  document.querySelectorAll('.edit-payer-btn').forEach(b => {
-    b.classList.remove('selected');
-    b.style.borderColor = 'rgba(255,255,255,0.5)';
-    b.style.background  = 'rgba(255,255,255,0.45)';
-  });
-  btn.classList.add('selected');
-  btn.style.borderColor = 'rgba(201,169,110,0.45)';
-  btn.style.background  = 'rgba(245,230,200,0.55)';
-}
-
 function saveEditExpense() {
-  const group  = getActiveGroup();
+  const group = getActiveGroup();
   if (!group) return;
-  const expId  = document.getElementById('edit-expense-id').value;
-  const exp    = group.expenses.find(e => e.id === expId);
+  const expId = document.getElementById('edit-expense-id').value;
+  const exp   = group.expenses.find(e => e.id === expId);
   if (!exp) return;
-  const name   = document.getElementById('edit-expense-desc').value.trim();
-  const amount = parseFloat(document.getElementById('edit-expense-amount').value) || 0;
-  if (!name || !amount) { showToast('⚠️ Enter a description and amount'); return; }
-  exp.name    = name;
-  exp.amount  = amount;
-  exp.note    = document.getElementById('edit-expense-note').value.trim();
-  exp.payerId = STATE.editSelectedPayer || exp.payerId;
-  exp.icon    = STATE.expenseIconSelected || exp.icon;
+  const name  = document.getElementById('edit-expense-desc').value.trim();
+  if (!name) { showToast('⚠️ Enter a description'); return; }
+  const payInputs      = document.querySelectorAll('#edit-expense-member-payments .expense-pay-input');
+  const memberPayments = Array.from(payInputs).map(inp => ({ memberId: inp.dataset.memberId, amount: parseFloat(inp.value) || 0 }));
+  const total          = memberPayments.reduce((s, p) => s + p.amount, 0);
+  if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
+  exp.name           = name;
+  exp.icon           = STATE.expenseIconSelected || exp.icon;
+  exp.memberPayments = memberPayments;
+  exp.total          = total;
+  exp.note           = document.getElementById('edit-expense-note').value.trim();
+  delete exp.amount;
+  delete exp.payerId;
   saveGroups();
   renderExpensesPanel(group);
+  renderSettlePanel(group);
+  updateGroupHeroStats(group);
   closeModalById('edit-expense-modal');
   showToast('✅ Expense updated!');
 }
@@ -1728,6 +1763,7 @@ function saveEditTask() {
   task.assigneeId = STATE.editAssignedMember || task.assigneeId;
   saveGroups();
   renderTasksPanel(group);
+  updateGroupHeroStats(group);
   closeModalById('edit-task-modal');
   showToast('✅ Task updated!');
 }
@@ -1738,6 +1774,7 @@ function deleteTask(taskId) {
   group.tasks = group.tasks.filter(t => t.id !== taskId);
   saveGroups();
   renderTasksPanel(group);
+  updateGroupHeroStats(group);
   closeModalById('edit-task-modal');
   showToast('🗑 Task deleted');
 }
@@ -1800,16 +1837,20 @@ function calcSettlement(group) {
   const balances = {};
   group.members.forEach(m => balances[m.id] = 0);
   group.expenses.forEach(exp => {
-    const amount = parseFloat(exp.amount) || 0;
-    if (!amount) return;
-    if (exp.splitMethod === 'equal') {
+    if (exp.memberPayments) {
+      const total = exp.memberPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+      if (!total) return;
+      const share = total / group.members.length;
+      exp.memberPayments.forEach(p => { if (balances[p.memberId] !== undefined) balances[p.memberId] += parseFloat(p.amount) || 0; });
+      group.members.forEach(m => { if (balances[m.id] !== undefined) balances[m.id] -= share; });
+    } else {
+      const amount = parseFloat(exp.amount) || 0;
+      if (!amount) return;
       const share = amount / group.members.length;
       group.members.forEach(m => {
         balances[m.id] = (balances[m.id] || 0) - share;
         if (m.id === exp.payerId) balances[m.id] += amount;
       });
-    } else {
-      if (balances[exp.payerId] !== undefined) balances[exp.payerId] += amount;
     }
   });
   const creditors = group.members.filter(m => balances[m.id] > 0.01).map(m => ({ ...m, bal: balances[m.id] }));
@@ -3409,6 +3450,60 @@ function pinPlaceToMap(name, catId) {
 window.pinPlaceToMap = pinPlaceToMap;
 
 // Render quick category pills on the saan-top-card
+function updateGroupHeroStats(group) {
+  const total = (group.expenses || []).reduce((s, e) => {
+    if (e.memberPayments) return s + e.memberPayments.reduce((a, p) => a + (parseFloat(p.amount) || 0), 0);
+    return s + (parseFloat(e.amount) || 0);
+  }, 0);
+  const doneTasks  = (group.tasks || []).filter(t => t.status === 'done').length;
+  const totalTasks = (group.tasks || []).length;
+  const owner      = group.members.find(m => m.isOwner);
+  let ownerBal = 0;
+  if (owner) {
+    calcSettlement(group).forEach(s => {
+      if (s.toName === owner.name) ownerBal += s.amount;
+      if (s.fromName === owner.name) ownerBal -= s.amount;
+    });
+  }
+  const tasksEl  = document.getElementById('hero-tasks');
+  const budgetEl = document.getElementById('hero-budget');
+  const spentEl  = document.getElementById('hero-spent');
+  const owedEl   = document.getElementById('hero-owed');
+  if (tasksEl)  tasksEl.textContent  = totalTasks > 0 ? `${doneTasks}/${totalTasks}` : '0';
+  if (budgetEl) budgetEl.textContent = group.budget > 0 ? '₱' + group.budget.toLocaleString() : '—';
+  if (spentEl)  spentEl.textContent  = '₱' + total.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (owedEl) {
+    owedEl.textContent = (ownerBal >= 0 ? '₱' : '-₱') + Math.abs(ownerBal).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    owedEl.style.color = ownerBal >= 0 ? 'var(--green-deep)' : 'var(--danger)';
+  }
+}
+
+function renderTaskMemberPickerFor(group) {
+  const container = document.getElementById('task-assign-picker');
+  if (!container) return;
+  container.innerHTML = group.members.map((m, i) => {
+    const sel = i === 0;
+    return `<button class="task-member-btn${sel?' selected':''}" onclick="selectTaskMember(this,'${m.id}')"
+      style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:var(--r-md);cursor:pointer;border:1.5px solid ${sel?'rgba(201,169,110,0.45)':'rgba(255,255,255,0.5)'};background:${sel?'rgba(245,230,200,0.55)':'rgba(255,255,255,0.45)'}">
+      <div class="member-av ${m.color}" style="width:36px;height:36px;border-radius:10px;font-size:12px">${m.id}</div>
+      <span style="font-size:10px;font-weight:600;color:var(--ink-2);text-align:center;max-width:52px">${m.name.split(' ')[0]}</span>
+    </button>`;
+  }).join('');
+  if (group.members[0]) STATE.assignedMember = group.members[0].id;
+}
+
+function deleteGroup() {
+  const group = getActiveGroup();
+  if (!group) return;
+  if (!confirm(`Delete "${group.name}"? This cannot be undone.`)) return;
+  GROUPS = GROUPS.filter(g => g.id !== group.id);
+  saveGroups();
+  renderGroupsList();
+  closeModalById('edit-group-modal');
+  goBack();
+  showToast('🗑 Group deleted');
+}
+
 function renderSaanTopCard(group) {
   const isJowa = group?.type === 'jowa';
   const titleEl = document.getElementById('saan-card-title');
