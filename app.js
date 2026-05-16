@@ -1715,7 +1715,7 @@ function openExpenseReceipt(expId) {
     const covM = group.members.find(m=>m.id===exp.coveredBy);
     breakdownHtml = `<div class="r-sec-title">Covered Expense</div>
       <div class="r-row"><span class="r-key">Covered by</span><span class="r-val">${covM?covM.name.split(' ')[0]:'—'}</span></div>
-      <div class="r-row"><span class="r-key">Status</span><span class="r-val" style="color:${exp.isSettled?'var(--green-deep)':'var(--danger)'}${exp.isSettled?'"':'';font-weight:800"}'>${exp.isSettled?'Settled ✓':'Pending'}</span></div>`;
+      <div class="r-row"><span class="r-key">Status</span><span class="r-val" style="color:${exp.isSettled?'var(--green-deep)':'var(--danger)'};font-weight:800">${exp.isSettled?'Settled ✓':'Pending'}</span></div>`;
   }
 
   content.innerHTML = `
