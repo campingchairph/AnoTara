@@ -765,11 +765,11 @@
       <div onclick="openBalanceBreakdown()" style="padding:14px 16px;border-radius:var(--r-xl);background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.10);cursor:pointer;display:flex;align-items:center;gap:12px">
         <div style="flex:1">
           <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px">Net Balance</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱1,240</div>
+          <div id="ov-bal-amount" style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:#111827;letter-spacing:-0.5px;margin-top:2px">₱0</div>
         </div>
         <div style="display:flex;gap:6px">
-          <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱1,800</span>
-          <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱560</span>
+          <span id="ov-bal-up"   style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#D1FAE5;color:#065F46">↑ ₱0</span>
+          <span id="ov-bal-down" style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:#FCE7F3;color:#9D174D">↓ ₱0</span>
         </div>
       </div>
       <!-- Reminder strip -->
@@ -1017,6 +1017,9 @@
         <div class="settings-group glass">
           <div class="settings-item"><div class="si-left"><div class="si-icon pink">⭐</div><span class="si-name" data-t="rateApp"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
           <div class="settings-item"><div class="si-left"><div class="si-icon pink">💬</div><span class="si-name" data-t="sendFeedback"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+        </div>
+        <div class="settings-group glass">
+          <div class="settings-item" onclick="resetAppData()" style="color:var(--danger)"><div class="si-left"><div class="si-icon pink">🗑</div><span class="si-name" style="color:var(--danger)">Reset All App Data</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
         </div>
         <div style="text-align:center;padding:20px 20px 12px;font-size:12px;color:var(--ink-4)">Ano Tara? v3.0 · Made with 💕 in the Philippines</div>
       </div>

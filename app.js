@@ -58,7 +58,7 @@ if (!GROUPS) {
         { id:'TL', name:'Tita Linda',  color:'ma-sand',  isOwner:false },
         { id:'AN', name:'Ana',         color:'ma-green', isOwner:false },
       ],
-      tasks:[], expenses:[], budget:4200, createdAt: Date.now(),
+      tasks:[], expenses:[], budget:0, createdAt: Date.now(),
     },
     {
       id: 'berks', type: 'berks', emoji: '🍜',
@@ -350,6 +350,7 @@ function onAuthSuccess() {
   updateShellOverview();
   checkOverviewBanner();
   initIdleTimer();
+  setTimeout(updateNetBalance, 300); // update balance cards after data is ready
   showToast('👋 Welcome, ' + firstName + '!');
 }
 
@@ -937,61 +938,110 @@ function openBalanceBreakdown() {
   }
 }
 
+/* ── NET BALANCE (home + overview cards) ─────── */
+function updateNetBalance() {
+  let totalOwed = 0, totalOwe = 0;
+  GROUPS.forEach(g => {
+    const owner = g.members.find(m => m.isOwner);
+    if (!owner) return;
+    calcSettlement(g).forEach(s => {
+      if (s.toName   === owner.name) totalOwed += s.amount;
+      if (s.fromName === owner.name) totalOwe  += s.amount;
+    });
+  });
+  const net    = totalOwed - totalOwe;
+  const netStr = (net >= 0 ? '₱' : '-₱') + Math.abs(net).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const owedStr = '↑ ₱' + totalOwed.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const oweStr  = '↓ ₱' + totalOwe.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+  // Legacy home screen balance card
+  const ha = document.querySelector('.bal-amount');
+  const hp = document.querySelectorAll('.bal-pill');
+  if (ha) { ha.textContent = netStr; ha.style.color = net < 0 ? 'var(--danger)' : ''; }
+  if (hp[0]) hp[0].textContent = owedStr;
+  if (hp[1]) hp[1].textContent = oweStr;
+
+  // App overview balance card
+  const oa = document.getElementById('ov-bal-amount');
+  const ou = document.getElementById('ov-bal-up');
+  const od = document.getElementById('ov-bal-down');
+  if (oa) { oa.textContent = netStr; oa.style.color = net < 0 ? 'var(--danger)' : '#111827'; }
+  if (ou) ou.textContent = owedStr;
+  if (od) od.textContent = oweStr;
+}
+
 function renderBalanceBreakdown() {
-  const byGroup = document.getElementById('bal-by-group');
+  const byGroup  = document.getElementById('bal-by-group');
   const byPerson = document.getElementById('bal-by-person');
   if (!byGroup || !byPerson) return;
 
-  const groups = [
-    { name:'Ano Tara — Mifamilia', emoji:'🎂', owed:473, owe:0,   variant:'familia' },
-    { name:'Ano Tara — Berks',     emoji:'🍜', owed:560, owe:0,   variant:'berks' },
-    { name:'Ano Tara — Jowa',      emoji:'💑', owed:0,   owe:240, variant:'jowa' },
-    { name:'Palawan Trip',          emoji:'✈️', owed:800, owe:320, variant:'familia' },
-  ];
+  const empty = '<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px;font-weight:600">No balances yet — add expenses first</div>';
 
-  byGroup.innerHTML = groups.map(g => {
-    const net = g.owed - g.owe;
+  // ── By Group ──────────────────────────────────
+  const groupRows = GROUPS.map(g => {
+    const owner = g.members.find(m => m.isOwner);
+    if (!owner) return '';
+    let owed = 0, owe = 0;
+    calcSettlement(g).forEach(s => {
+      if (s.toName === owner.name)   owed += s.amount;
+      if (s.fromName === owner.name) owe  += s.amount;
+    });
+    if (owed === 0 && owe === 0) return '';
+    const net   = owed - owe;
     const isPos = net >= 0;
-    return `
-    <div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
+    return `<div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
       <span style="font-size:22px">${g.emoji}</span>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700;color:var(--ink)">${g.name}</div>
-        ${g.owed ? `<div style="font-size:11px;color:var(--green-deep)">↑ Owed ₱${g.owed}</div>` : ''}
-        ${g.owe  ? `<div style="font-size:11px;color:var(--pink-deep)">↓ Owes ₱${g.owe}</div>` : ''}
+        ${owed ? `<div style="font-size:11px;color:var(--green-deep)">↑ Owed ₱${owed.toLocaleString(undefined,{maximumFractionDigits:2})}</div>` : ''}
+        ${owe  ? `<div style="font-size:11px;color:var(--pink-deep)">↓ Owes ₱${owe.toLocaleString(undefined,{maximumFractionDigits:2})}</div>` : ''}
       </div>
       <div style="font-size:16px;font-weight:700;color:${isPos?'var(--green-deep)':'var(--pink-deep)'}">
-        ${isPos?'+':'−'}₱${Math.abs(net)}
+        ${isPos?'+':'−'}₱${Math.abs(net).toLocaleString(undefined,{maximumFractionDigits:2})}
       </div>
     </div>`;
   }).join('');
+  byGroup.innerHTML = groupRows || empty;
 
-  const people = [
-    { id:'CA', name:'Carlo',      color:'ma-green', owesYou:113,  youOwe:0   },
-    { id:'MK', name:'Mark',       color:'ma-pink',  owesYou:200,  youOwe:0   },
-    { id:'AN', name:'Ana',        color:'ma-green', owesYou:473,  youOwe:0   },
-    { id:'SP', name:'Seph (Jowa)',  color:'ma-tan',   owesYou:0,    youOwe:240 },
-    { id:'TL', name:'Tita Linda', color:'ma-sand',  owesYou:273,  youOwe:0   },
-  ];
+  // ── By Person (aggregate across all groups) ───
+  const personMap = {};
+  GROUPS.forEach(g => {
+    const owner = g.members.find(m => m.isOwner);
+    if (!owner) return;
+    calcSettlement(g).forEach(s => {
+      if (s.toName === owner.name) {
+        if (!personMap[s.fromName]) personMap[s.fromName] = { owesYou:0, youOwe:0, color:'ma-tan', id:'?' };
+        personMap[s.fromName].owesYou += s.amount;
+        const mem = g.members.find(m => m.name === s.fromName);
+        if (mem) { personMap[s.fromName].color = mem.color; personMap[s.fromName].id = mem.id; }
+      }
+      if (s.fromName === owner.name) {
+        if (!personMap[s.toName]) personMap[s.toName] = { owesYou:0, youOwe:0, color:'ma-tan', id:'?' };
+        personMap[s.toName].youOwe += s.amount;
+        const mem = g.members.find(m => m.name === s.toName);
+        if (mem) { personMap[s.toName].color = mem.color; personMap[s.toName].id = mem.id; }
+      }
+    });
+  });
+
+  const people = Object.entries(personMap).map(([name, d]) => ({ name, ...d }));
+  if (!people.length) { byPerson.innerHTML = empty; return; }
 
   byPerson.innerHTML = people.map(p => {
-    const isOwed = p.owesYou > 0;
-    return `
-    <div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
+    const net    = p.owesYou - p.youOwe;
+    const isOwed = net > 0;
+    const firstName = p.name.split(' ')[0];
+    return `<div class="bal-row glass" style="margin-bottom:8px;padding:12px 14px;border-radius:var(--r-md);display:flex;align-items:center;gap:10px">
       <div class="member-av ${p.color}" style="width:38px;height:38px;border-radius:10px;font-size:12px">${p.id}</div>
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--ink)">${p.name}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">${firstName}</div>
         <div style="font-size:11px;color:${isOwed?'var(--green-deep)':'var(--pink-deep)'}">
-          ${isOwed ? p.name+' '+t('owesYou')+' ₱'+p.owesYou : t('owesThem')+' ₱'+p.youOwe}
+          ${isOwed ? firstName+' owes you ₱'+p.owesYou.toLocaleString(undefined,{maximumFractionDigits:2}) : 'You owe ₱'+p.youOwe.toLocaleString(undefined,{maximumFractionDigits:2})}
         </div>
       </div>
-      <button onclick="showToast('📲 Request sent to ${p.name}!')" style="
-        padding:6px 12px;border-radius:var(--r-xs);
-        background:${isOwed?'rgba(90,171,122,0.15)':'rgba(224,120,152,0.12)'};
-        border:1px solid ${isOwed?'rgba(90,171,122,0.25)':'rgba(224,120,152,0.2)'};
-        color:${isOwed?'var(--green-deep)':'var(--pink-deep)'};
-        font-size:11px;font-weight:700;cursor:pointer;
-      ">${isOwed ? t('requestPayment') : t('sendMoney')}</button>
+      <button onclick="showToast('📲 Reminder sent!')" style="padding:6px 12px;border-radius:var(--r-xs);background:${isOwed?'rgba(90,171,122,0.15)':'rgba(224,120,152,0.12)'};border:1px solid ${isOwed?'rgba(90,171,122,0.25)':'rgba(224,120,152,0.2)'};color:${isOwed?'var(--green-deep)':'var(--pink-deep)'};font-size:11px;font-weight:700;cursor:pointer;">
+        ${isOwed ? 'Request' : 'Pay'}
+      </button>
     </div>`;
   }).join('');
 }
@@ -1683,13 +1733,16 @@ function openExpenseReceipt(expId) {
   if (type === 'split' || exp.memberPayments) {
     const share = group.members.length > 0 ? total/group.members.length : 0;
     if (exp.paidBy && (exp.memberPayments||[]).length === 1) {
-      // New clean format: one payer
-      const payer = group.members.find(m => m.id === exp.paidBy);
+      // New clean format: one payer — list who owes the payer
+      const payer    = group.members.find(m => m.id === exp.paidBy);
+      const payerName = payer ? payer.name.split(' ')[0] : '—';
+      const nonPayers = group.members.filter(m => m.id !== exp.paidBy);
       breakdownHtml = `<div class="r-sec-title">Split Bill</div>
-        <div class="r-row"><span class="r-key">Paid by</span><span class="r-val" style="font-weight:800">${payer?payer.name.split(' ')[0]:'—'}</span></div>
-        <div class="r-row"><span class="r-key">Splitting among</span><span class="r-val">${group.members.length} people</span></div>
+        <div class="r-row"><span class="r-key">Paid by</span><span class="r-val" style="font-weight:800">${payerName}</span></div>
+        <div class="r-row"><span class="r-key">Total</span><span class="r-val">₱${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
         <div class="r-divider"></div>
-        <div class="r-row"><span class="r-key">Each person owes</span><span class="r-val" style="font-weight:800;color:var(--tan-dark)">₱${share.toFixed(2)}</span></div>`;
+        <div style="font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 20px 4px">Owes ${payerName}</div>`
+        + nonPayers.map(m => `<div class="r-row"><span class="r-key">${m.name.split(' ')[0]}</span><span class="r-val" style="font-weight:800;color:var(--tan-dark)">₱${share.toFixed(2)}</span></div>`).join('');
     } else {
       // Legacy multi-payer format
       breakdownHtml = `<div class="r-sec-title">Payments</div>`
@@ -1952,6 +2005,14 @@ function saveProfile() {
 }
 window.openProfileEdit = openProfileEdit;
 window.saveProfile     = saveProfile;
+
+/* ── RESET APP DATA ──────────────────────────── */
+function resetAppData() {
+  if (!confirm('⚠️ Reset ALL app data?\n\nThis clears every group, expense, task, and setting. Cannot be undone.')) return;
+  localStorage.clear();
+  location.reload();
+}
+window.resetAppData = resetAppData;
 
 function renderExpensePaymentInputs(group, containerId, totalPreviewId) {
   const container = document.getElementById(containerId);
@@ -3989,6 +4050,9 @@ function updateGroupHeroStats(group) {
     if (budFillEl)   budFillEl.style.width   = '0%';
     if (budRemainEl) { budRemainEl.textContent = 'No budget set'; budRemainEl.style.color = ''; }
   }
+
+  // Refresh home net balance cards
+  updateNetBalance();
 }
 
 function renderTaskMemberPickerFor(group) {
