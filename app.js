@@ -126,23 +126,7 @@ function showAppShell() {
 }
 
 function initShellSwipe() {
-  const panels = document.getElementById('tab-panels');
-  if (!panels || panels._swipeBound) return;
-  panels._swipeBound = true;
-  let startX = 0, startY = 0;
-  panels.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, {passive:true});
-  panels.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
-    const tabs = MAIN_TABS.filter(t => t !== 'wedding' || WEDDING_STATE.activated);
-    const idx  = tabs.indexOf(_activeMainTab);
-    if (dx < 0 && idx < tabs.length-1) switchMainTab(tabs[idx+1]);
-    if (dx > 0 && idx > 0)             switchMainTab(tabs[idx-1]);
-  }, {passive:true});
+  // Swipe-to-switch-tab disabled — use the bottom tab bar to navigate
 }
 
 function updateShellOverview() {
@@ -3977,6 +3961,33 @@ function updateGroupHeroStats(group) {
       owedEl.style.color = ownerBal >= 0 ? 'var(--green-deep)' : 'var(--danger)';
       if (owedLblEl) owedLblEl.textContent = 'Owed';
     }
+  }
+
+  // ── Budget bar (expenses panel) ──────────────────
+  const budSpentEl  = document.getElementById('bud-spent-val');
+  const budTotalEl  = document.getElementById('bud-total-val');
+  const budFillEl   = document.getElementById('bud-prog-fill');
+  const budRemainEl = document.getElementById('bud-remain-val');
+  if (budSpentEl) budSpentEl.textContent = '₱' + total.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (group.budget > 0) {
+    const budget    = Number(group.budget);
+    const remaining = budget - total;
+    const pct       = Math.min(100, (total / budget) * 100).toFixed(1);
+    if (budTotalEl)  budTotalEl.textContent = '₱' + budget.toLocaleString();
+    if (budFillEl) {
+      budFillEl.style.width      = pct + '%';
+      budFillEl.style.background = remaining >= 0 ? '' : 'var(--danger)';
+    }
+    if (budRemainEl) {
+      budRemainEl.textContent = remaining >= 0
+        ? '₱' + remaining.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' remaining'
+        : '₱' + Math.abs(remaining).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' over budget';
+      budRemainEl.style.color = remaining >= 0 ? '' : 'var(--danger)';
+    }
+  } else {
+    if (budTotalEl)  budTotalEl.textContent  = '—';
+    if (budFillEl)   budFillEl.style.width   = '0%';
+    if (budRemainEl) { budRemainEl.textContent = 'No budget set'; budRemainEl.style.color = ''; }
   }
 }
 

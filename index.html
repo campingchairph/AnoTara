@@ -507,7 +507,7 @@
   <div id="panel-expenses" class="pad" style="display:none">
     <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="expensesTitle"></span><span class="sec-action" onclick="openModal('add-expense-modal')" data-t="addExpense"></span></div>
     <div id="expenses-list"></div>
-    <div class="budget-bar-wrap"><div class="bud-row"><span class="bud-label" data-t="budgetSpent"></span><span class="bud-val">₱2,840</span></div><div class="bud-row" style="margin-top:2px"><span class="bud-label" style="font-size:11.5px" data-t="budgetLabel"></span><span style="font-size:12px;color:var(--ink-3)">₱4,200</span></div><div class="prog-track"><div class="prog-fill" style="width:0" data-width="67.6%"></div></div><div class="bud-remain">₱1,360 <span data-t="budgetRemaining"></span></div></div>
+    <div class="budget-bar-wrap"><div class="bud-row"><span class="bud-label" data-t="budgetSpent"></span><span class="bud-val" id="bud-spent-val">₱0</span></div><div class="bud-row" style="margin-top:2px"><span class="bud-label" style="font-size:11.5px" data-t="budgetLabel"></span><span id="bud-total-val" style="font-size:12px;color:var(--ink-3)">—</span></div><div class="prog-track"><div class="prog-fill" id="bud-prog-fill" style="width:0%"></div></div><div class="bud-remain" id="bud-remain-val">—</div></div>
     <button class="cta-btn dark" onclick="renderReceipt();navTo('receipt')" data-t="viewReceipt"></button>
   </div>
   <!-- MEMBERS -->
