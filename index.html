@@ -1050,9 +1050,13 @@
     <div class="input-group"><div class="input-label" data-t="categoryLabel"></div><div id="expense-icon-preview" class="expense-icon-preview">🍽️</div><div class="icon-picker-wrap"><div id="icon-picker-grid"></div></div></div>
     <div class="input-group"><div class="input-label" data-t="descLabel"></div><input type="text" id="expense-desc-input" class="glass-input" data-t-ph="descPlaceholder"></div>
     <div class="input-group">
-      <div class="input-label">Who Paid How Much</div>
-      <div id="expense-member-payments"></div>
-      <div id="expense-total-preview" style="display:none;text-align:right;font-size:14px;font-weight:800;color:var(--ink);padding:8px 4px 0;border-top:1px solid rgba(0,0,0,0.07);margin-top:6px">Total: ₱0</div>
+      <div class="input-label">Expense Type</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="exp-mode-btn active" id="mode-btn-split"    onclick="switchExpenseMode('split')">💰 Split</button>
+        <button class="exp-mode-btn"        id="mode-btn-itemized" onclick="switchExpenseMode('itemized')">📋 Itemized</button>
+        <button class="exp-mode-btn"        id="mode-btn-covered"  onclick="switchExpenseMode('covered')">🤝 Covered</button>
+      </div>
+      <div id="expense-mode-content"></div>
     </div>
     <div class="input-group"><div class="input-label" data-t="noteLabel"></div><input type="text" id="expense-note-input" class="glass-input" data-t-ph="notePlaceholder"></div>
     <div class="input-group"><div class="input-label" data-t="dateLabel"></div><input type="date" id="expense-date-input" class="glass-input"></div>
@@ -1081,6 +1085,14 @@
     <div class="input-group"><div class="input-label" data-t="groupTypeLabel"></div><div class="type-grid"><button class="type-btn selected" onclick="selectType(this)"><span class="type-emoji">💑</span><div class="type-name" data-t="typeJowa"></div><div class="type-desc" data-t="typeJowaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">👨‍👩‍👧‍👦</span><div class="type-name" data-t="typeFamilia"></div><div class="type-desc" data-t="typeFamiliaSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">🎉</span><div class="type-name" data-t="typeBerks"></div><div class="type-desc" data-t="typeBerksSub"></div></button><button class="type-btn" onclick="selectType(this)"><span class="type-emoji">✈️</span><div class="type-name" data-t="typeTrip"></div><div class="type-desc" data-t="typeTripSub"></div></button></div></div>
     <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input type="number" class="glass-input" placeholder="₱ 0.00"></div>
     <button class="cta-btn" onclick="createGroup()" data-t="createGroupBtn"></button>
+  </div>
+</div>
+
+<!-- Per-Expense Receipt -->
+<div id="expense-receipt-modal" class="modal-overlay" onclick="closeModalOutside(event,'expense-receipt-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="expense-receipt-content"></div>
   </div>
 </div>
 

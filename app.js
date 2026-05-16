@@ -1368,8 +1368,12 @@ function openModal(id) {
   // Render dynamic content before opening
   if (id === 'add-expense-modal') {
     renderIconPicker();
+    STATE.expenseMode = 'split';
+    document.querySelectorAll('.exp-mode-btn').forEach(b => b.classList.remove('active'));
+    const splitBtn = document.getElementById('mode-btn-split');
+    if (splitBtn) splitBtn.classList.add('active');
     const g = getActiveGroup();
-    if (g) renderExpensePaymentInputs(g, 'expense-member-payments', 'expense-total-preview');
+    if (g) renderSplitModeContent(g, document.getElementById('expense-mode-content'));
   }
   if (id === 'add-task-modal') {
     const g = getActiveGroup();
@@ -1498,18 +1502,46 @@ function addExpense() {
   const dateEl = document.getElementById('expense-date-input');
   const name   = (descEl?.value || '').trim();
   if (!name) { showToast('⚠️ Enter a description'); return; }
-  const payInputs     = document.querySelectorAll('#expense-member-payments .expense-pay-input');
-  const memberPayments = Array.from(payInputs).map(inp => ({ memberId: inp.dataset.memberId, amount: parseFloat(inp.value) || 0 }));
-  const total         = memberPayments.reduce((s, p) => s + p.amount, 0);
-  if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
-  const expense = {
-    id: 'exp_' + Date.now(),
-    icon: STATE.expenseIconSelected || '🍽️',
-    name, memberPayments, total,
-    note: noteEl?.value.trim() || '',
-    date: dateEl?.value || '',
-    createdAt: Date.now(),
-  };
+
+  const mode = STATE.expenseMode || 'split';
+  const base = { id:'exp_'+Date.now(), icon:STATE.expenseIconSelected||'🍽️', name, type:mode,
+                  note:noteEl?.value.trim()||'', date:dateEl?.value||'', createdAt:Date.now() };
+  let expense;
+
+  if (mode === 'split') {
+    const inputs = document.querySelectorAll('.split-pay-input');
+    const memberPayments = Array.from(inputs).map(i => ({ memberId:i.dataset.memberId, amount:parseFloat(i.value)||0 }));
+    const total = memberPayments.reduce((s,p) => s+p.amount, 0);
+    if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
+    expense = { ...base, memberPayments, total };
+
+  } else if (mode === 'itemized') {
+    const memberItems = [];
+    let total = 0;
+    group.members.forEach(m => {
+      const rows  = document.querySelectorAll(`.item-row[data-member="${m.id}"]`);
+      const items = Array.from(rows).map(row => {
+        const itemName = row.querySelector('.item-name-input')?.value.trim();
+        const qty      = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
+        const price    = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+        return itemName && price > 0 ? { name:itemName, qty, price, subtotal:qty*price } : null;
+      }).filter(Boolean);
+      const subtotal = items.reduce((s,i) => s+i.subtotal, 0);
+      total += subtotal;
+      memberItems.push({ memberId:m.id, items, subtotal });
+    });
+    if (!total) { showToast('⚠️ Add at least one item'); return; }
+    expense = { ...base, memberItems, total };
+
+  } else if (mode === 'covered') {
+    const amount     = parseFloat(document.getElementById('covered-amount-input')?.value) || 0;
+    if (!amount) { showToast('⚠️ Enter the total amount'); return; }
+    const covBtn     = document.querySelector('.covered-member-btn.active');
+    const coveredBy  = covBtn?.dataset.memberId || group.members[0]?.id;
+    const isSettled  = document.getElementById('covered-settled-toggle')?.checked || false;
+    expense = { ...base, coveredBy, total:amount, isSettled };
+  }
+
   group.expenses.push(expense);
   saveGroups();
   renderExpensesPanel(group);
@@ -1518,9 +1550,6 @@ function addExpense() {
   if (descEl) descEl.value = '';
   if (noteEl) noteEl.value = '';
   if (dateEl) dateEl.value = '';
-  payInputs.forEach(i => i.value = '');
-  const prev = document.getElementById('expense-total-preview');
-  if (prev) prev.style.display = 'none';
   closeModalById('add-expense-modal');
   showToast(t('expenseAdded'));
 }
@@ -1586,32 +1615,122 @@ function renderExpensesPanel(group) {
     return;
   }
   container.innerHTML = group.expenses.map(exp => {
-    let total, payerLine;
-    if (exp.memberPayments) {
-      total = exp.memberPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
-      const payers = exp.memberPayments.filter(p => p.amount > 0).map(p => {
-        const m = group.members.find(m => m.id === p.memberId);
+    const type  = exp.type || (exp.memberPayments ? 'split' : exp.coveredBy ? 'covered' : 'split');
+    const total = getExpenseTotal(exp);
+    let subLine = '', badgeCls = 'etb-split', badgeTxt = 'Split';
+
+    if (type === 'split' || exp.memberPayments) {
+      badgeCls = 'etb-split'; badgeTxt = 'Split';
+      const payers = (exp.memberPayments||[]).filter(p=>p.amount>0).map(p=>{
+        const m = group.members.find(m=>m.id===p.memberId);
         return m ? `${m.name.split(' ')[0]} ₱${parseFloat(p.amount).toLocaleString()}` : '';
       }).filter(Boolean);
-      payerLine = payers.length ? payers.join(', ') : '—';
-    } else {
-      total = parseFloat(exp.amount) || 0;
-      const payer = group.members.find(m => m.id === exp.payerId);
-      payerLine = `Paid by ${payer ? payer.name.split(' ')[0] : '—'}`;
+      subLine = payers.length ? payers.join(' · ') : '—';
+    } else if (type === 'itemized') {
+      badgeCls = 'etb-itemized'; badgeTxt = 'Itemized';
+      const hasItems = (exp.memberItems||[]).filter(mi=>mi.subtotal>0).map(mi=>{
+        const m = group.members.find(m=>m.id===mi.memberId);
+        return m ? `${m.name.split(' ')[0]} ₱${mi.subtotal.toLocaleString()}` : '';
+      }).filter(Boolean);
+      subLine = hasItems.length ? hasItems.join(' · ') : '—';
+    } else if (type === 'covered') {
+      const covM = group.members.find(m=>m.id===exp.coveredBy);
+      badgeCls = exp.isSettled ? 'etb-settled' : 'etb-covered';
+      badgeTxt = exp.isSettled ? 'Settled ✓' : 'Covered';
+      subLine  = covM ? `Covered by ${covM.name.split(' ')[0]}` : 'Covered';
     }
-    const share = group.members.length > 0 ? (total / group.members.length).toFixed(2) : 0;
+    const share = group.members.length > 0 ? (total/group.members.length).toFixed(2) : 0;
+    const settleBtn = type === 'covered' && !exp.isSettled
+      ? `<button onclick="event.stopPropagation();markExpenseSettled('${exp.id}')" style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;border:none;background:rgba(232,245,237,0.9);color:var(--green-deep);cursor:pointer;margin-top:3px">Mark Settled</button>` : '';
+
     return `<div class="expense-item glass" onclick="openExpenseActions('${exp.id}')">
       <div class="expense-icon" style="background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.22)">${exp.icon}</div>
       <div class="expense-body">
-        <div class="expense-name">${exp.name}</div>
-        <div class="expense-detail">${payerLine}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span class="expense-name">${exp.name}</span>
+          <span class="exp-type-badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        <div class="expense-detail">${subLine}</div>
+        ${settleBtn}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div class="expense-amount">₱${total.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
-        <div class="expense-split">₱${share} each</div>
+        ${type!=='covered'?`<div class="expense-split">₱${share} each</div>`:''}
+        <button onclick="event.stopPropagation();openExpenseReceipt('${exp.id}')" style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;border:1px solid rgba(0,0,0,0.1);background:#fff;color:var(--ink-3);cursor:pointer;margin-top:3px">🧾</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function getExpenseTotal(exp) {
+  if (exp.total) return parseFloat(exp.total);
+  if (exp.memberPayments) return exp.memberPayments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+  if (exp.memberItems) return exp.memberItems.reduce((s,mi)=>s+(parseFloat(mi.subtotal)||0),0);
+  if (exp.totalAmount) return parseFloat(exp.totalAmount);
+  return parseFloat(exp.amount) || 0;
+}
+
+function markExpenseSettled(expId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  const exp = group.expenses.find(e=>e.id===expId);
+  if (!exp) return;
+  exp.isSettled = true;
+  saveGroups();
+  renderExpensesPanel(group);
+  renderSettlePanel(group);
+  showToast('✅ Marked as settled!');
+}
+
+function openExpenseReceipt(expId) {
+  const group = getActiveGroup();
+  if (!group) return;
+  const exp = group.expenses.find(e=>e.id===expId);
+  if (!exp) return;
+  const content = document.getElementById('expense-receipt-content');
+  if (!content) return;
+  const type  = exp.type || (exp.memberPayments ? 'split' : exp.coveredBy ? 'covered' : 'split');
+  const total = getExpenseTotal(exp);
+  const today = exp.date || new Date().toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'});
+
+  let breakdownHtml = '';
+  if (type === 'split' || exp.memberPayments) {
+    const share = group.members.length > 0 ? total/group.members.length : 0;
+    breakdownHtml = `<div class="r-sec-title">Payments</div>`
+      + (exp.memberPayments||[]).map(p=>{
+          const m = group.members.find(m=>m.id===p.memberId);
+          return p.amount > 0 ? `<div class="r-row"><span class="r-key">${m?m.name.split(' ')[0]:'—'} paid</span><span class="r-val">₱${parseFloat(p.amount).toLocaleString()}</span></div>` : '';
+        }).join('')
+      + `<div class="r-divider"></div><div class="r-row"><span class="r-key">Each person owes</span><span class="r-val">₱${share.toFixed(2)}</span></div>`;
+  } else if (type === 'itemized') {
+    breakdownHtml = `<div class="r-sec-title">Itemized Breakdown</div>`
+      + (exp.memberItems||[]).map(mi=>{
+          const m = group.members.find(m=>m.id===mi.memberId);
+          if (!mi.items || mi.items.length===0) return '';
+          return `<div style="padding:8px 20px"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px">${m?m.name.split(' ')[0]:'?'}</div>`
+            + mi.items.map(item=>`<div class="r-row" style="padding:4px 0"><span class="r-key">${item.name} ×${item.qty}</span><span class="r-val">₱${item.subtotal.toLocaleString()}</span></div>`).join('')
+            + `<div style="text-align:right;font-size:12px;font-weight:800;color:var(--tan-dark);padding-top:3px">Subtotal: ₱${(mi.subtotal||0).toLocaleString()}</div></div>`;
+        }).join('');
+  } else if (type === 'covered') {
+    const covM = group.members.find(m=>m.id===exp.coveredBy);
+    breakdownHtml = `<div class="r-sec-title">Covered Expense</div>
+      <div class="r-row"><span class="r-key">Covered by</span><span class="r-val">${covM?covM.name.split(' ')[0]:'—'}</span></div>
+      <div class="r-row"><span class="r-key">Status</span><span class="r-val" style="color:${exp.isSettled?'var(--green-deep)':'var(--danger)'}${exp.isSettled?'"':'';font-weight:800"}'>${exp.isSettled?'Settled ✓':'Pending'}</span></div>`;
+  }
+
+  content.innerHTML = `
+    <div class="receipt-logo" style="border-radius:var(--r-xl) var(--r-xl) 0 0;margin:-8px -8px 0">
+      <div style="font-size:28px;margin-bottom:4px">${exp.icon}</div>
+      <div class="receipt-brand" style="font-size:18px">${exp.name}</div>
+      <div class="receipt-title">${type.charAt(0).toUpperCase()+type.slice(1)} · ${today}</div>
+    </div>
+    <div class="r-divider"></div>
+    ${breakdownHtml}
+    <div class="r-divider"></div>
+    <div class="r-row"><span class="r-key" style="font-weight:800;color:var(--ink)">Total</span><span class="r-total">₱${total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+    ${exp.note ? `<div class="r-row"><span class="r-key" style="color:var(--ink-4)">Note</span><span class="r-val" style="color:var(--ink-4)">${exp.note}</span></div>` : ''}
+  `;
+  openModal('expense-receipt-modal');
 }
 
 function openExpenseActions(expId) {
@@ -1623,6 +1742,134 @@ function openExpenseActions(expId) {
   const title = document.getElementById('expense-actions-title');
   if (title) title.textContent = exp.icon + ' ' + exp.name + ' — ₱' + parseFloat(exp.amount).toLocaleString();
   openModal('expense-actions-modal');
+}
+
+/* ── EXPENSE MODES ───────────────────────────── */
+function switchExpenseMode(mode) {
+  STATE.expenseMode = mode;
+  ['split','itemized','covered'].forEach(m => {
+    const btn = document.getElementById('mode-btn-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const group = getActiveGroup();
+  const content = document.getElementById('expense-mode-content');
+  if (!group || !content) return;
+  if (mode === 'split')    renderSplitModeContent(group, content);
+  if (mode === 'itemized') renderItemizedModeContent(group, content);
+  if (mode === 'covered')  renderCoveredModeContent(group, content);
+}
+
+function renderSplitModeContent(group, container) {
+  if (!container) return;
+  container.innerHTML = `
+    <div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:8px">Enter how much each person paid. Total is split equally.</div>
+    ${group.members.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <div class="member-av ${m.color}" style="width:32px;height:32px;border-radius:9px;font-size:11px;flex-shrink:0">${m.id}</div>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
+        <span style="padding:8px 6px 8px 10px;font-size:13px;font-weight:700;color:var(--ink-3)">₱</span>
+        <input type="number" class="split-pay-input" data-member-id="${m.id}" placeholder="0" min="0"
+          oninput="updateSplitTotal()"
+          style="width:80px;padding:8px 10px 8px 0;border:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink);text-align:right;outline:none;-moz-appearance:textfield">
+      </div>
+    </div>`).join('')}
+    <div id="split-total-preview" style="display:none;text-align:right;font-size:14px;font-weight:800;color:var(--ink);padding:8px 4px 0;border-top:1px solid rgba(0,0,0,0.07);margin-top:6px">Total: ₱0</div>`;
+}
+
+function updateSplitTotal() {
+  const preview = document.getElementById('split-total-preview');
+  if (!preview) return;
+  const total = Array.from(document.querySelectorAll('.split-pay-input')).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+  preview.style.display = total > 0 ? 'block' : 'none';
+  preview.textContent = 'Total: ₱' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderItemizedModeContent(group, container) {
+  if (!container) return;
+  container.innerHTML = `<div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:10px">Tap a member to add their items.</div>`
+    + group.members.map(m => `
+    <div class="itemized-member-header" onclick="toggleItemizedSection('${m.id}')">
+      <div class="member-av ${m.color}" style="width:30px;height:30px;border-radius:8px;font-size:10px;flex-shrink:0">${m.id}</div>
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--ink)">${m.name.split(' ')[0]}</span>
+      <span id="itm-sub-${m.id}" style="font-size:13px;font-weight:800;color:var(--tan-dark)">₱0</span>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ink-4);fill:none;stroke-width:2;flex-shrink:0;margin-left:6px"><polyline points="9,18 15,12 9,6"/></svg>
+    </div>
+    <div id="itm-body-${m.id}" style="display:none;padding:4px 0 8px">
+      <div id="itm-rows-${m.id}"></div>
+      <button onclick="addItemRow('${m.id}')" style="font-size:12px;font-weight:700;color:var(--tan-dark);background:none;border:none;cursor:pointer;padding:4px 0">+ Add Item</button>
+    </div>`).join('');
+}
+
+function toggleItemizedSection(memberId) {
+  const body = document.getElementById('itm-body-' + memberId);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (!open && document.getElementById('itm-rows-' + memberId).children.length === 0) addItemRow(memberId);
+}
+
+function addItemRow(memberId) {
+  const rows = document.getElementById('itm-rows-' + memberId);
+  if (!rows) return;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.dataset.member = memberId;
+  row.innerHTML = `
+    <input type="text" class="item-name-input" placeholder="Item name" oninput="updateItemizedSubtotal('${memberId}')">
+    <span style="font-size:12px;color:var(--ink-4);font-weight:600">×</span>
+    <input type="number" class="item-qty-input" placeholder="1" min="1" value="1" oninput="updateItemizedSubtotal('${memberId}')">
+    <span style="font-size:12px;color:var(--ink-4);font-weight:600">₱</span>
+    <input type="number" class="item-price-input" placeholder="0" min="0" oninput="updateItemizedSubtotal('${memberId}')">
+    <button class="item-remove-btn" onclick="this.closest('.item-row').remove();updateItemizedSubtotal('${memberId}')">×</button>`;
+  rows.appendChild(row);
+}
+
+function updateItemizedSubtotal(memberId) {
+  const rows = document.querySelectorAll(`.item-row[data-member="${memberId}"]`);
+  const subtotal = Array.from(rows).reduce((s, row) => {
+    const qty   = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
+    const price = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+    return s + qty * price;
+  }, 0);
+  const el = document.getElementById('itm-sub-' + memberId);
+  if (el) el.textContent = '₱' + subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function renderCoveredModeContent(group, container) {
+  if (!container) return;
+  container.innerHTML = `
+    <div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:8px">One person covers the full expense for everyone.</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Total Amount</div>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
+        <span style="padding:10px 8px 10px 12px;font-size:15px;font-weight:700;color:var(--ink-3)">₱</span>
+        <input type="number" id="covered-amount-input" placeholder="0.00" min="0"
+          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none;-moz-appearance:textfield">
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Covered by</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${group.members.map((m, i) => `
+        <button class="covered-member-btn${i===0?' active':''}" data-member-id="${m.id}" onclick="selectCoveredBy(this)">
+          <div class="member-av ${m.color}" style="width:26px;height:26px;border-radius:7px;font-size:10px">${m.id}</div>
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
+        </button>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(232,245,237,0.5);border-radius:var(--r-md);border:1px solid rgba(90,171,122,0.2)">
+      <input type="checkbox" id="covered-settled-toggle" style="width:18px;height:18px;cursor:pointer;accent-color:var(--green-deep)">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">Already Settled</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:1px">Check if the covered person was already paid back</div>
+      </div>
+    </div>`;
+}
+
+function selectCoveredBy(btn) {
+  document.querySelectorAll('.covered-member-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function renderExpensePaymentInputs(group, containerId, totalPreviewId) {
@@ -1796,9 +2043,27 @@ function renderReceipt() {
   const expenseRows = expenses.length === 0
     ? '<div style="padding:12px 20px;color:var(--ink-4);font-size:13px">No expenses logged yet</div>'
     : expenses.map(e => {
-        const payer = group.members.find(m => m.id === e.payerId);
-        const pName = payer ? payer.name.split(' ')[0] : '—';
-        return `<div class="r-row"><span class="r-key">${e.icon} ${e.name} (${pName})</span><span class="r-val">₱${parseFloat(e.amount).toLocaleString()}</span></div>`;
+        const type  = e.type || (e.memberPayments ? 'split' : e.coveredBy ? 'covered' : 'split');
+        const eTotal = getExpenseTotal(e);
+        let detail = '';
+        if (type === 'split' && e.memberPayments) {
+          const payers = e.memberPayments.filter(p=>p.amount>0).map(p=>{
+            const m = group.members.find(m=>m.id===p.memberId);
+            return m ? `${m.name.split(' ')[0]} ₱${parseFloat(p.amount).toLocaleString()}` : '';
+          }).filter(Boolean).join(', ');
+          detail = payers ? `<div style="font-size:11px;color:var(--ink-4);padding:0 20px 6px">${payers}</div>` : '';
+        } else if (type === 'itemized' && e.memberItems) {
+          const lines = e.memberItems.filter(mi=>mi.subtotal>0).map(mi=>{
+            const m = group.members.find(m=>m.id===mi.memberId);
+            return m ? `${m.name.split(' ')[0]}: ₱${mi.subtotal.toLocaleString()}` : '';
+          }).filter(Boolean).join(' · ');
+          detail = lines ? `<div style="font-size:11px;color:var(--ink-4);padding:0 20px 6px">${lines}</div>` : '';
+        } else if (type === 'covered') {
+          const covM = group.members.find(m=>m.id===e.coveredBy);
+          const status = e.isSettled ? '✓ Settled' : 'Pending';
+          detail = `<div style="font-size:11px;color:var(--ink-4);padding:0 20px 6px">Covered by ${covM?covM.name.split(' ')[0]:'—'} · ${status}</div>`;
+        }
+        return `<div class="r-row"><span class="r-key">${e.icon} ${e.name}</span><span class="r-val">₱${eTotal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>${detail}`;
       }).join('');
 
   const settlementRows = settlements.length === 0
@@ -1837,20 +2102,37 @@ function calcSettlement(group) {
   const balances = {};
   group.members.forEach(m => balances[m.id] = 0);
   group.expenses.forEach(exp => {
-    if (exp.memberPayments) {
-      const total = exp.memberPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
-      if (!total) return;
+    const type  = exp.type || (exp.memberPayments ? 'split' : exp.coveredBy ? 'covered' : 'split');
+    const total = getExpenseTotal(exp);
+    if (!total) return;
+
+    if (type === 'covered') {
+      if (exp.isSettled) return; // already settled — no ledger entry
       const share = total / group.members.length;
-      exp.memberPayments.forEach(p => { if (balances[p.memberId] !== undefined) balances[p.memberId] += parseFloat(p.amount) || 0; });
-      group.members.forEach(m => { if (balances[m.id] !== undefined) balances[m.id] -= share; });
-    } else {
-      const amount = parseFloat(exp.amount) || 0;
-      if (!amount) return;
-      const share = amount / group.members.length;
       group.members.forEach(m => {
-        balances[m.id] = (balances[m.id] || 0) - share;
-        if (m.id === exp.payerId) balances[m.id] += amount;
+        balances[m.id] = (balances[m.id]||0) - share;
+        if (m.id === exp.coveredBy) balances[m.id] += total;
       });
+    } else if (type === 'itemized') {
+      // Each member owes their own subtotal; they "paid" that amount
+      const share = total / group.members.length; // still split equally for settlement
+      (exp.memberItems||[]).forEach(mi => {
+        if (balances[mi.memberId] !== undefined) balances[mi.memberId] += parseFloat(mi.subtotal)||0;
+      });
+      group.members.forEach(m => { if (balances[m.id]!==undefined) balances[m.id] -= share; });
+    } else {
+      // split (default) or legacy
+      if (exp.memberPayments) {
+        const share = total / group.members.length;
+        exp.memberPayments.forEach(p => { if (balances[p.memberId]!==undefined) balances[p.memberId] += parseFloat(p.amount)||0; });
+        group.members.forEach(m => { if (balances[m.id]!==undefined) balances[m.id] -= share; });
+      } else {
+        const share = total / group.members.length;
+        group.members.forEach(m => {
+          balances[m.id] = (balances[m.id]||0) - share;
+          if (m.id === exp.payerId) balances[m.id] += total;
+        });
+      }
     }
   });
   const creditors = group.members.filter(m => balances[m.id] > 0.01).map(m => ({ ...m, bal: balances[m.id] }));
@@ -3451,10 +3733,7 @@ window.pinPlaceToMap = pinPlaceToMap;
 
 // Render quick category pills on the saan-top-card
 function updateGroupHeroStats(group) {
-  const total = (group.expenses || []).reduce((s, e) => {
-    if (e.memberPayments) return s + e.memberPayments.reduce((a, p) => a + (parseFloat(p.amount) || 0), 0);
-    return s + (parseFloat(e.amount) || 0);
-  }, 0);
+  const total = (group.expenses || []).reduce((s, e) => s + getExpenseTotal(e), 0);
   const doneTasks  = (group.tasks || []).filter(t => t.status === 'done').length;
   const totalTasks = (group.tasks || []).length;
   const owner      = group.members.find(m => m.isOwner);

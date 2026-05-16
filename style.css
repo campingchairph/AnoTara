@@ -168,7 +168,7 @@ body{background:#F5F5F5;min-height:100%;width:100%;}
 /* ── SECTION HEADERS ─────────────────────────── */
 .pad{padding:0 16px;}
 .tab-panel .pad{padding-left:0;padding-right:0;}
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 16px;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:16px 16px;}
 .sec-title{font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-0.3px;}
 .sec-action{font-size:13px;font-weight:700;color:var(--accent-dk);cursor:pointer;}
 
@@ -703,6 +703,39 @@ nav.tabs .tab.active {
 
 /* ── PANEL BOTTOM PADDING ────────────────────── */
 #panel-tasks, #panel-expenses, #panel-settle, #panel-members { padding-bottom: 80px; }
+
+/* ── EXPENSE MODE BUTTONS ────────────────────── */
+.exp-mode-btn {
+  flex: 1; padding: 9px 6px; border-radius: var(--r-md);
+  border: 1.5px solid rgba(0,0,0,0.08); background: #F3F4F6;
+  font-size: 12px; font-weight: 800; color: var(--ink-3);
+  cursor: pointer; font-family: var(--f); transition: all 0.15s;
+}
+.exp-mode-btn.active {
+  background: var(--ink); color: #fff; border-color: var(--ink);
+}
+
+/* ── EXPENSE TYPE BADGE ──────────────────────── */
+.exp-type-badge {
+  font-size: 10px; font-weight: 800; padding: 2px 7px;
+  border-radius: 99px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.etb-split    { background: rgba(232,245,237,0.8); color: var(--green-deep); }
+.etb-itemized { background: rgba(245,230,200,0.8); color: var(--tan-dark); }
+.etb-covered  { background: rgba(252,232,238,0.8); color: var(--pink-deep); }
+.etb-settled  { background: #D1FAE5; color: #065F46; }
+
+/* ── ITEMIZED ROW ────────────────────────────── */
+.item-row { display: flex; align-items: center; gap: 6px; padding: 6px 0; }
+.item-name-input  { flex: 1; min-width: 0; padding: 7px 10px; border-radius: var(--r-sm); border: 1.5px solid rgba(201,169,110,0.3); background: rgba(255,255,255,0.7); font-size: 13px; font-family: var(--f); color: var(--ink); outline: none; }
+.item-qty-input, .item-price-input { width: 56px; padding: 7px 8px; border-radius: var(--r-sm); border: 1.5px solid rgba(201,169,110,0.3); background: rgba(255,255,255,0.7); font-size: 13px; font-family: var(--f); color: var(--ink); outline: none; text-align: right; -moz-appearance: textfield; }
+.item-remove-btn { width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(229,90,78,0.1); color: var(--danger); font-size: 16px; cursor: pointer; flex-shrink: 0; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.itemized-member-header { display: flex; align-items: center; gap:10px; padding: 10px 12px; border-radius: var(--r-md); cursor: pointer; background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.06); margin-bottom: 4px; }
+.itemized-member-body { padding: 4px 12px 8px; }
+
+/* ── COVERED MEMBER PICK ─────────────────────── */
+.covered-member-btn { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: var(--r-md); cursor: pointer; border: 1.5px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.45); font-family: var(--f); }
+.covered-member-btn.active { border-color: rgba(224,120,152,0.45); background: rgba(252,232,238,0.55); }
 .task-status { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; flex-shrink: 0; }
 .s-done     { background: #D1FAE5; color: #065F46; }
 .s-progress { background: #FEF9C3; color: #854D0E; }
