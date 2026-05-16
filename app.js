@@ -339,12 +339,14 @@ function onAuthSuccess() {
   hideAuth();
   // Update greeting name and avatar
   const u = AUTH.user;
-  const firstName = u.name.split(' ')[0];
+  const firstName = (u.name || 'Jhoan').split(' ')[0];
   document.querySelectorAll('.greeting-name').forEach(el => el.textContent = firstName + ' ✨');
   document.querySelectorAll('.avatar-btn').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
   document.querySelectorAll('.profile-av').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
-  document.querySelectorAll('.profile-name-el').forEach(el => el.textContent = u.name);
-  document.querySelectorAll('.profile-phone-el').forEach(el => el.textContent = u.phone);
+  document.querySelectorAll('.profile-name-el').forEach(el => el.textContent = u.name || 'Jhoan');
+  document.querySelectorAll('.profile-phone-el').forEach(el => el.textContent = u.phone || '');
+  const ovAv = document.getElementById('ov-avatar');
+  if (ovAv) ovAv.textContent = firstName.substring(0,2).toUpperCase();
   // Update Jowa group members with real name
   const jowaGroup = GROUPS.find(g => g.type === 'jowa');
   if (jowaGroup) {
@@ -422,37 +424,25 @@ function unpairJowa() {
 
 // ── App boot ────────────────────────────────────
 function bootApp() {
-  const hasSeenIntro = localStorage.getItem('at_seen_intro');
+  // Auto-create a default local user — no login/signup required
+  if (!AUTH.user) {
+    const savedName = localStorage.getItem('at_profile_name') || 'Jhoan';
+    AUTH.user = { id: 'user_local', name: savedName, phone: '', pairCode: '', jowaId: null, jowaName: null };
+    saveAuth();
+  }
 
   // Always show splash on load
   showLoadingSplash();
 
-  if (isLoggedIn()) {
-    // Check if PIN is set — show lock if so
-    if (getPIN()) {
-      setTimeout(() => showPinLock('lock'), 1800);
-      // After PIN unlock, show app
-      const origHide = window.hidePinLock;
-      window.hidePinLock = function() {
-        origHide();
-        window.hidePinLock = origHide; // restore
-        onAuthSuccess();
-        initIdleTimer();
-      };
-    } else {
-      setTimeout(() => { onAuthSuccess(); initIdleTimer(); }, 1900);
-    }
-    return;
-  }
-
-  // Not logged in — show splash then auth
-  setTimeout(() => {
-    if (!hasSeenIntro) {
-      showIntro();
-    } else {
-      showAuth('signup');
-    }
-  }, 1900);
+  // PIN lock on every boot (default PIN: 1234)
+  setTimeout(() => showPinLock('lock'), 1800);
+  const origHide = window.hidePinLock;
+  window.hidePinLock = function() {
+    origHide();
+    window.hidePinLock = origHide; // restore for idle re-lock
+    onAuthSuccess();
+    initIdleTimer();
+  };
 }
 
 /* ── INTRO SWIPE ─────────────────────────────── */
@@ -1509,13 +1499,16 @@ function addExpense() {
   let expense;
 
   if (mode === 'split') {
-    const inputs = document.querySelectorAll('.split-pay-input');
-    const memberPayments = Array.from(inputs).map(i => ({ memberId:i.dataset.memberId, amount:parseFloat(i.value)||0 }));
-    const total = memberPayments.reduce((s,p) => s+p.amount, 0);
-    if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
-    expense = { ...base, memberPayments, total };
+    const paidByBtn = document.querySelector('.split-payer-btn.active');
+    const paidBy    = paidByBtn?.dataset.memberId || group.members[0]?.id;
+    const total     = parseFloat(document.getElementById('split-total-input')?.value) || 0;
+    if (!total) { showToast('⚠️ Enter the total amount'); return; }
+    // paidBy fronted the whole bill; everyone splits equally
+    expense = { ...base, paidBy, memberPayments: [{ memberId: paidBy, amount: total }], total };
 
   } else if (mode === 'itemized') {
+    const paidByBtn = document.querySelector('.itemized-payer-btn.active');
+    const paidBy    = paidByBtn?.dataset.memberId || group.members[0]?.id;
     const memberItems = [];
     let total = 0;
     group.members.forEach(m => {
@@ -1531,7 +1524,7 @@ function addExpense() {
       memberItems.push({ memberId:m.id, items, subtotal });
     });
     if (!total) { showToast('⚠️ Add at least one item'); return; }
-    expense = { ...base, memberItems, total };
+    expense = { ...base, paidBy, memberItems, total };
 
   } else if (mode === 'covered') {
     const amount     = parseFloat(document.getElementById('covered-amount-input')?.value) || 0;
@@ -1621,18 +1614,27 @@ function renderExpensesPanel(group) {
 
     if (type === 'split' || exp.memberPayments) {
       badgeCls = 'etb-split'; badgeTxt = 'Split';
-      const payers = (exp.memberPayments||[]).filter(p=>p.amount>0).map(p=>{
-        const m = group.members.find(m=>m.id===p.memberId);
-        return m ? `${m.name.split(' ')[0]} ₱${parseFloat(p.amount).toLocaleString()}` : '';
-      }).filter(Boolean);
-      subLine = payers.length ? payers.join(' · ') : '—';
+      if (exp.paidBy && (exp.memberPayments||[]).length === 1) {
+        // New clean format: single payer, equal split
+        const payer = group.members.find(m => m.id === exp.paidBy);
+        const share = group.members.length > 0 ? (total / group.members.length).toFixed(2) : '0';
+        subLine = payer ? `Paid by ${payer.name.split(' ')[0]} · ₱${share} each` : '—';
+      } else {
+        const payers = (exp.memberPayments||[]).filter(p=>p.amount>0).map(p=>{
+          const m = group.members.find(m=>m.id===p.memberId);
+          return m ? `${m.name.split(' ')[0]} ₱${parseFloat(p.amount).toLocaleString()}` : '';
+        }).filter(Boolean);
+        subLine = payers.length ? payers.join(' · ') : '—';
+      }
     } else if (type === 'itemized') {
       badgeCls = 'etb-itemized'; badgeTxt = 'Itemized';
+      const paidByM = exp.paidBy ? group.members.find(m => m.id === exp.paidBy) : null;
+      const paidByStr = paidByM ? `Paid by ${paidByM.name.split(' ')[0]} · ` : '';
       const hasItems = (exp.memberItems||[]).filter(mi=>mi.subtotal>0).map(mi=>{
         const m = group.members.find(m=>m.id===mi.memberId);
         return m ? `${m.name.split(' ')[0]} ₱${mi.subtotal.toLocaleString()}` : '';
       }).filter(Boolean);
-      subLine = hasItems.length ? hasItems.join(' · ') : '—';
+      subLine = paidByStr + (hasItems.length ? hasItems.join(' · ') : '—');
     } else if (type === 'covered') {
       const covM = group.members.find(m=>m.id===exp.coveredBy);
       badgeCls = exp.isSettled ? 'etb-settled' : 'etb-covered';
@@ -1696,14 +1698,27 @@ function openExpenseReceipt(expId) {
   let breakdownHtml = '';
   if (type === 'split' || exp.memberPayments) {
     const share = group.members.length > 0 ? total/group.members.length : 0;
-    breakdownHtml = `<div class="r-sec-title">Payments</div>`
-      + (exp.memberPayments||[]).map(p=>{
-          const m = group.members.find(m=>m.id===p.memberId);
-          return p.amount > 0 ? `<div class="r-row"><span class="r-key">${m?m.name.split(' ')[0]:'—'} paid</span><span class="r-val">₱${parseFloat(p.amount).toLocaleString()}</span></div>` : '';
-        }).join('')
-      + `<div class="r-divider"></div><div class="r-row"><span class="r-key">Each person owes</span><span class="r-val">₱${share.toFixed(2)}</span></div>`;
+    if (exp.paidBy && (exp.memberPayments||[]).length === 1) {
+      // New clean format: one payer
+      const payer = group.members.find(m => m.id === exp.paidBy);
+      breakdownHtml = `<div class="r-sec-title">Split Bill</div>
+        <div class="r-row"><span class="r-key">Paid by</span><span class="r-val" style="font-weight:800">${payer?payer.name.split(' ')[0]:'—'}</span></div>
+        <div class="r-row"><span class="r-key">Splitting among</span><span class="r-val">${group.members.length} people</span></div>
+        <div class="r-divider"></div>
+        <div class="r-row"><span class="r-key">Each person owes</span><span class="r-val" style="font-weight:800;color:var(--tan-dark)">₱${share.toFixed(2)}</span></div>`;
+    } else {
+      // Legacy multi-payer format
+      breakdownHtml = `<div class="r-sec-title">Payments</div>`
+        + (exp.memberPayments||[]).map(p=>{
+            const m = group.members.find(m=>m.id===p.memberId);
+            return p.amount > 0 ? `<div class="r-row"><span class="r-key">${m?m.name.split(' ')[0]:'—'} paid</span><span class="r-val">₱${parseFloat(p.amount).toLocaleString()}</span></div>` : '';
+          }).join('')
+        + `<div class="r-divider"></div><div class="r-row"><span class="r-key">Each person owes</span><span class="r-val">₱${share.toFixed(2)}</span></div>`;
+    }
   } else if (type === 'itemized') {
+    const paidByM = exp.paidBy ? group.members.find(m=>m.id===exp.paidBy) : null;
     breakdownHtml = `<div class="r-sec-title">Itemized Breakdown</div>`
+      + (paidByM ? `<div class="r-row"><span class="r-key">Paid by</span><span class="r-val" style="font-weight:800">${paidByM.name.split(' ')[0]}</span></div><div class="r-divider"></div>` : '')
       + (exp.memberItems||[]).map(mi=>{
           const m = group.members.find(m=>m.id===mi.memberId);
           if (!mi.items || mi.items.length===0) return '';
@@ -1740,7 +1755,7 @@ function openExpenseActions(expId) {
   if (!exp) return;
   document.getElementById('expense-actions-id').value = expId;
   const title = document.getElementById('expense-actions-title');
-  if (title) title.textContent = exp.icon + ' ' + exp.name + ' — ₱' + parseFloat(exp.amount).toLocaleString();
+  if (title) title.textContent = exp.icon + ' ' + exp.name + ' — ₱' + getExpenseTotal(exp).toLocaleString();
   openModal('expense-actions-modal');
 }
 
@@ -1759,35 +1774,68 @@ function switchExpenseMode(mode) {
   if (mode === 'covered')  renderCoveredModeContent(group, content);
 }
 
-function renderSplitModeContent(group, container) {
+function renderSplitModeContent(group, container, prefillPaidBy, prefillTotal) {
   if (!container) return;
+  const paidBy = prefillPaidBy || group.members[0]?.id;
   container.innerHTML = `
-    <div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:8px">Enter how much each person paid. Total is split equally.</div>
-    ${group.members.map(m => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-      <div class="member-av ${m.color}" style="width:32px;height:32px;border-radius:9px;font-size:11px;flex-shrink:0">${m.id}</div>
-      <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
-      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
-        <span style="padding:8px 6px 8px 10px;font-size:13px;font-weight:700;color:var(--ink-3)">₱</span>
-        <input type="number" class="split-pay-input" data-member-id="${m.id}" placeholder="0" min="0"
-          oninput="updateSplitTotal()"
-          style="width:80px;padding:8px 10px 8px 0;border:none;background:transparent;font-size:13px;font-weight:700;color:var(--ink);text-align:right;outline:none;-moz-appearance:textfield">
+    <div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:10px">One person pays the bill upfront. The total is split equally among all members.</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Who paid the bill?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${group.members.map(m => `
+        <button class="covered-member-btn split-payer-btn${m.id===paidBy?' active':''}" data-member-id="${m.id}" onclick="selectSplitPayer(this)">
+          <div class="member-av ${m.color}" style="width:26px;height:26px;border-radius:7px;font-size:10px">${m.id}</div>
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
+        </button>`).join('')}
       </div>
-    </div>`).join('')}
-    <div id="split-total-preview" style="display:none;text-align:right;font-size:14px;font-weight:800;color:var(--ink);padding:8px 4px 0;border-top:1px solid rgba(0,0,0,0.07);margin-top:6px">Total: ₱0</div>`;
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Total Amount</div>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
+        <span style="padding:10px 8px 10px 12px;font-size:15px;font-weight:700;color:var(--ink-3)">₱</span>
+        <input type="number" id="split-total-input" placeholder="0.00" min="0" value="${prefillTotal||''}"
+          oninput="updateSplitEachPreview(${group.members.length})"
+          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none;-moz-appearance:textfield">
+      </div>
+    </div>
+    <div id="split-each-preview" style="display:${prefillTotal?'block':'none'};font-size:12px;font-weight:700;color:var(--ink-4);text-align:right;padding-top:6px">
+      ${prefillTotal ? `Each person owes ₱${(prefillTotal/group.members.length).toFixed(2)}` : ''}
+    </div>`;
 }
 
-function updateSplitTotal() {
-  const preview = document.getElementById('split-total-preview');
-  if (!preview) return;
-  const total = Array.from(document.querySelectorAll('.split-pay-input')).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
-  preview.style.display = total > 0 ? 'block' : 'none';
-  preview.textContent = 'Total: ₱' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function selectSplitPayer(btn) {
+  document.querySelectorAll('.split-payer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
-function renderItemizedModeContent(group, container) {
+function updateSplitEachPreview(memberCount) {
+  const input   = document.getElementById('split-total-input');
+  const preview = document.getElementById('split-each-preview');
+  if (!input || !preview) return;
+  const total = parseFloat(input.value) || 0;
+  if (total > 0 && memberCount > 0) {
+    preview.style.display = 'block';
+    preview.textContent = `Each person owes ₱${(total / memberCount).toFixed(2)}`;
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function renderItemizedModeContent(group, container, prefillPaidBy) {
   if (!container) return;
-  container.innerHTML = `<div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:10px">Tap a member to add their items.</div>`
+  const paidBy = prefillPaidBy || group.members[0]?.id;
+  container.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Who paid the bill?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${group.members.map(m => `
+        <button class="covered-member-btn itemized-payer-btn${m.id===paidBy?' active':''}" data-member-id="${m.id}" onclick="selectItemizedPayer(this)">
+          <div class="member-av ${m.color}" style="width:26px;height:26px;border-radius:7px;font-size:10px">${m.id}</div>
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink)">${m.name.split(' ')[0]}</span>
+        </button>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-4);font-weight:600;margin-bottom:10px">Add items per person. Each member owes their subtotal to the payer.</div>`
     + group.members.map(m => `
     <div class="itemized-member-header" onclick="toggleItemizedSection('${m.id}')">
       <div class="member-av ${m.color}" style="width:30px;height:30px;border-radius:8px;font-size:10px;flex-shrink:0">${m.id}</div>
@@ -1799,6 +1847,11 @@ function renderItemizedModeContent(group, container) {
       <div id="itm-rows-${m.id}"></div>
       <button onclick="addItemRow('${m.id}')" style="font-size:12px;font-weight:700;color:var(--tan-dark);background:none;border:none;cursor:pointer;padding:4px 0">+ Add Item</button>
     </div>`).join('');
+}
+
+function selectItemizedPayer(btn) {
+  document.querySelectorAll('.itemized-payer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function toggleItemizedSection(memberId) {
@@ -1872,6 +1925,50 @@ function selectCoveredBy(btn) {
   btn.classList.add('active');
 }
 
+/* ── EDIT EXPENSE MODE SWITCH ────────────────── */
+function switchEditExpenseMode(mode) {
+  STATE.editExpenseMode = mode;
+  ['split','itemized','covered'].forEach(m => {
+    const btn = document.getElementById('edit-mode-btn-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const group   = getActiveGroup();
+  const content = document.getElementById('edit-expense-mode-content');
+  if (!group || !content) return;
+  if (mode === 'split')    renderSplitModeContent(group, content);
+  if (mode === 'itemized') renderItemizedModeContent(group, content);
+  if (mode === 'covered')  renderCoveredModeContent(group, content);
+}
+window.switchEditExpenseMode = switchEditExpenseMode;
+
+/* ── PROFILE EDIT ────────────────────────────── */
+function openProfileEdit() {
+  const nameInput = document.getElementById('profile-edit-name');
+  if (nameInput && AUTH.user) nameInput.value = AUTH.user.name || '';
+  openModal('profile-edit-modal');
+}
+
+function saveProfile() {
+  const nameInput = document.getElementById('profile-edit-name');
+  const name = (nameInput?.value || '').trim();
+  if (!name) { showToast('⚠️ Enter your name'); return; }
+  if (!AUTH.user) AUTH.user = { id: 'user_local', phone: '', pairCode: '' };
+  AUTH.user.name = name;
+  saveAuth();
+  localStorage.setItem('at_profile_name', name);
+  const firstName = name.split(' ')[0];
+  document.querySelectorAll('.profile-av').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
+  document.querySelectorAll('.profile-name-el').forEach(el => el.textContent = name);
+  document.querySelectorAll('.avatar-btn').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
+  document.querySelectorAll('.greeting-name').forEach(el => el.textContent = firstName + ' ✨');
+  const ovAv = document.getElementById('ov-avatar');
+  if (ovAv) ovAv.textContent = firstName.substring(0,2).toUpperCase();
+  closeModalById('profile-edit-modal');
+  showToast('✅ Profile updated!');
+}
+window.openProfileEdit = openProfileEdit;
+window.saveProfile     = saveProfile;
+
 function renderExpensePaymentInputs(group, containerId, totalPreviewId) {
   const container = document.getElementById(containerId);
   if (!container || !group) return;
@@ -1903,6 +2000,11 @@ function openEditExpense(expId) {
   const exp = group.expenses.find(e => e.id === expId);
   if (!exp) return;
   closeModalById('expense-actions-modal');
+
+  // Detect expense type
+  const type = exp.type || (exp.memberPayments ? 'split' : exp.coveredBy ? 'covered' : 'split');
+  STATE.editExpenseMode = type;
+
   document.getElementById('edit-expense-id').value   = expId;
   document.getElementById('edit-expense-desc').value = exp.name;
   document.getElementById('edit-expense-note').value = exp.note || '';
@@ -1911,14 +2013,61 @@ function openEditExpense(expId) {
   if (iconPreview) iconPreview.textContent = exp.icon;
   const grid = document.getElementById('edit-icon-picker-grid');
   if (grid) renderIconPickerInto(grid, 'edit-expense-icon-preview');
-  renderExpensePaymentInputs(group, 'edit-expense-member-payments', 'edit-expense-total-preview');
-  // Pre-fill amounts
-  const payments = exp.memberPayments || (exp.payerId ? [{ memberId: exp.payerId, amount: exp.amount }] : []);
-  payments.forEach(p => {
-    const inp = document.querySelector(`#edit-expense-member-payments .expense-pay-input[data-member-id="${p.memberId}"]`);
-    if (inp && p.amount) inp.value = p.amount;
+
+  // Set mode buttons
+  ['split','itemized','covered'].forEach(m => {
+    const btn = document.getElementById('edit-mode-btn-' + m);
+    if (btn) btn.classList.toggle('active', m === type);
   });
-  updateExpenseTotalPreview('edit-expense-member-payments', 'edit-expense-total-preview');
+
+  // Render mode content with pre-filled values
+  const content = document.getElementById('edit-expense-mode-content');
+  if (!content) { openModal('edit-expense-modal'); return; }
+
+  if (type === 'split') {
+    const paidBy = exp.paidBy || exp.memberPayments?.[0]?.memberId || group.members[0]?.id;
+    const total  = getExpenseTotal(exp);
+    renderSplitModeContent(group, content, paidBy, total);
+    // swap class prefix so edit modal's payer buttons use edit- selector
+    content.querySelectorAll('.split-payer-btn').forEach(b => b.classList.add('edit-split-payer-btn'));
+  } else if (type === 'itemized') {
+    const paidBy = exp.paidBy || group.members[0]?.id;
+    renderItemizedModeContent(group, content, paidBy);
+    content.querySelectorAll('.itemized-payer-btn').forEach(b => b.classList.add('edit-itemized-payer-btn'));
+    // Re-populate items
+    setTimeout(() => {
+      (exp.memberItems || []).forEach(mi => {
+        if (!mi.items || mi.items.length === 0) return;
+        toggleItemizedSection(mi.memberId); // open section
+        mi.items.forEach(item => {
+          addItemRow(mi.memberId);
+          const rows = document.querySelectorAll(`#itm-rows-${mi.memberId} .item-row`);
+          const row  = rows[rows.length - 1];
+          if (!row) return;
+          const nameI  = row.querySelector('.item-name-input');
+          const qtyI   = row.querySelector('.item-qty-input');
+          const priceI = row.querySelector('.item-price-input');
+          if (nameI)  nameI.value  = item.name || '';
+          if (qtyI)   qtyI.value   = item.qty  || 1;
+          if (priceI) priceI.value = item.price || 0;
+          updateItemizedSubtotal(mi.memberId);
+        });
+      });
+    }, 50);
+  } else if (type === 'covered') {
+    renderCoveredModeContent(group, content);
+    // Pre-fill
+    setTimeout(() => {
+      const amtEl = document.getElementById('covered-amount-input');
+      if (amtEl) amtEl.value = getExpenseTotal(exp) || '';
+      const settledEl = document.getElementById('covered-settled-toggle');
+      if (settledEl) settledEl.checked = exp.isSettled || false;
+      document.querySelectorAll('.covered-member-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.memberId === exp.coveredBy);
+      });
+    }, 30);
+  }
+
   openModal('edit-expense-modal');
 }
 
@@ -1928,19 +2077,71 @@ function saveEditExpense() {
   const expId = document.getElementById('edit-expense-id').value;
   const exp   = group.expenses.find(e => e.id === expId);
   if (!exp) return;
-  const name  = document.getElementById('edit-expense-desc').value.trim();
+  const name = document.getElementById('edit-expense-desc').value.trim();
   if (!name) { showToast('⚠️ Enter a description'); return; }
-  const payInputs      = document.querySelectorAll('#edit-expense-member-payments .expense-pay-input');
-  const memberPayments = Array.from(payInputs).map(inp => ({ memberId: inp.dataset.memberId, amount: parseFloat(inp.value) || 0 }));
-  const total          = memberPayments.reduce((s, p) => s + p.amount, 0);
-  if (!total) { showToast('⚠️ Enter at least one payment amount'); return; }
-  exp.name           = name;
-  exp.icon           = STATE.expenseIconSelected || exp.icon;
-  exp.memberPayments = memberPayments;
-  exp.total          = total;
-  exp.note           = document.getElementById('edit-expense-note').value.trim();
+
+  const mode = STATE.editExpenseMode || exp.type || 'split';
+
+  if (mode === 'split') {
+    const paidByBtn = document.querySelector('#edit-expense-mode-content .split-payer-btn.active');
+    const paidBy    = paidByBtn?.dataset.memberId || exp.paidBy || group.members[0]?.id;
+    const total     = parseFloat(document.getElementById('split-total-input')?.value) || 0;
+    if (!total) { showToast('⚠️ Enter the total amount'); return; }
+    exp.type           = 'split';
+    exp.paidBy         = paidBy;
+    exp.memberPayments = [{ memberId: paidBy, amount: total }];
+    exp.total          = total;
+    delete exp.memberItems;
+    delete exp.coveredBy;
+    delete exp.isSettled;
+
+  } else if (mode === 'itemized') {
+    const paidByBtn = document.querySelector('#edit-expense-mode-content .itemized-payer-btn.active');
+    const paidBy    = paidByBtn?.dataset.memberId || exp.paidBy || group.members[0]?.id;
+    const memberItems = [];
+    let total = 0;
+    group.members.forEach(m => {
+      const rows  = document.querySelectorAll(`#edit-expense-mode-content .item-row[data-member="${m.id}"]`);
+      const items = Array.from(rows).map(row => {
+        const itemName = row.querySelector('.item-name-input')?.value.trim();
+        const qty      = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
+        const price    = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+        return itemName && price > 0 ? { name: itemName, qty, price, subtotal: qty * price } : null;
+      }).filter(Boolean);
+      const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
+      total += subtotal;
+      memberItems.push({ memberId: m.id, items, subtotal });
+    });
+    if (!total) { showToast('⚠️ Add at least one item'); return; }
+    exp.type        = 'itemized';
+    exp.paidBy      = paidBy;
+    exp.memberItems = memberItems;
+    exp.total       = total;
+    delete exp.memberPayments;
+    delete exp.coveredBy;
+    delete exp.isSettled;
+
+  } else if (mode === 'covered') {
+    const amount     = parseFloat(document.getElementById('covered-amount-input')?.value) || 0;
+    if (!amount) { showToast('⚠️ Enter the total amount'); return; }
+    const covBtn     = document.querySelector('#edit-expense-mode-content .covered-member-btn.active');
+    const coveredBy  = covBtn?.dataset.memberId || exp.coveredBy || group.members[0]?.id;
+    const isSettled  = document.getElementById('covered-settled-toggle')?.checked || false;
+    exp.type      = 'covered';
+    exp.coveredBy = coveredBy;
+    exp.total     = amount;
+    exp.isSettled = isSettled;
+    delete exp.memberPayments;
+    delete exp.memberItems;
+    delete exp.paidBy;
+  }
+
+  exp.name = name;
+  exp.icon = STATE.expenseIconSelected || exp.icon;
+  exp.note = document.getElementById('edit-expense-note').value.trim();
   delete exp.amount;
   delete exp.payerId;
+
   saveGroups();
   renderExpensesPanel(group);
   renderSettlePanel(group);
@@ -2114,12 +2315,20 @@ function calcSettlement(group) {
         if (m.id === exp.coveredBy) balances[m.id] += total;
       });
     } else if (type === 'itemized') {
-      // Each member owes their own subtotal; they "paid" that amount
-      const share = total / group.members.length; // still split equally for settlement
-      (exp.memberItems||[]).forEach(mi => {
-        if (balances[mi.memberId] !== undefined) balances[mi.memberId] += parseFloat(mi.subtotal)||0;
-      });
-      group.members.forEach(m => { if (balances[m.id]!==undefined) balances[m.id] -= share; });
+      if (exp.paidBy && balances[exp.paidBy] !== undefined) {
+        // New format: payer fronted the full bill; each member owes their subtotal
+        balances[exp.paidBy] += total;
+        (exp.memberItems||[]).forEach(mi => {
+          if (balances[mi.memberId] !== undefined) balances[mi.memberId] -= parseFloat(mi.subtotal)||0;
+        });
+      } else {
+        // Legacy: equal split for settlement
+        const share = total / group.members.length;
+        (exp.memberItems||[]).forEach(mi => {
+          if (balances[mi.memberId] !== undefined) balances[mi.memberId] += parseFloat(mi.subtotal)||0;
+        });
+        group.members.forEach(m => { if (balances[m.id]!==undefined) balances[m.id] -= share; });
+      }
     } else {
       // split (default) or legacy
       if (exp.memberPayments) {
@@ -3733,27 +3942,41 @@ window.pinPlaceToMap = pinPlaceToMap;
 
 // Render quick category pills on the saan-top-card
 function updateGroupHeroStats(group) {
-  const total = (group.expenses || []).reduce((s, e) => s + getExpenseTotal(e), 0);
+  const total     = (group.expenses || []).reduce((s, e) => s + getExpenseTotal(e), 0);
   const doneTasks  = (group.tasks || []).filter(t => t.status === 'done').length;
   const totalTasks = (group.tasks || []).length;
-  const owner      = group.members.find(m => m.isOwner);
-  let ownerBal = 0;
-  if (owner) {
-    calcSettlement(group).forEach(s => {
-      if (s.toName === owner.name) ownerBal += s.amount;
-      if (s.fromName === owner.name) ownerBal -= s.amount;
-    });
-  }
-  const tasksEl  = document.getElementById('hero-tasks');
-  const budgetEl = document.getElementById('hero-budget');
-  const spentEl  = document.getElementById('hero-spent');
-  const owedEl   = document.getElementById('hero-owed');
+
+  const tasksEl   = document.getElementById('hero-tasks');
+  const budgetEl  = document.getElementById('hero-budget');
+  const spentEl   = document.getElementById('hero-spent');
+  const owedEl    = document.getElementById('hero-owed');
+  const owedLblEl = owedEl?.closest('.hero-stat')?.querySelector('.hero-stat-lbl');
+
   if (tasksEl)  tasksEl.textContent  = totalTasks > 0 ? `${doneTasks}/${totalTasks}` : '0';
-  if (budgetEl) budgetEl.textContent = group.budget > 0 ? '₱' + group.budget.toLocaleString() : '—';
+  if (budgetEl) budgetEl.textContent = group.budget > 0 ? '₱' + Number(group.budget).toLocaleString() : '—';
   if (spentEl)  spentEl.textContent  = '₱' + total.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
   if (owedEl) {
-    owedEl.textContent = (ownerBal >= 0 ? '₱' : '-₱') + Math.abs(ownerBal).toLocaleString(undefined, { maximumFractionDigits: 0 });
-    owedEl.style.color = ownerBal >= 0 ? 'var(--green-deep)' : 'var(--danger)';
+    if (group.budget > 0) {
+      // Show budget remaining
+      const remaining = Number(group.budget) - total;
+      owedEl.textContent = (remaining >= 0 ? '₱' : '-₱') + Math.abs(remaining).toLocaleString(undefined, { maximumFractionDigits: 0 });
+      owedEl.style.color = remaining >= 0 ? 'var(--green-deep)' : 'var(--danger)';
+      if (owedLblEl) owedLblEl.textContent = 'Left';
+    } else {
+      // No budget set — show owner's owed balance from settlement
+      const owner = group.members.find(m => m.isOwner);
+      let ownerBal = 0;
+      if (owner) {
+        calcSettlement(group).forEach(s => {
+          if (s.toName === owner.name) ownerBal += s.amount;
+          if (s.fromName === owner.name) ownerBal -= s.amount;
+        });
+      }
+      owedEl.textContent = (ownerBal >= 0 ? '₱' : '-₱') + Math.abs(ownerBal).toLocaleString(undefined, { maximumFractionDigits: 0 });
+      owedEl.style.color = ownerBal >= 0 ? 'var(--green-deep)' : 'var(--danger)';
+      if (owedLblEl) owedLblEl.textContent = 'Owed';
+    }
   }
 }
 
@@ -4500,7 +4723,7 @@ window.checkHomeBanner      = checkHomeBanner;
 // ── PIN aliases for new HTML screens ─────────────────────────────
 window.pinInput       = (d) => { pinKey(d); };
 window.pinDelete      = ()  => { pinKey('del'); };
-window.pinForgot      = ()  => { if(!confirm('Log in again with your phone number?')) return; AUTH.user=null; localStorage.removeItem('at_user'); location.reload(); };
+window.pinForgot      = ()  => { if(!confirm('Reset PIN to default (1234)?')) return; localStorage.removeItem('at_pin'); location.reload(); };
 window.pinSetupInput  = (d) => { pinKey(d); };
 window.pinSetupDelete = ()  => { pinKey('del'); };
 window.pinSetupSkip   = ()  => { document.getElementById('pin-setup-screen').style.display='none'; showToast('You can set up a PIN in Settings later.'); };
@@ -4514,7 +4737,7 @@ let _pinBuffer    = '';
 let _pinMode      = 'lock';   // 'lock' | 'setup' | 'confirm'
 let _pinSetupFirst = '';
 let _idleTimer    = null;
-const PIN_IDLE_MS = 60000; // 1 minute
+const PIN_IDLE_MS = 300000; // 5 minutes
 
 function getPIN()  { return localStorage.getItem('at_pin') || '1234'; }
 function setPIN(p) { localStorage.setItem('at_pin', p); }
@@ -4683,10 +4906,13 @@ function showLoadingSplash() {
   }, 1800);
 }
 
-window.pinKey   = pinKey;
-window.setupPIN = setupPIN;
-window.showPinLock = showPinLock;
-window.hidePinLock = hidePinLock;
+window.pinKey              = pinKey;
+window.setupPIN            = setupPIN;
+window.showPinLock         = showPinLock;
+window.hidePinLock         = hidePinLock;
+window.selectSplitPayer    = selectSplitPayer;
+window.selectItemizedPayer = selectItemizedPayer;
+window.updateSplitEachPreview = updateSplitEachPreview;
 
 // Add shake keyframe
 const shakeStyle = document.createElement('style');

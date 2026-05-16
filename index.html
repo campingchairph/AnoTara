@@ -83,7 +83,7 @@
   <div style="text-align:left;margin-bottom:32px;padding:0 16px;width:100%;max-width:320px">
     <div style="font-family:'DM Serif Display',serif;font-size:32px;font-weight:400;color:#111827;margin-bottom:4px;font-style:italic" id="pin-title">ano tara?</div>
     <div style="font-size:14px;font-weight:600;color:#F5A623" id="pin-subtitle">Enter your PIN</div>
-    <div style="font-size:12px;color:#9CA3AF;margin-top:2px">Test PIN: 123456</div>
+    <div style="font-size:12px;color:#9CA3AF;margin-top:2px">Default PIN: 1234</div>
   </div>
   <!-- PIN dots -->
   <div style="display:flex;gap:16px;margin-bottom:32px" id="pin-dots">
@@ -990,16 +990,24 @@
 
     <!-- SETTINGS tab -->
     <div class="tab-panel" id="tp-settings">
-      <div style="padding:16px 20px 8px;display:flex;align-items:center;gap:14px">
+      <!-- Profile header — tappable to edit -->
+      <div onclick="openProfileEdit()" style="padding:16px 20px 12px;display:flex;align-items:center;gap:14px;cursor:pointer">
         <div class="profile-av" style="width:56px;height:56px;font-size:18px">JH</div>
-        <div><div class="profile-name-el" style="font-size:18px;font-weight:700;color:var(--ink)">Jhoan A.</div><div class="profile-phone-el" style="font-size:13px;color:var(--ink-3);margin-top:2px">—</div></div>
+        <div style="flex:1">
+          <div class="profile-name-el" style="font-size:18px;font-weight:700;color:var(--ink)">Jhoan</div>
+          <div style="font-size:12px;color:var(--ink-4);margin-top:2px">Tap to edit profile</div>
+        </div>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ink-4);fill:none;stroke-width:2"><polyline points="9,18 15,12 9,6"/></svg>
       </div>
       <div class="settings-section pad">
+        <div class="settings-group glass">
+          <div class="settings-item" onclick="openProfileEdit()"><div class="si-left"><div class="si-icon sand">👤</div><span class="si-name">Edit Profile &amp; Name</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="window.setupPIN()"><div class="si-left"><div class="si-icon sand">🔐</div><span class="si-name" id="pin-settings-label">Change PIN</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+        </div>
         <div class="settings-group glass">
           <div class="settings-item" onclick="window.openPairModal()"><div class="si-left"><div class="si-icon pink">💑</div><span class="si-name">Pair with Jowa</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
           <div class="settings-item" onclick="navTo('suppliers');window.initSuppliers()"><div class="si-left"><div class="si-icon sand">📋</div><span class="si-name">Supplier Quick Dial</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
           <div class="settings-item" onclick="window.openRemindersScreen()"><div class="si-left"><div class="si-icon pink">💕</div><span class="si-name">Important Dates</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-          <div class="settings-item" onclick="window.setupPIN()"><div class="si-left"><div class="si-icon sand">🔐</div><span class="si-name" id="pin-settings-label">Set Up PIN Lock</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
         </div>
         <div class="settings-group glass">
           <div class="settings-item"><div class="si-left"><div class="si-icon sand">🔔</div><span class="si-name" data-t="notifications"></span></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
@@ -1009,7 +1017,6 @@
         <div class="settings-group glass">
           <div class="settings-item"><div class="si-left"><div class="si-icon pink">⭐</div><span class="si-name" data-t="rateApp"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
           <div class="settings-item"><div class="si-left"><div class="si-icon pink">💬</div><span class="si-name" data-t="sendFeedback"></span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-          <div class="settings-item" onclick="window.signOut()"><div class="si-left"><div class="si-icon pink">🚪</div><span class="si-name">Sign Out</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
         </div>
         <div style="text-align:center;padding:20px 20px 12px;font-size:12px;color:var(--ink-4)">Ano Tara? v3.0 · Made with 💕 in the Philippines</div>
       </div>
@@ -1120,12 +1127,17 @@
     <div class="input-group"><div class="input-label">Category</div><div id="edit-expense-icon-preview" class="expense-icon-preview">🍽️</div><div class="icon-picker-wrap"><div id="edit-icon-picker-grid"></div></div></div>
     <div class="input-group"><div class="input-label">Description</div><input type="text" id="edit-expense-desc" class="glass-input" placeholder="e.g. Dinner, Grocery…"></div>
     <div class="input-group">
-      <div class="input-label">Who Paid How Much</div>
-      <div id="edit-expense-member-payments"></div>
-      <div id="edit-expense-total-preview" style="display:none;text-align:right;font-size:14px;font-weight:800;color:var(--ink);padding:8px 4px 0;border-top:1px solid rgba(0,0,0,0.07);margin-top:6px">Total: ₱0</div>
+      <div class="input-label">Expense Type</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="exp-mode-btn active" id="edit-mode-btn-split"    onclick="switchEditExpenseMode('split')">💰 Split</button>
+        <button class="exp-mode-btn"        id="edit-mode-btn-itemized" onclick="switchEditExpenseMode('itemized')">📋 Itemized</button>
+        <button class="exp-mode-btn"        id="edit-mode-btn-covered"  onclick="switchEditExpenseMode('covered')">🤝 Covered</button>
+      </div>
+      <div id="edit-expense-mode-content"></div>
     </div>
     <div class="input-group"><div class="input-label">Note</div><input type="text" id="edit-expense-note" class="glass-input" placeholder="Optional note…"></div>
     <button class="cta-btn pink" onclick="saveEditExpense()">Save Changes →</button>
+    <button onclick="deleteExpense(document.getElementById('edit-expense-id').value)" style="width:100%;padding:12px;border:none;background:none;color:var(--danger);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);margin-top:4px">🗑 Delete Expense</button>
   </div>
 </div>
 
@@ -1140,6 +1152,24 @@
     <div class="input-group"><div class="input-label">Due Date</div><input type="date" id="edit-task-due" class="glass-input"></div>
     <button class="cta-btn green" onclick="saveEditTask()">Save Changes →</button>
     <button onclick="deleteTask(document.getElementById('edit-task-id').value)" style="width:100%;padding:12px;border:none;background:none;color:var(--danger);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);margin-top:4px">Delete Task</button>
+  </div>
+</div>
+
+<!-- Profile Edit -->
+<div id="profile-edit-modal" class="modal-overlay" onclick="closeModalOutside(event,'profile-edit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Profile</div>
+    <div class="input-group">
+      <div class="input-label">Your Name</div>
+      <input type="text" id="profile-edit-name" class="glass-input" placeholder="Enter your name">
+    </div>
+    <button class="cta-btn pink" onclick="saveProfile()">Save Profile →</button>
+    <div style="margin-top:12px;padding:14px 16px;background:rgba(245,230,200,0.4);border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)">
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px">🔐 PIN Lock</div>
+      <div style="font-size:12px;color:var(--ink-4);margin-bottom:10px">Default PIN is <strong>1234</strong>. Change it below.</div>
+      <button onclick="closeModalById('profile-edit-modal');window.setupPIN()" class="cta-btn" style="padding:10px 16px;font-size:13px">Change PIN →</button>
+    </div>
   </div>
 </div>
 
