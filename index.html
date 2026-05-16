@@ -311,10 +311,10 @@
   <!-- Balance Card -->
   <div class="balance-card" onclick="openBalanceBreakdown()">
     <div class="bal-label" data-t="netBalance"></div>
-    <div class="bal-amount">₱1,240</div>
+    <div class="bal-amount">₱0</div>
     <div class="bal-pills">
-      <span class="bal-pill owed"><span data-t="owedToYou"></span> ₱1,800</span>
-      <span class="bal-pill owe"><span data-t="youOwe"></span> ₱560</span>
+      <span class="bal-pill owed"><span data-t="owedToYou"></span> ₱0</span>
+      <span class="bal-pill owe"><span data-t="youOwe"></span> ₱0</span>
     </div>
     <div class="bal-tap-hint">👆 Tap for full breakdown</div>
   </div>
@@ -373,32 +373,7 @@
     <span class="sec-action" onclick="openModal('new-group-modal')" data-t="newBtn"></span>
   </div>
   <div class="groups-scroll" id="groups-scroll-el">
-    <div class="group-card gc-jowa" onclick="openGroup('jowa')">
-      <div class="group-emoji">💑</div>
-      <div class="group-name" data-t="jowaLabel"></div>
-      <div class="group-meta">Jhoan &amp; Seph · Couple</div>
-      <div class="group-balance neg">↓ You owe ₱240</div>
-      <div class="group-badge">₱18,240 this month</div>
-    </div>
-    <div class="group-card gc-familia" onclick="openGroup('familia')">
-      <div class="group-emoji">🎂</div>
-      <div class="group-name" data-t="familiaLabel"></div>
-      <div class="group-meta">6 members · 8 tasks</div>
-      <div class="group-balance pos">↑ Owed ₱673</div>
-      <div class="group-badge">₱4,200 budget</div>
-    </div>
-    <div class="group-card gc-berks" onclick="openGroup('berks')">
-      <div class="group-emoji">🍜</div>
-      <div class="group-name" data-t="berksLabel"></div>
-      <div class="group-meta">5 people · Tonight</div>
-      <div class="group-balance pos">↑ Owed ₱560</div>
-      <div class="group-badge">Split bill</div>
-    </div>
-    <div class="group-card gc-new" onclick="openModal('new-group-modal')">
-      <div class="group-emoji" style="opacity:.4">+</div>
-      <div class="group-name" style="color:var(--ink-3)" data-t="newGroupLabel"></div>
-      <div class="group-meta" style="color:var(--ink-4)" data-t="newGroupSub"></div>
-    </div>
+    <!-- populated by renderGroupsList() -->
   </div>
 
   <!-- Activity -->
@@ -406,11 +381,8 @@
     <span class="sec-title" data-t="happening"></span>
     <span class="sec-action" data-t="seeAll"></span>
   </div>
-  <div class="pad activity-list">
-    <div class="activity-item glass"><div class="act-dot sand">🛒</div><div class="act-text"><div class="act-title"><strong>Carlo</strong> bought cake ingredients — ₱680</div><div class="act-time">Mifamilia · 12 min ago</div></div></div>
-    <div class="activity-item glass"><div class="act-dot green">📍</div><div class="act-text"><div class="act-title"><strong>Jess</strong> is on the way to Yabu</div><div class="act-time">Berks · 25 min ago</div></div></div>
-    <div class="activity-item glass"><div class="act-dot pink">💰</div><div class="act-text"><div class="act-title"><strong>Seph</strong> paid ₱1,200 for the hotel deposit</div><div class="act-time">Jowa · 2 hrs ago</div></div></div>
-    <div class="activity-item glass"><div class="act-dot sand">✅</div><div class="act-text"><div class="act-title"><strong>Mark</strong> completed "Buy decorations"</div><div class="act-time">Mifamilia · 3 hrs ago</div></div></div>
+  <div class="pad activity-list" id="happening-now-list">
+    <!-- populated by renderHappeningNow() -->
   </div>
   <div class="spacer"></div>
 </section>
@@ -426,26 +398,7 @@
     </div>
   </header>
   <div class="pad" id="groups-list-el">
-    <div class="activity-item glass-pink" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('jowa')">
-      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(252,232,238,0.80);border:1px solid rgba(224,120,152,0.22);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">💑</div>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="jowaLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="coupleFinance"></div><div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:72%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--pink-mid));border-radius:2px"></div></div></div>
-      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--pink-deep)">↓ Owe ₱240</div><div style="font-size:10.5px;color:var(--ink-4)">this month</div></div>
-    </div>
-    <div class="activity-item glass-cream" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('familia')">
-      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.80);border:1px solid rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🎂</div>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="familiaLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="familyEvent"></div><div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:37%;height:100%;background:linear-gradient(90deg,var(--tan),var(--amber));border-radius:2px"></div></div></div>
-      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--green-deep)">↑ Owed ₱673</div><div style="font-size:10.5px;color:var(--ink-4)">₱4,200 budget</div></div>
-    </div>
-    <div class="activity-item glass-green" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('berks')">
-      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(208,236,218,0.80);border:1px solid rgba(90,171,122,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🍜</div>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--ink)" data-t="berksLabel"></div><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px" data-t="friendsHangout"></div><div style="margin-top:6px;display:inline-block;background:rgba(232,245,237,0.8);color:var(--green-deep);font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid rgba(90,171,122,0.2)" data-t="tonight"></div></div>
-      <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:700;color:var(--green-deep)">↑ Owed ₱560</div><div style="font-size:10.5px;color:var(--ink-4)">split bill</div></div>
-    </div>
-    <div class="activity-item" style="border-radius:var(--r-lg);border:1.5px dashed rgba(201,169,110,0.38);background:rgba(255,253,248,0.45);cursor:pointer;margin-bottom:11px" onclick="openModal('new-group-modal')">
-      <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.50);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:var(--tan);stroke-width:2;fill:none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-      <div><div style="font-size:15px;font-weight:700;color:var(--tan-dark)" data-t="newGroupLabel"></div><div style="font-size:11.5px;color:var(--ink-4)">Jowa · Mifamilia · Berks · Trip</div></div>
-    </div>
-
+    <!-- populated by renderGroupsList() -->
   </div>
 </section>
 
@@ -513,11 +466,7 @@
   <!-- MEMBERS -->
   <div id="panel-members" class="pad" style="display:none">
     <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="membersTitle"></span><span class="sec-action" onclick="openShareModal()" data-t="inviteMember"></span></div>
-    <div class="member-row glass"><div class="member-av ma-tan">MA</div><div><div class="member-name">Jhoan (You)</div><div class="member-role">Admin · Paid ₱1,200</div></div><span class="member-status ms-here" data-t="msHere"></span></div>
-    <div class="member-row glass"><div class="member-av ma-green">CA</div><div><div class="member-name">Carlo</div><div class="member-role">Member · Paid ₱680</div></div><span class="member-status ms-here" data-t="msHere"></span></div>
-    <div class="member-row glass"><div class="member-av ma-pink">MK</div><div><div class="member-name">Mark</div><div class="member-role">Member · Paid ₱960</div></div><span class="member-status ms-way" data-t="msWay"></span></div>
-    <div class="member-row glass"><div class="member-av ma-sand">TL</div><div><div class="member-name">Tita Linda</div><div class="member-role">Member · Paid ₱0</div></div><span class="member-status ms-here" data-t="msCooking"></span></div>
-    <div class="member-row glass"><div class="member-av ma-green" style="color:var(--green-deep)">AN</div><div><div class="member-name">Ana</div><div class="member-role">Member · Paid ₱0</div></div><span class="member-status ms-late" data-t="msLate"></span></div>
+    <!-- populated by renderMembersTab() -->
   </div>
   <!-- SETTLE -->
   <div id="panel-settle" class="pad" style="display:none;padding-top:16px">
@@ -552,8 +501,8 @@
   <div class="couple-hero">
     <div id="couple-sync-indicator" class="couple-sync"><div class="sync-dot"></div><span class="sync-label" data-t="synced"></span></div>
     <div style="font-size:11px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:0.9px;margin-top:8px" data-t="thisMonth"></div>
-    <div style="font-family:var(--f2);font-size:38px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-1.5px;margin:5px 0 14px;line-height:1">₱18,240</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="bal-pill owe">Jhoan paid ₱10,840</span><span class="bal-pill owed">Seph paid ₱7,400</span></div>
+    <div id="jowa-hero-total" style="font-family:var(--f2);font-size:38px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-1.5px;margin:5px 0 14px;line-height:1">₱0</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span id="jowa-p1-card" class="bal-pill owe">—</span><span id="jowa-p2-card" class="bal-pill owed">—</span></div>
     <button onclick="openModal('pair-modal')" style="margin-top:14px;padding:8px 16px;border-radius:var(--r-sm);background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.65);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer" data-t="pairJowa"></button>
   </div>
 
@@ -579,49 +528,10 @@
     </div>
   </div>
 
-  <!-- Savings Goals — expanded -->
+  <!-- Savings Goals — dynamic -->
   <div class="pad sec-hdr"><span class="sec-title" data-t="savingsGoals"></span><span class="sec-action" onclick="openModal('add-goal-modal')" data-t="newGoal"></span></div>
-  <div class="pad">
-    <!-- Japan Goal -->
-    <div class="goal-card glass-pink" style="margin-bottom:12px">
-      <div class="goal-header">
-        <div><div class="goal-emoji">🌏</div><div class="goal-title">Japan 2025</div><div class="goal-sub">Dream vacation · Together · Target: Dec 2025</div></div>
-        <span class="goal-tag gt-green" data-t="onTrack"></span>
-      </div>
-      <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--pink-accent),var(--tan))" data-width="62%"></div></div>
-      <div class="goal-nums-row"><span class="goal-num">₱31,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
-      <!-- Expanded contributions -->
-      <div class="goal-expanded">
-        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Contributions</div>
-        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan</span><span style="font-size:11px;color:var(--ink-4)">₱2,000/mo</span><span class="goal-contrib-amt">₱18,000</span></div>
-        <div class="goal-contrib-row"><span class="goal-contrib-name">Seph</span><span style="font-size:11px;color:var(--ink-4)">₱1,500/mo</span><span class="goal-contrib-amt">₱13,000</span></div>
-        <div style="margin-top:10px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.2)">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--ink-3)">Projected completion</span><span style="font-size:12px;font-weight:700;color:var(--green-deep)">Oct 2025 ✓</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--ink-3)">Still needed</span><span style="font-size:12px;font-weight:700;color:var(--ink)">₱19,000</span></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="openAddMoneyModal('Japan 2025')" class="goal-add-btn" style="flex:1">+ Add Money</button>
-          <button onclick="openEditGoalModal('Japan 2025',50000,31000)" class="goal-add-btn" style="flex:1;border-style:solid">Edit Goal</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Emergency Fund Goal -->
-    <div class="goal-card glass-green" style="margin-bottom:12px">
-      <div class="goal-header">
-        <div><div class="goal-emoji">🛡️</div><div class="goal-title">Emergency Fund</div><div class="goal-sub">Safety net · Together</div></div>
-        <span class="goal-tag gt-sand" data-t="almostThere"></span>
-      </div>
-      <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--green-accent),var(--green-deep))" data-width="88%"></div></div>
-      <div class="goal-nums-row"><span class="goal-num">₱44,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
-      <div class="goal-expanded">
-        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Transaction History</div>
-        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan · May 1</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱3,000</span></div>
-        <div class="goal-contrib-row"><span class="goal-contrib-name">Seph · Apr 15</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱2,500</span></div>
-        <div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan · Apr 1</span><span class="goal-contrib-amt" style="color:var(--green-deep)">+₱3,000</span></div>
-        <div style="display:flex;gap:8px;margin-top:8px"><button onclick="openAddMoneyModal('Emergency Fund')" class="goal-add-btn" style="flex:1">+ Add Money</button><button onclick="openWithdrawModal('Emergency Fund')" class="goal-add-btn" style="flex:1;border-style:solid">Withdraw</button></div>
-      </div>
-    </div>
+  <div class="pad" id="couple-goals-section">
+    <!-- populated by renderSavingsGoals() -->
   </div>
 
 
@@ -811,10 +721,10 @@
         <!-- Jowa Budget Card -->
         <div class="glass" onclick="switchMainTab('jowa')" style="padding:16px;margin-bottom:12px;cursor:pointer">
           <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">This Month · Jowa</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink)">₱18,240</div>
+          <div id="home-jowa-total" style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink)">₱0</div>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#D1FAE5;color:#065F46">Jhoan ₱10,840</span>
-            <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#FCE7F3;color:#9D174D">Seph ₱7,400</span>
+            <span id="home-jowa-p1" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#D1FAE5;color:#065F46">—</span>
+            <span id="home-jowa-p2" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#FCE7F3;color:#9D174D">—</span>
           </div>
         </div>
 
@@ -862,8 +772,7 @@
         <!-- Happening Now -->
         <div style="font-size:17px;font-weight:900;color:var(--ink);margin-bottom:10px;font-family:'Nunito',sans-serif">Happening Now</div>
         <div id="home-activity-list">
-          <div class="activity-item glass" style="margin-bottom:8px"><div class="act-dot sand">🛒</div><div class="act-text"><div class="act-title"><strong>Carlo</strong> added an expense — ₱680</div><div class="act-time">Mifamilia · recently</div></div></div>
-          <div class="activity-item glass" style="margin-bottom:8px"><div class="act-dot pink">💑</div><div class="act-text"><div class="act-title"><strong>Seph</strong> checked in today 💕</div><div class="act-time">Jowa · recently</div></div></div>
+          <!-- populated by renderHappeningNow() -->
         </div>
       </div>
       <div style="height:24px"></div>
@@ -885,13 +794,13 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div>
             <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px" data-t="thisMonth"></div>
-            <div style="font-family:var(--f2);font-size:34px;color:#fff;letter-spacing:-1px;margin-top:2px;line-height:1">₱18,240</div>
+            <div id="jowa-hero-total-2" style="font-family:var(--f2);font-size:34px;color:#fff;letter-spacing:-1px;margin-top:2px;line-height:1">₱0</div>
           </div>
           <button onclick="openModal('pair-modal')" style="padding:8px 14px;border-radius:99px;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.4);font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)" data-t="pairJowa"></button>
         </div>
         <div style="display:flex;gap:8px">
-          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Jhoan paid<br><strong style="font-size:15px">₱10,840</strong></span>
-          <span style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">Seph paid<br><strong style="font-size:15px">₱7,400</strong></span>
+          <span id="jowa-p1-card-2" style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">—</span>
+          <span id="jowa-p2-card-2" style="flex:1;padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);font-size:12px;font-weight:700;color:#fff;text-align:center">—</span>
         </div>
       </div>
       <!-- Important Dates -->
@@ -911,12 +820,7 @@
       <!-- Savings Goals -->
       <div class="pad sec-hdr" style="margin-top:8px"><span class="sec-title" data-t="savingsGoals"></span><span class="sec-action" onclick="openModal('add-goal-modal')" data-t="newGoal"></span></div>
       <div class="pad" id="jowa-goals-section">
-        <div class="goal-card glass-pink" style="margin-bottom:12px">
-          <div class="goal-header"><div><div class="goal-emoji">🌏</div><div class="goal-title">Japan 2025</div><div class="goal-sub">Dream vacation · Together · Target: Dec 2025</div></div><span class="goal-tag gt-green" data-t="onTrack"></span></div>
-          <div class="prog-track"><div class="goal-fill" style="width:0;background:linear-gradient(90deg,var(--pink-accent),var(--tan))" data-width="62%"></div></div>
-          <div class="goal-nums-row"><span class="goal-num">₱31,000 saved</span><span class="goal-num"><b>₱50,000</b> goal</span></div>
-          <div class="goal-expanded"><div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Contributions</div><div class="goal-contrib-row"><span class="goal-contrib-name">Jhoan</span><span style="font-size:11px;color:var(--ink-4)">₱2,000/mo</span><span class="goal-contrib-amt">₱18,000</span></div><div class="goal-contrib-row"><span class="goal-contrib-name">Seph</span><span style="font-size:11px;color:var(--ink-4)">₱1,500/mo</span><span class="goal-contrib-amt">₱13,000</span></div><div style="display:flex;gap:8px;margin-top:10px"><button onclick="openAddMoneyModal('Japan 2025')" class="goal-add-btn" style="flex:1">+ Add Money</button><button onclick="openEditGoalModal('Japan 2025',50000,31000)" class="goal-add-btn" style="flex:1;border-style:solid">Edit Goal</button></div></div>
-        </div>
+        <!-- populated by renderSavingsGoals() -->
       </div>
       <!-- Quick Access -->
       <div class="pad" style="margin-top:8px">
