@@ -1399,8 +1399,7 @@ function createGroup() {
   const emoji    = emojiMap[type] || '👥';
 
   // Budget
-  const budgetEl = document.getElementById('ng-budget');
-  const budget   = parseFloat(budgetEl?.value) || 0;
+  const budget = pesoVal('ng-budget');
 
   // Members input — comma-separated names
   const membersEl = document.getElementById('ng-members');
@@ -1502,7 +1501,7 @@ function addExpense() {
   if (mode === 'split') {
     const paidByBtn = document.querySelector('.split-payer-btn.active');
     const paidBy    = paidByBtn?.dataset.memberId || group.members[0]?.id;
-    const total     = parseFloat(document.getElementById('split-total-input')?.value) || 0;
+    const total     = pesoVal('split-total-input');
     if (!total) { showToast('⚠️ Enter the total amount'); return; }
     // paidBy fronted the whole bill; everyone splits equally
     expense = { ...base, paidBy, memberPayments: [{ memberId: paidBy, amount: total }], total };
@@ -1517,7 +1516,7 @@ function addExpense() {
       const items = Array.from(rows).map(row => {
         const itemName = row.querySelector('.item-name-input')?.value.trim();
         const qty      = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
-        const price    = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+        const price    = parseFloat((row.querySelector('.item-price-input')?.value||'').replace(/,/g,'')) || 0;
         return itemName && price > 0 ? { name:itemName, qty, price, subtotal:qty*price } : null;
       }).filter(Boolean);
       const subtotal = items.reduce((s,i) => s+i.subtotal, 0);
@@ -1528,7 +1527,7 @@ function addExpense() {
     expense = { ...base, paidBy, memberItems, total };
 
   } else if (mode === 'covered') {
-    const amount     = parseFloat(document.getElementById('covered-amount-input')?.value) || 0;
+    const amount     = pesoVal('covered-amount-input');
     if (!amount) { showToast('⚠️ Enter the total amount'); return; }
     const covBtn     = document.querySelector('.covered-member-btn.active');
     const coveredBy  = covBtn?.dataset.memberId || group.members[0]?.id;
@@ -1797,9 +1796,9 @@ function renderSplitModeContent(group, container, prefillPaidBy, prefillTotal) {
       <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Total Amount</div>
       <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
         <span style="padding:10px 8px 10px 12px;font-size:15px;font-weight:700;color:var(--ink-3)">₱</span>
-        <input type="number" id="split-total-input" placeholder="0.00" min="0" value="${prefillTotal||''}"
+        <input type="text" id="split-total-input" placeholder="0" inputmode="decimal" class="peso-input" value="${prefillTotal ? prefillTotal.toLocaleString() : ''}"
           oninput="updateSplitEachPreview(${group.members.length})"
-          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none;-moz-appearance:textfield">
+          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none">
       </div>
     </div>
     <div id="split-each-preview" style="display:${prefillTotal?'block':'none'};font-size:12px;font-weight:700;color:var(--ink-4);text-align:right;padding-top:6px">
@@ -1813,10 +1812,9 @@ function selectSplitPayer(btn) {
 }
 
 function updateSplitEachPreview(memberCount) {
-  const input   = document.getElementById('split-total-input');
   const preview = document.getElementById('split-each-preview');
-  if (!input || !preview) return;
-  const total = parseFloat(input.value) || 0;
+  if (!preview) return;
+  const total = pesoVal('split-total-input');
   if (total > 0 && memberCount > 0) {
     preview.style.display = 'block';
     preview.textContent = `Each person owes ₱${(total / memberCount).toFixed(2)}`;
@@ -1877,7 +1875,7 @@ function addItemRow(memberId) {
     <span style="font-size:12px;color:var(--ink-4);font-weight:600">×</span>
     <input type="number" class="item-qty-input" placeholder="1" min="1" value="1" oninput="updateItemizedSubtotal('${memberId}')">
     <span style="font-size:12px;color:var(--ink-4);font-weight:600">₱</span>
-    <input type="number" class="item-price-input" placeholder="0" min="0" oninput="updateItemizedSubtotal('${memberId}')">
+    <input type="text" inputmode="decimal" class="item-price-input peso-input" placeholder="0" oninput="updateItemizedSubtotal('${memberId}')">
     <button class="item-remove-btn" onclick="this.closest('.item-row').remove();updateItemizedSubtotal('${memberId}')">×</button>`;
   rows.appendChild(row);
 }
@@ -1886,7 +1884,7 @@ function updateItemizedSubtotal(memberId) {
   const rows = document.querySelectorAll(`.item-row[data-member="${memberId}"]`);
   const subtotal = Array.from(rows).reduce((s, row) => {
     const qty   = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
-    const price = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+    const price = parseFloat((row.querySelector('.item-price-input')?.value||'').replace(/,/g,'')) || 0;
     return s + qty * price;
   }, 0);
   const el = document.getElementById('itm-sub-' + memberId);
@@ -1901,8 +1899,8 @@ function renderCoveredModeContent(group, container) {
       <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">Total Amount</div>
       <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);border:1.5px solid rgba(201,169,110,0.3);border-radius:var(--r-sm);overflow:hidden">
         <span style="padding:10px 8px 10px 12px;font-size:15px;font-weight:700;color:var(--ink-3)">₱</span>
-        <input type="number" id="covered-amount-input" placeholder="0.00" min="0"
-          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none;-moz-appearance:textfield">
+        <input type="text" id="covered-amount-input" placeholder="0" inputmode="decimal" class="peso-input"
+          style="flex:1;padding:10px 12px 10px 0;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);outline:none">
       </div>
     </div>
     <div style="margin-bottom:10px">
@@ -2084,7 +2082,7 @@ function openEditExpense(expId) {
     // Pre-fill
     setTimeout(() => {
       const amtEl = document.getElementById('covered-amount-input');
-      if (amtEl) amtEl.value = getExpenseTotal(exp) || '';
+      if (amtEl) { const v = getExpenseTotal(exp); amtEl.value = v ? v.toLocaleString() : ''; }
       const settledEl = document.getElementById('covered-settled-toggle');
       if (settledEl) settledEl.checked = exp.isSettled || false;
       document.querySelectorAll('.covered-member-btn').forEach(b => {
@@ -2110,7 +2108,7 @@ function saveEditExpense() {
   if (mode === 'split') {
     const paidByBtn = document.querySelector('#edit-expense-mode-content .split-payer-btn.active');
     const paidBy    = paidByBtn?.dataset.memberId || exp.paidBy || group.members[0]?.id;
-    const total     = parseFloat(document.getElementById('split-total-input')?.value) || 0;
+    const total     = pesoVal('split-total-input');
     if (!total) { showToast('⚠️ Enter the total amount'); return; }
     exp.type           = 'split';
     exp.paidBy         = paidBy;
@@ -2130,7 +2128,7 @@ function saveEditExpense() {
       const items = Array.from(rows).map(row => {
         const itemName = row.querySelector('.item-name-input')?.value.trim();
         const qty      = parseFloat(row.querySelector('.item-qty-input')?.value) || 1;
-        const price    = parseFloat(row.querySelector('.item-price-input')?.value) || 0;
+        const price    = parseFloat((row.querySelector('.item-price-input')?.value||'').replace(/,/g,'')) || 0;
         return itemName && price > 0 ? { name: itemName, qty, price, subtotal: qty * price } : null;
       }).filter(Boolean);
       const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
@@ -2147,7 +2145,7 @@ function saveEditExpense() {
     delete exp.isSettled;
 
   } else if (mode === 'covered') {
-    const amount     = parseFloat(document.getElementById('covered-amount-input')?.value) || 0;
+    const amount     = pesoVal('covered-amount-input');
     if (!amount) { showToast('⚠️ Enter the total amount'); return; }
     const covBtn     = document.querySelector('#edit-expense-mode-content .covered-member-btn.active');
     const coveredBy  = covBtn?.dataset.memberId || exp.coveredBy || group.members[0]?.id;
@@ -3229,7 +3227,7 @@ function openAddMoneyModal(goalName) {
 }
 
 function submitAddMoney() {
-  const amt = parseFloat(document.getElementById('add-money-amount')?.value)||0;
+  const amt = pesoVal('add-money-amount');
   if (!amt) { showToast('⚠️ Enter an amount'); return; }
   closeModalById('add-money-modal');
   showToast(`💰 ₱${amt.toLocaleString()} added to ${_addMoneyGoalName}!`);
@@ -3245,7 +3243,7 @@ function openWithdrawModal(goalName) {
 }
 
 function submitWithdraw() {
-  const amt = parseFloat(document.getElementById('withdraw-amount')?.value)||0;
+  const amt = pesoVal('withdraw-amount');
   if (!amt) { showToast('⚠️ Enter an amount'); return; }
   closeModalById('withdraw-modal');
   showToast(`↩ ₱${amt.toLocaleString()} withdrawn from ${_withdrawGoalName}`);
@@ -4358,7 +4356,7 @@ function submitJowaEntry() {
   const expense = JOWA_EXPENSES.find(e=>e.id===_jeDetailId);
   if (!expense) return;
   const desc   = (document.getElementById('jee-desc')?.value||'').trim();
-  const amount = parseFloat(document.getElementById('jee-amount')?.value)||0;
+  const amount = pesoVal('jee-amount');
   const date   = document.getElementById('jee-date')?.value || new Date().toISOString().split('T')[0];
   if (!desc) { showToast('⚠️ Enter description'); return; }
   if (!amount) { showToast('⚠️ Enter amount'); return; }
@@ -5278,32 +5276,230 @@ window.renderExpenseTrendChart = renderExpenseTrendChart;
 /* ═══════════════════════════════════════════════
    BUDGET PLANNER
    ═══════════════════════════════════════════════ */
-let BUDGET_PROFILE = JSON.parse(localStorage.getItem('at_budget') || 'null') || { salary:0, freq:'monthly', bills:[] };
+let BUDGET_PROFILE = JSON.parse(localStorage.getItem('at_budget') || 'null') || { salary:0, freq:'monthly', bills:[], deductions:{ sss:0, philhealth:0, pagibig:0, tax:0, other:0 }, essentials:[] };
+// Migrate old profiles that lack new fields
+if (!BUDGET_PROFILE.deductions) BUDGET_PROFILE.deductions = { sss:0, philhealth:0, pagibig:0, tax:0, other:0 };
+if (!BUDGET_PROFILE.essentials) BUDGET_PROFILE.essentials = [];
 function saveBudgetProfile() { localStorage.setItem('at_budget', JSON.stringify(BUDGET_PROFILE)); }
 
 const FREQ_PER_MONTH = { monthly:1, semi:2, weekly:4.33, daily:21.7 };
 function getMonthlyIncome() { return (BUDGET_PROFILE.salary||0) * (FREQ_PER_MONTH[BUDGET_PROFILE.freq||'monthly']||1); }
+function getMonthlyGross()  { return BUDGET_PROFILE.salary || 0; }
+function getTotalDeductions() { const d = BUDGET_PROFILE.deductions||{}; return (d.sss||0)+(d.philhealth||0)+(d.pagibig||0)+(d.tax||0)+(d.other||0); }
+function getMonthlyNet()    { return Math.max(0, getMonthlyGross() - getTotalDeductions()); }
+function getPaycheckNet()   { return getMonthlyNet()   / (FREQ_PER_MONTH[BUDGET_PROFILE.freq||'monthly']||1); }
+function getPaycheckGross() { return getMonthlyGross() / (FREQ_PER_MONTH[BUDGET_PROFILE.freq||'monthly']||1); }
+function getActiveEssentials() { return BUDGET_PROFILE.essentials || []; }
+function getEssentialsTotal()  { return getActiveEssentials().reduce((s,e)=>s+(e.amount||0), 0); }
+
+// ── Global peso formatter ──────────────────────────────────────────────────
+// Call pesoFmt(inputEl) to auto-add commas; call pesoVal(id) to read back a clean float.
+function pesoFmt(el) {
+  if (!el) return;
+  const pos = el.selectionStart;
+  const rawBefore = (el.value||'').replace(/,/g,'');
+  const parts = rawBefore.split('.');
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const newVal = parts.length > 1 ? intPart + '.' + parts.slice(1).join('') : intPart;
+  el.value = newVal;
+  // Restore cursor (account for added commas)
+  const added = newVal.length - rawBefore.length;
+  try { el.setSelectionRange(pos + added, pos + added); } catch(e) {}
+}
+function pesoVal(id) {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  return parseFloat((el.value||'').replace(/,/g,''))||0;
+}
+// Auto-apply to any element with class peso-input
+document.addEventListener('input', function(ev) {
+  if (ev.target && ev.target.classList && ev.target.classList.contains('peso-input')) {
+    // Allow only digits and one decimal point
+    ev.target.value = ev.target.value.replace(/[^0-9.]/g,'').replace(/^(\d*\.?\d*).*$/, '$1');
+    pesoFmt(ev.target);
+  }
+});
 
 let _billIcon = '💳';
 let _billRecurring = 'forever';
+let _billDueDay = null;
+let _billSplit = 1;
+let _editingBillId = null;
+let _essDueDay = null;
+let _essSplit = 1;
+let _editingEssId = null;
 const BILL_ICONS = ['💡','💧','📶','🏠','🚗','📱','💳','🛒','🎬','🎵','🏋️','💊','📚','🎮','✈️','🍱','🏥','🎓','🛡️','💰','☕','🎁','🔧','🏫','🐾'];
+
+// ── Ordinal suffix ──
+function ordinal(n) {
+  if (n == null) return '—';
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// ── Due-day picker ──
+function renderBillDueDayPicker(selected) {
+  const el = document.getElementById('bill-dueday-picker');
+  if (!el) return;
+  let html = '';
+  for (let d = 1; d <= 31; d++) {
+    html += '<button class="due-day-chip'+(selected===d?' active':'')+'" onclick="selectBillDueDay('+d+')">'+d+'</button>';
+  }
+  html += '<button class="due-day-chip none-chip'+(selected===null?' active':'')+'" onclick="selectBillDueDay(null)">No date</button>';
+  el.innerHTML = html;
+  // Scroll to selected
+  if (selected) {
+    setTimeout(() => {
+      const chip = el.children[selected - 1];
+      if (chip) chip.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+    }, 50);
+  }
+}
+
+function selectBillDueDay(day) {
+  _billDueDay = day;
+  renderBillDueDayPicker(day);
+  // Refresh hint with new day context
+  renderBillSplitChips(_billSplit, 'bill-split-picker', 'bill-split-hint', 'bill-amount-input');
+}
+
+function selectEssentialDueDay(day) {
+  _essDueDay = day;
+  renderEssentialDueDayPicker(day);
+  renderBillSplitChips(_essSplit, 'essential-split-picker', 'essential-split-hint', 'essential-amount-input');
+}
+
+// ── Paycheck period helpers ──
+function getPaycheckPeriods() {
+  const freq = BUDGET_PROFILE.freq || 'monthly';
+  if (freq === 'monthly')
+    return [{ key:'m',  label:'Monthly Paycheck',  approxDay:null, start:1,  end:31 }];
+  if (freq === 'semi')
+    return [
+      { key:'p1', label:'1st Paycheck', approxDay:15, start:1,  end:15 },
+      { key:'p2', label:'2nd Paycheck', approxDay:30, start:16, end:31 },
+    ];
+  if (freq === 'weekly')
+    return [
+      { key:'w1', label:'Week 1', approxDay:7,  start:1,  end:7  },
+      { key:'w2', label:'Week 2', approxDay:14, start:8,  end:14 },
+      { key:'w3', label:'Week 3', approxDay:21, start:15, end:21 },
+      { key:'w4', label:'Week 4', approxDay:28, start:22, end:31 },
+    ];
+  // daily — single period
+  return [{ key:'d', label:'Daily Pay', approxDay:null, start:1, end:31 }];
+}
+
+function getBillsInPeriod(activeBills, period, isFirst) {
+  const due = activeBills.filter(b => b.dueDay != null && b.dueDay >= period.start && b.dueDay <= period.end);
+  const unscheduled = isFirst ? activeBills.filter(b => b.dueDay == null) : [];
+  return [...unscheduled, ...due].sort((a, b) => (a.dueDay || 0) - (b.dueDay || 0));
+}
+
+// Returns per-period effective allocation for a bill (handling split pre-save)
+function getEffectiveBillsForPeriod(activeBills, periods, periodIdx) {
+  const totalPeriods = periods.length;
+  const result = [];
+  activeBills.forEach(bill => {
+    // Cap split to available periods — single-paycheck months can't pre-save
+    const split = totalPeriods === 1 ? 1 : Math.min(bill.splitPaychecks || 1, totalPeriods);
+    const amtPerPeriod = bill.amount / split;
+    // Find which period the bill is due in
+    let dueIdx = 0;
+    if (bill.dueDay != null) {
+      const idx = periods.findIndex(p => bill.dueDay >= p.start && bill.dueDay <= p.end);
+      if (idx !== -1) dueIdx = idx;
+    }
+    // Walk backwards from due period: i=0 = due, i=1 = 1 period before, etc.
+    for (let i = 0; i < split; i++) {
+      const targetIdx = ((dueIdx - i) % totalPeriods + totalPeriods) % totalPeriods;
+      if (targetIdx === periodIdx) {
+        result.push({ ...bill, effectiveAmount: amtPerPeriod, isPreSave: i > 0, periodsBeforeDue: i, totalSplit: split });
+        break;
+      }
+    }
+  });
+  return result;
+}
+
+// ── Split chips ──
+function renderBillSplitChips(selected, pickerId, hintId, amountId) {
+  const picker = document.getElementById(pickerId);
+  const hint   = document.getElementById(hintId);
+  if (!picker) return;
+  const freq  = BUDGET_PROFILE.freq || 'monthly';
+  const maxSplit = { monthly:1, semi:2, weekly:4, daily:1 }[freq] || 1;
+  const labels = ['','1 paycheck','2 paychecks','3 paychecks','4 paychecks'];
+  let html = '';
+  for (let i = 1; i <= 4; i++) {
+    const disabled = i > maxSplit;
+    html += '<button class="split-chip'+(selected===i?' active':'')+(disabled?' disabled':'')+'"'+
+      (disabled?'' : ' onclick="selectSplit('+i+',\''+pickerId+'\',\''+hintId+'\',\''+amountId+'\')"')+
+      (disabled?' style="opacity:0.35;cursor:default"':'')+
+      '>'+labels[i]+'</button>';
+  }
+  picker.innerHTML = html;
+  if (hint) updateSplitHint(selected, hintId, amountId, maxSplit);
+}
+
+function selectSplit(n, pickerId, hintId, amountId) {
+  if (pickerId === 'bill-split-picker')       _billSplit = n;
+  else if (pickerId === 'essential-split-picker') _essSplit = n;
+  renderBillSplitChips(n, pickerId, hintId, amountId);
+}
+
+function updateSplitHint(n, hintId, amountId, maxSplit) {
+  const hint = document.getElementById(hintId);
+  if (!hint) return;
+  const freq = BUDGET_PROFILE.freq || 'monthly';
+  if (freq === 'monthly' || freq === 'daily' || maxSplit === 1) {
+    hint.textContent = 'Full amount paid each month (split not applicable for this pay schedule).';
+    return;
+  }
+  if (n <= 1) {
+    hint.textContent = 'Full amount comes from one paycheck.';
+    return;
+  }
+  const amount = pesoVal(amountId);
+  const perPC = amount > 0 ? '₱'+(amount/n).toLocaleString(undefined,{maximumFractionDigits:0})+' per paycheck × '+n : n+' paychecks';
+  const freqLabel = { semi:'each semi-monthly paycheck', weekly:'each weekly pay' }[freq]||'each paycheck';
+  hint.textContent = 'Set aside '+perPC+' '+freqLabel+'. Pay in full when due.';
+}
+
+// ── Essential due-day picker ──
+function renderEssentialDueDayPicker(selected) {
+  const el = document.getElementById('essential-dueday-picker');
+  if (!el) return;
+  let html = '';
+  for (let d = 1; d <= 31; d++) {
+    html += '<button class="due-day-chip'+(selected===d?' active':'')+'" onclick="selectEssentialDueDay('+d+')">'+d+'</button>';
+  }
+  html += '<button class="due-day-chip none-chip'+(selected===null?' active':'')+'" onclick="selectEssentialDueDay(null)">No date</button>';
+  el.innerHTML = html;
+}
 
 function initBudgetTab() {
   const salEl = document.getElementById('budget-salary-input');
-  if (salEl) salEl.value = BUDGET_PROFILE.salary || '';
+  if (salEl) {
+    salEl.value = BUDGET_PROFILE.salary ? BUDGET_PROFILE.salary.toLocaleString() : '';
+  }
   ['monthly','semi','weekly','daily'].forEach(f => {
     const btn = document.getElementById('freq-'+f);
     if (btn) btn.classList.toggle('active', f === (BUDGET_PROFILE.freq||'monthly'));
   });
+  renderDeductionInputs();
+  renderDeductionSummary();
+  renderBudgetEssentials();
   renderBudgetBills();
   renderBudgetChart();
   renderPaycheckGuide();
 }
 
 function onSalaryInput() {
-  const val = parseFloat(document.getElementById('budget-salary-input')?.value) || 0;
-  BUDGET_PROFILE.salary = val;
+  BUDGET_PROFILE.salary = pesoVal('budget-salary-input');
   saveBudgetProfile();
+  renderDeductionSummary();
   renderBudgetChart();
   renderPaycheckGuide();
 }
@@ -5320,8 +5516,15 @@ function setBudgetFreq(f) {
 }
 
 function openAddBillModal() {
+  _editingBillId = null;
   _billIcon = '💳';
   _billRecurring = 'forever';
+  _billDueDay = null;
+  _billSplit = 1;
+  const title = document.getElementById('bill-modal-title');
+  if (title) title.textContent = 'Add Bill / Expense';
+  const btn = document.getElementById('bill-submit-btn');
+  if (btn) btn.textContent = 'Add Bill →';
   const prev = document.getElementById('bill-icon-preview');
   if (prev) prev.textContent = _billIcon;
   const picker = document.getElementById('bill-icon-picker');
@@ -5337,6 +5540,40 @@ function openAddBillModal() {
   const u = document.getElementById('bill-until-input');   if (u) { u.style.display='none'; u.value=''; }
   const rf = document.getElementById('bill-rec-forever');  if (rf) rf.classList.add('active');
   const ru = document.getElementById('bill-rec-until');    if (ru) ru.classList.remove('active');
+  renderBillDueDayPicker(null);
+  renderBillSplitChips(1, 'bill-split-picker', 'bill-split-hint', 'bill-amount-input');
+  openModal('add-bill-modal');
+}
+
+function openEditBillModal(id) {
+  const bill = BUDGET_PROFILE.bills.find(b => b.id === id);
+  if (!bill) return;
+  _editingBillId = id;
+  _billIcon = bill.icon || '💳';
+  _billRecurring = bill.until ? 'until' : 'forever';
+  _billDueDay = bill.dueDay ?? null;
+  _billSplit = bill.splitPaychecks || 1;
+  const title = document.getElementById('bill-modal-title');
+  if (title) title.textContent = 'Edit Bill';
+  const btn = document.getElementById('bill-submit-btn');
+  if (btn) btn.textContent = 'Save Changes →';
+  const prev = document.getElementById('bill-icon-preview');
+  if (prev) prev.textContent = _billIcon;
+  const picker = document.getElementById('bill-icon-picker');
+  if (picker) {
+    picker.style.display = 'none';
+    picker.innerHTML = BILL_ICONS.map(ic =>
+      '<button style="font-size:22px;padding:7px;border:none;background:rgba(245,230,200,0.45);border-radius:8px;cursor:pointer" onclick="selectBillIcon(\''+ic+'\')" >'+ic+'</button>'
+    ).join('');
+  }
+  const n = document.getElementById('bill-name-input');    if (n) n.value = bill.name || '';
+  const a = document.getElementById('bill-amount-input');  if (a) a.value = bill.amount ? bill.amount.toLocaleString() : '';
+  const t = document.getElementById('bill-type-input');    if (t) t.value = bill.type || 'bill';
+  const u = document.getElementById('bill-until-input');   if (u) { u.value = bill.until||''; u.style.display = bill.until ? 'block' : 'none'; }
+  const rf = document.getElementById('bill-rec-forever');  if (rf) rf.classList.toggle('active', !bill.until);
+  const ru = document.getElementById('bill-rec-until');    if (ru) ru.classList.toggle('active', !!bill.until);
+  renderBillDueDayPicker(_billDueDay);
+  renderBillSplitChips(_billSplit, 'bill-split-picker', 'bill-split-hint', 'bill-amount-input');
   openModal('add-bill-modal');
 }
 
@@ -5365,18 +5602,25 @@ function setBillRecurring(type) {
 
 function submitBudgetBill() {
   const name   = (document.getElementById('bill-name-input')?.value||'').trim();
-  const amount = parseFloat(document.getElementById('bill-amount-input')?.value)||0;
+  const amount = pesoVal('bill-amount-input');
   const type   = document.getElementById('bill-type-input')?.value || 'bill';
   const until  = _billRecurring === 'until' ? (document.getElementById('bill-until-input')?.value||null) : null;
   if (!name)   { showToast('⚠️ Enter a bill name'); return; }
   if (!amount) { showToast('⚠️ Enter an amount'); return; }
-  BUDGET_PROFILE.bills.push({ id:'bill_'+Date.now(), icon:_billIcon, name, amount, type, until });
+  const data = { icon:_billIcon, name, amount, type, until, dueDay:_billDueDay, splitPaychecks:_billSplit };
+  if (_editingBillId) {
+    const idx = BUDGET_PROFILE.bills.findIndex(b => b.id === _editingBillId);
+    if (idx !== -1) BUDGET_PROFILE.bills[idx] = { ...BUDGET_PROFILE.bills[idx], ...data };
+    showToast('✏️ '+name+' updated!');
+  } else {
+    BUDGET_PROFILE.bills.push({ id:'bill_'+Date.now(), ...data });
+    showToast('💳 '+name+' added!');
+  }
   saveBudgetProfile();
   closeModalById('add-bill-modal');
   renderBudgetBills();
   renderBudgetChart();
   renderPaycheckGuide();
-  showToast('💳 '+name+' added!');
 }
 
 function deleteBudgetBill(id) {
@@ -5408,36 +5652,262 @@ function renderBudgetBills() {
     el.innerHTML = '<div style="text-align:center;padding:20px 16px;color:var(--ink-4);font-size:13px">No bills added yet — tap <b>+ Add</b> to start.</div>';
     return;
   }
+  const sorted = [...active].sort((a,b) => (a.dueDay||99) - (b.dueDay||99));
   const typeLabel = { bill:'Bill', subscription:'Subscription', installment:'Installment' };
-  el.innerHTML = active.map(b =>
-    '<div class="glass" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);margin-bottom:8px">' +
-      '<div style="font-size:26px;width:42px;height:42px;background:rgba(245,230,200,0.5);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+b.icon+'</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:14px;font-weight:700;color:var(--ink)">'+b.name+'</div>' +
-        '<div style="font-size:11px;color:var(--ink-4);margin-top:1px">'+(typeLabel[b.type]||b.type)+' · '+(b.until?'Until '+b.until:'Ongoing')+'</div>' +
+  el.innerHTML = sorted.map(b => {
+    const dueBadge = b.dueDay
+      ? '<span style="font-size:10px;font-weight:700;color:var(--green-deep);background:rgba(90,171,122,0.12);padding:2px 6px;border-radius:99px;margin-left:5px">due '+ordinal(b.dueDay)+'</span>'
+      : '<span style="font-size:10px;color:var(--ink-4);background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:99px;margin-left:5px">no due date</span>';
+    return (
+      '<div class="glass" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);margin-bottom:8px">' +
+        '<div style="font-size:26px;width:42px;height:42px;background:rgba(245,230,200,0.5);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+b.icon+'</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+b.name+dueBadge+'</div>' +
+          '<div style="font-size:11px;color:var(--ink-4);margin-top:2px">'+(typeLabel[b.type]||b.type)+' · '+(b.until?'Until '+b.until:'Ongoing')+((b.splitPaychecks&&b.splitPaychecks>1)?' · <span style="color:var(--green-deep)">split ×'+b.splitPaychecks+'</span>':'')+'</div>' +
+        '</div>' +
+        '<div style="text-align:right;flex-shrink:0;margin-right:6px">' +
+          '<div style="font-size:15px;font-weight:700;color:var(--ink)">₱'+b.amount.toLocaleString()+'</div>' +
+          '<div style="font-size:10px;color:var(--ink-4)">/month</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0">' +
+        '<button onclick="openEditBillModal(\''+b.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(90,171,122,0.12);color:var(--green-deep);font-size:13px;cursor:pointer">✏️</button>' +
+        '<button onclick="deleteBudgetBill(\''+b.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(224,120,152,0.15);color:var(--pink-deep);font-size:13px;cursor:pointer">🗑</button>' +
       '</div>' +
-      '<div style="text-align:right;flex-shrink:0;margin-right:6px">' +
-        '<div style="font-size:15px;font-weight:700;color:var(--ink)">₱'+b.amount.toLocaleString()+'</div>' +
-        '<div style="font-size:10px;color:var(--ink-4)">/month</div>' +
-      '</div>' +
-      '<button onclick="deleteBudgetBill(\''+b.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(224,120,152,0.15);color:var(--pink-deep);font-size:13px;cursor:pointer;flex-shrink:0">🗑</button>' +
-    '</div>'
-  ).join('');
+      '</div>'
+    );
+  }).join('');
 }
 
+// ── Deductions ──────────────────────────────────────────────────────────────
+function renderDeductionInputs() {
+  const ded = BUDGET_PROFILE.deductions || {};
+  const map = { sss:ded.sss, philhealth:ded.philhealth, pagibig:ded.pagibig, tax:ded.tax, other:ded.other };
+  Object.keys(map).forEach(key => {
+    const el = document.getElementById('ded-'+key);
+    if (el) el.value = map[key] ? map[key].toLocaleString() : '';
+  });
+}
+
+function onDeductionInput(key) {
+  const val = pesoVal('ded-'+key);
+  if (!BUDGET_PROFILE.deductions) BUDGET_PROFILE.deductions = { sss:0, philhealth:0, pagibig:0, tax:0, other:0 };
+  BUDGET_PROFILE.deductions[key] = val;
+  saveBudgetProfile();
+  renderDeductionSummary();
+  renderBudgetChart();
+  renderPaycheckGuide();
+}
+
+function suggestDeductions() {
+  const gross = getMonthlyGross();
+  if (!gross) { showToast('⚠️ Enter your salary first'); return; }
+  // SSS: ~4.5% of MSC (capped at ₱30,000)
+  const msc = Math.min(gross, 30000);
+  const sss = Math.round(msc * 0.045 / 5) * 5;
+  // PhilHealth: 2.5% employee share
+  const ph  = Math.round(gross * 0.025 / 5) * 5;
+  // Pag-IBIG: flat ₱100
+  const pi  = 100;
+  // Withholding tax (simplified annual bracket)
+  const annual = gross * 12;
+  let taxAnnual = 0;
+  if      (annual <= 250000)   taxAnnual = 0;
+  else if (annual <= 400000)   taxAnnual = (annual - 250000) * 0.15;
+  else if (annual <= 800000)   taxAnnual = 22500  + (annual - 400000)  * 0.20;
+  else if (annual <= 2000000)  taxAnnual = 102500 + (annual - 800000)  * 0.25;
+  else if (annual <= 8000000)  taxAnnual = 402500 + (annual - 2000000) * 0.30;
+  else                          taxAnnual = 2202500+ (annual - 8000000) * 0.35;
+  const monthlyTax = Math.round(taxAnnual / 12);
+  BUDGET_PROFILE.deductions = { sss, philhealth:ph, pagibig:pi, tax:monthlyTax, other: BUDGET_PROFILE.deductions?.other||0 };
+  saveBudgetProfile();
+  renderDeductionInputs();
+  renderDeductionSummary();
+  renderBudgetChart();
+  renderPaycheckGuide();
+  showToast('✅ Deductions auto-estimated!');
+}
+
+function toggleDeductionsPanel() {
+  const panel = document.getElementById('deductions-panel');
+  const arrow  = document.getElementById('deductions-arrow');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function renderDeductionSummary() {
+  const el = document.getElementById('deduction-summary');
+  if (!el) return;
+  const gross = getMonthlyGross();
+  if (!gross) { el.innerHTML = ''; return; }
+  const deductions = getTotalDeductions();
+  const net = getMonthlyNet();
+  el.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px;background:rgba(0,0,0,0.18);border-radius:12px">' +
+      '<div style="text-align:center">' +
+        '<div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:.6px;margin-bottom:3px">GROSS</div>' +
+        '<div style="font-size:15px;font-weight:700;color:#fff">₱'+gross.toLocaleString(undefined,{maximumFractionDigits:0})+'</div>' +
+      '</div>' +
+      '<div style="font-size:20px;color:rgba(255,255,255,0.45);font-weight:300">−</div>' +
+      '<div style="text-align:center">' +
+        '<div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:.6px;margin-bottom:3px">DEDUCTIONS</div>' +
+        '<div style="font-size:15px;font-weight:700;color:#fca5a5">₱'+deductions.toLocaleString(undefined,{maximumFractionDigits:0})+'</div>' +
+      '</div>' +
+      '<div style="font-size:20px;color:rgba(255,255,255,0.45);font-weight:300">=</div>' +
+      '<div style="text-align:center">' +
+        '<div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:.6px;margin-bottom:3px">NET / MO</div>' +
+        '<div style="font-size:16px;font-weight:800;color:#6ee7b7">₱'+net.toLocaleString(undefined,{maximumFractionDigits:0})+'</div>' +
+      '</div>' +
+    '</div>';
+}
+
+// ── Essentials ──────────────────────────────────────────────────────────────
+const ESSENTIAL_PRESETS = [
+  { icon:'🛒', name:'Groceries' }, { icon:'💊', name:'Medicines' },
+  { icon:'🚌', name:'Transport' }, { icon:'🧴', name:'Personal Care' },
+  { icon:'🍽️', name:'Dining Out' }, { icon:'👕', name:'Clothing' },
+  { icon:'⚡', name:'Utilities' }, { icon:'📱', name:'Mobile Load' },
+];
+
+let _essIcon = '📦', _essName = '';
+function renderBudgetEssentials() {
+  const el = document.getElementById('budget-essentials-list');
+  if (!el) return;
+  const ess = getActiveEssentials();
+  let html = '';
+  if (ess.length) {
+    html += [...ess].sort((a,b)=>(a.dueDay||99)-(b.dueDay||99)).map(e => {
+      const dueBadge = e.dueDay
+        ? '<span style="font-size:10px;font-weight:700;color:#3B82F6;background:rgba(96,165,250,0.12);padding:2px 6px;border-radius:99px;margin-left:5px">buy '+ordinal(e.dueDay)+'</span>'
+        : '';
+      const splitBadge = (e.splitPaychecks && e.splitPaychecks > 1)
+        ? '<span style="font-size:10px;color:var(--green-deep);background:rgba(90,171,122,0.1);padding:2px 5px;border-radius:99px;margin-left:4px">split ×'+e.splitPaychecks+'</span>'
+        : '';
+      return (
+        '<div class="glass" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);margin-bottom:8px">' +
+          '<div style="font-size:26px;width:42px;height:42px;background:rgba(200,230,255,0.4);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+e.icon+'</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+e.name+dueBadge+splitBadge+'</div>' +
+            '<div style="font-size:11px;color:var(--ink-4);margin-top:2px">Monthly essential</div>' +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;margin-right:4px">' +
+            '<div style="font-size:15px;font-weight:700;color:var(--ink)">₱'+e.amount.toLocaleString()+'</div>' +
+            '<div style="font-size:10px;color:var(--ink-4)">/month</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:4px;flex-shrink:0">' +
+            '<button onclick="openEditEssentialModal(\''+e.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(90,171,122,0.12);color:var(--green-deep);font-size:13px;cursor:pointer">✏️</button>' +
+            '<button onclick="deleteEssential(\''+e.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(224,120,152,0.15);color:var(--pink-deep);font-size:13px;cursor:pointer">🗑</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+  // Preset quick-add chips
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:'+(ess.length?'6':'0')+'px">';
+  ESSENTIAL_PRESETS.forEach(p => {
+    if (!ess.find(e=>e.name===p.name)) {
+      html += '<button onclick="openAddEssentialPreset(\''+p.icon+'\',\''+p.name+'\')" '+
+        'style="display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:99px;border:1.5px dashed rgba(0,0,0,0.15);background:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;color:var(--ink-3)">'+p.icon+' '+p.name+'</button>';
+    }
+  });
+  html += '<button onclick="openAddEssentialPreset(\'📦\',\'\')" '+
+    'style="display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:99px;border:1.5px dashed rgba(100,160,220,0.35);background:rgba(200,230,255,0.25);font-size:12px;cursor:pointer;color:#3B82F6;font-weight:700">+ Custom</button>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function openAddEssentialPreset(icon, name) {
+  _editingEssId = null;
+  _essIcon = icon;
+  _essDueDay = null;
+  _essSplit = 1;
+  const np = document.getElementById('essential-name-input');
+  const ap = document.getElementById('essential-amount-input');
+  const ip = document.getElementById('essential-icon-preview');
+  const mt = document.getElementById('essential-modal-title');
+  const sb = document.getElementById('essential-submit-btn');
+  if (np) np.value = name;
+  if (ap) ap.value = '';
+  if (ip) ip.textContent = icon;
+  if (mt) mt.textContent = '🛒 Add Monthly Essential';
+  if (sb) sb.textContent = 'Add Essential →';
+  renderEssentialDueDayPicker(null);
+  renderBillSplitChips(1, 'essential-split-picker', 'essential-split-hint', 'essential-amount-input');
+  openModal('add-essential-modal');
+}
+
+function openEditEssentialModal(id) {
+  const ess = BUDGET_PROFILE.essentials.find(e => e.id === id);
+  if (!ess) return;
+  _editingEssId = id;
+  _essIcon = ess.icon || '📦';
+  _essDueDay = ess.dueDay ?? null;
+  _essSplit = ess.splitPaychecks || 1;
+  const np = document.getElementById('essential-name-input');
+  const ap = document.getElementById('essential-amount-input');
+  const ip = document.getElementById('essential-icon-preview');
+  const mt = document.getElementById('essential-modal-title');
+  const sb = document.getElementById('essential-submit-btn');
+  if (np) np.value = ess.name || '';
+  if (ap) ap.value = ess.amount ? ess.amount.toLocaleString() : '';
+  if (ip) ip.textContent = _essIcon;
+  if (mt) mt.textContent = '✏️ Edit Essential';
+  if (sb) sb.textContent = 'Save Changes →';
+  renderEssentialDueDayPicker(_essDueDay);
+  renderBillSplitChips(_essSplit, 'essential-split-picker', 'essential-split-hint', 'essential-amount-input');
+  openModal('add-essential-modal');
+}
+
+function submitEssential() {
+  const name   = (document.getElementById('essential-name-input')?.value||'').trim();
+  const amount = pesoVal('essential-amount-input');
+  if (!name)   { showToast('⚠️ Enter a name'); return; }
+  if (!amount) { showToast('⚠️ Enter an amount'); return; }
+  if (!BUDGET_PROFILE.essentials) BUDGET_PROFILE.essentials = [];
+  const data = { icon:_essIcon, name, amount, dueDay:_essDueDay, splitPaychecks:_essSplit };
+  if (_editingEssId) {
+    const idx = BUDGET_PROFILE.essentials.findIndex(e => e.id === _editingEssId);
+    if (idx !== -1) BUDGET_PROFILE.essentials[idx] = { ...BUDGET_PROFILE.essentials[idx], ...data };
+    showToast('✏️ '+name+' updated!');
+  } else {
+    BUDGET_PROFILE.essentials.push({ id:'ess_'+Date.now(), ...data });
+    showToast('✅ '+name+' added!');
+  }
+  saveBudgetProfile();
+  closeModalById('add-essential-modal');
+  renderBudgetEssentials();
+  renderBudgetChart();
+  renderPaycheckGuide();
+}
+
+function deleteEssential(id) {
+  const ess = BUDGET_PROFILE.essentials.find(e=>e.id===id);
+  if (!ess || !confirm('Remove "'+ess.name+'"?')) return;
+  BUDGET_PROFILE.essentials = BUDGET_PROFILE.essentials.filter(e=>e.id!==id);
+  saveBudgetProfile();
+  renderBudgetEssentials();
+  renderBudgetChart();
+  renderPaycheckGuide();
+  showToast('🗑 Removed!');
+}
+
+// ── Chart ────────────────────────────────────────────────────────────────────
 function renderBudgetChart() {
   const canvas   = document.getElementById('budget-donut');
   const legendEl = document.getElementById('budget-legend');
   if (!canvas) return;
 
-  const monthly    = getMonthlyIncome();
+  const monthly    = getMonthlyNet();   // use NET take-home
   const billsTotal = getActiveBills().reduce((s,b)=>s+b.amount, 0);
+  const essTotal   = getEssentialsTotal();
   const savings    = monthly * 0.20;
   const emergency  = monthly * 0.10;
-  const remainder  = Math.max(0, monthly - billsTotal - savings - emergency);
+  const remainder  = Math.max(0, monthly - billsTotal - essTotal - savings - emergency);
 
   const segments = monthly > 0 ? [
     { label:'Bills',          value:billsTotal, color:'#E07898', pct:(monthly>0?billsTotal/monthly*100:0) },
+    { label:'Essentials',     value:essTotal,   color:'#60A5FA', pct:(monthly>0?essTotal/monthly*100:0) },
     { label:'Savings (20%)',  value:savings,    color:'#5AAB7A', pct:20 },
     { label:'Emergency (10%)',value:emergency,  color:'#D4A853', pct:10 },
     { label:'Free Spending',  value:remainder,  color:'#9CA3AF', pct:(monthly>0?remainder/monthly*100:0) },
@@ -5511,7 +5981,7 @@ function drawBudgetDonut(canvas, segments, total) {
   ctx.fillText('₱' + Math.round(total).toLocaleString(), cx, cy - 5);
   ctx.fillStyle = '#6B7280';
   ctx.font = '10px Nunito,sans-serif';
-  ctx.fillText('per month', cx, cy + 9);
+  ctx.fillText('net/month', cx, cy + 9);
 }
 
 function renderPaycheckGuide() {
@@ -5519,50 +5989,218 @@ function renderPaycheckGuide() {
   if (!el) return;
   if (!BUDGET_PROFILE.salary) { el.innerHTML = ''; return; }
 
-  const freq      = BUDGET_PROFILE.freq || 'monthly';
-  const paychecks = FREQ_PER_MONTH[freq];
-  const salaryPC  = BUDGET_PROFILE.salary;
-  const monthly   = getMonthlyIncome();
-  const billsPC   = getActiveBills().reduce((s,b)=>s+b.amount, 0) / paychecks;
-  const savingsPC = monthly * 0.20 / paychecks;
-  const emerPC    = monthly * 0.10 / paychecks;
-  const freePC    = Math.max(0, salaryPC - billsPC - savingsPC - emerPC);
-  const freqLabel = { monthly:'each paycheck', semi:'each paycheck (2×/month)', weekly:'each weekly pay', daily:'each daily pay' }[freq];
+  const freq        = BUDGET_PROFILE.freq || 'monthly';
+  const paychecks   = FREQ_PER_MONTH[freq];
+  const paycheckNet = getPaycheckNet();
+  const monthly     = getMonthlyNet();
+  const periods     = getPaycheckPeriods();
+  const active      = getActiveBills();
+  const essPC       = getEssentialsTotal() / paychecks;
+  const savingsPC   = monthly * 0.20 / paychecks;
+  const emerPC      = monthly * 0.10 / paychecks;
+  const deductTotal = getTotalDeductions();
 
-  const billsPct   = monthly > 0 ? (getActiveBills().reduce((s,b)=>s+b.amount,0)/monthly*100) : 0;
-  const billsAlert = billsPct > 50 ? '⚠️ Over 50%! Consider reducing fixed bills.' : '✅ Looking healthy.';
+  // ── Monthly & Daily: single simple card ──────────────────────────────────
+  if (freq === 'monthly' || freq === 'daily') {
+    const freqLabel  = freq === 'monthly' ? 'each paycheck' : 'each daily pay';
+    const billsPC    = active.reduce((s,b)=>s+b.amount, 0) / paychecks;
+    const freePC     = Math.max(0, paycheckNet - billsPC - essPC - savingsPC - emerPC);
+    const totalFixed = active.reduce((s,b)=>s+b.amount,0) + getEssentialsTotal();
+    const fixedPct   = monthly > 0 ? (totalFixed/monthly*100) : 0;
+    const healthAlert= fixedPct>70?'⚠️ Over 70%! Budget is very tight.':fixedPct>50?'⚠️ Over 50%. Consider reducing.':'✅ Looking healthy.';
+    const deductLine = deductTotal > 0
+      ? '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:rgba(252,165,165,0.1);margin-bottom:6px">'+
+          '<div style="font-size:20px;flex-shrink:0">📋</div>'+
+          '<div style="flex:1;font-size:12px;color:var(--ink-3)">Deductions (SSS, PhilHealth…)</div>'+
+          '<div style="font-size:16px;font-weight:700;color:#EF4444">−₱'+Math.round(deductTotal/paychecks).toLocaleString()+'</div>'+
+        '</div>' : '';
 
-  el.innerHTML =
-    '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">' +
-      '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>' +
-      '<div style="font-size:12px;color:var(--ink-4);margin-bottom:14px">You receive <b>₱'+salaryPC.toLocaleString(undefined,{maximumFractionDigits:0})+'</b> '+freqLabel+'. Set aside:</div>' +
-      [
-        { icon:'💳', label:'Bills',           amt:billsPC,   color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
-        { icon:'🐷', label:'Savings',         amt:savingsPC, color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
-        { icon:'🛡️', label:'Emergency fund',  amt:emerPC,    color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
-        { icon:'🎉', label:'Free to spend',   amt:freePC,    color:'var(--ink-2)',       bg:'rgba(0,0,0,0.03)' },
-      ].map(r =>
-        '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:'+r.bg+';margin-bottom:6px">' +
-          '<div style="font-size:20px;flex-shrink:0">'+r.icon+'</div>' +
-          '<div style="flex:1;font-size:12px;color:var(--ink-3)">'+r.label+'</div>' +
-          '<div style="font-size:16px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>' +
+    // List bills sorted by due day
+    const billsList = active.length
+      ? '<div style="margin-bottom:10px">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bills this month</div>'+
+          [...active].sort((a,b)=>(a.dueDay||99)-(b.dueDay||99)).map(b=>
+            '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04)">'+
+              '<span style="font-size:16px">'+b.icon+'</span>'+
+              '<span style="flex:1;font-size:12px;color:var(--ink-3)">'+b.name+'</span>'+
+              (b.dueDay?'<span style="font-size:10px;color:var(--green-deep);background:rgba(90,171,122,0.1);padding:2px 5px;border-radius:99px">'+ordinal(b.dueDay)+'</span>':'')+
+              '<span style="font-size:12px;font-weight:700;color:var(--pink-deep)">₱'+b.amount.toLocaleString()+'</span>'+
+            '</div>'
+          ).join('')+
+          '<div style="display:flex;justify-content:flex-end;padding-top:5px;border-top:2px solid rgba(0,0,0,0.06);margin-top:4px">'+
+            '<span style="font-size:12px;font-weight:700;color:var(--pink-deep)">Total ₱'+(active.reduce((s,b)=>s+b.amount,0)).toLocaleString()+'</span>'+
+          '</div>'+
         '</div>'
-      ).join('') +
-      '<div style="margin-top:8px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">' +
-        '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:3px">Bills vs. Income</div>' +
-        '<div style="font-size:12px;color:var(--ink-3)"><b>'+billsPct.toFixed(1)+'%</b> of monthly income goes to bills. '+billsAlert+'</div>' +
-      '</div>' +
-    '</div>';
+      : '';
+
+    el.innerHTML =
+      '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">'+
+        '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>'+
+        '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">You receive <b>₱'+Math.round(paycheckNet).toLocaleString()+'</b> net '+freqLabel+'. Here\'s how to split it:</div>'+
+        deductLine + billsList +
+        [
+          { icon:'💳', label:'Bills',           amt:billsPC,  color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
+          { icon:'🛒', label:'Essentials',      amt:essPC,    color:'#3B82F6',           bg:'rgba(96,165,250,0.08)' },
+          { icon:'🐷', label:'Savings (20%)',   amt:savingsPC,color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
+          { icon:'🛡️', label:'Emergency (10%)', amt:emerPC,   color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
+          { icon:'🎉', label:'Free to spend',   amt:freePC,   color: freePC>0?'var(--ink-2)':'#EF4444', bg:'rgba(0,0,0,0.03)' },
+        ].filter(r=>r.amt>0).map(r=>
+          '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:'+r.bg+';margin-bottom:6px">'+
+            '<div style="font-size:20px;flex-shrink:0">'+r.icon+'</div>'+
+            '<div style="flex:1;font-size:12px;color:var(--ink-3)">'+r.label+'</div>'+
+            '<div style="font-size:16px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>'+
+          '</div>'
+        ).join('') +
+        '<div style="margin-top:8px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:3px">Fixed Spending vs. Net Income</div>'+
+          '<div style="font-size:12px;color:var(--ink-3)"><b>'+fixedPct.toFixed(1)+'%</b> of net income goes to fixed expenses. '+healthAlert+'</div>'+
+        '</div>'+
+      '</div>';
+    return;
+  }
+
+  // ── Semi-Monthly & Weekly: per-period breakdown ───────────────────────────
+  const freqTitle = { semi:'Semi-Monthly (2×/month)', weekly:'Weekly' }[freq] || '';
+
+  let html = '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Paycheck Plan — '+freqTitle+'</div>';
+
+  if (deductTotal > 0) {
+    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱'+Math.round(paycheckNet).toLocaleString()+'</b> net after <span style="color:#EF4444">₱'+Math.round(deductTotal/paychecks).toLocaleString()+' deductions</span></div>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱'+Math.round(paycheckNet).toLocaleString()+'</b> net take-home</div>';
+  }
+
+  periods.forEach((period, idx) => {
+    // Effective bills/essentials for this period (split-aware)
+    const effBills = getEffectiveBillsForPeriod(active, periods, idx);
+    const effEss   = getEffectiveBillsForPeriod(getActiveEssentials(), periods, idx);
+
+    // Split into "pay now" vs "pre-save"
+    const payBills    = effBills.filter(b => !b.isPreSave);
+    const presaveBills= effBills.filter(b =>  b.isPreSave);
+    const payEss      = effEss.filter(e => !e.isPreSave);
+    const presaveEss  = effEss.filter(e =>  e.isPreSave);
+
+    const billsNow    = payBills.reduce((s,b)=>s+b.effectiveAmount, 0);
+    const presaveAmt  = presaveBills.reduce((s,b)=>s+b.effectiveAmount, 0) + presaveEss.reduce((s,e)=>s+e.effectiveAmount, 0);
+    const essNow      = payEss.reduce((s,e)=>s+e.effectiveAmount, 0);
+    const totalOut    = billsNow + presaveAmt + essNow + savingsPC + emerPC;
+    const freePC      = Math.max(0, paycheckNet - totalOut);
+    const isOver      = totalOut > paycheckNet;
+    const borderClr   = isOver ? '#E07898' : '#5AAB7A';
+
+    html += '<div class="paycheck-period-card" style="border-left:4px solid '+borderClr+';margin-bottom:10px">';
+
+    // Header row
+    html +=
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--ink)">'+period.label+'</div>'+
+          (period.approxDay
+            ? '<div style="font-size:11px;color:var(--ink-4)">Received ~'+ordinal(period.approxDay)+' · covers '+ordinal(period.start)+'–'+ordinal(period.end)+'</div>'
+            : '')+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:15px;font-weight:800;color:var(--green-deep)">₱'+Math.round(paycheckNet).toLocaleString()+'</div>'+
+          '<div style="font-size:10px;color:var(--ink-4)">net available</div>'+
+        '</div>'+
+      '</div>';
+
+    // Helper to render an item row
+    const itemRow = (item, isEss, isPresave) => {
+      const color = isPresave ? '#D4A853' : (isEss ? '#3B82F6' : 'var(--pink-deep)');
+      const dueLbl = item.dueDay ? ordinal(item.dueDay) : null;
+      const splitLbl = item.totalSplit > 1 ? '÷'+item.totalSplit : '';
+      const badge = isPresave
+        ? '<span style="font-size:10px;background:rgba(212,168,83,0.15);color:#B07A00;padding:2px 6px;border-radius:99px;font-weight:700">pre-save</span>'
+        : (dueLbl ? '<span style="font-size:10px;background:rgba(90,171,122,0.1);color:var(--green-deep);padding:2px 5px;border-radius:99px">'+(isEss?'buy ':'due ')+dueLbl+'</span>' : '');
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04)">'+
+        '<span style="font-size:18px'+(isPresave?';opacity:.7':'')+'">'+item.icon+'</span>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:12px;color:var(--ink-3)'+(isPresave?';font-style:italic':'')+'">'+item.name+(splitLbl?' <span style="font-size:10px;color:var(--ink-4)">'+splitLbl+'</span>':'')+'</div>'+
+        '</div>'+
+        badge+
+        '<span style="font-size:13px;font-weight:700;color:'+color+'">₱'+Math.round(item.effectiveAmount).toLocaleString()+'</span>'+
+      '</div>';
+    };
+
+    // Bills due this period
+    const hasBillRows = payBills.length || presaveBills.length || payEss.length || presaveEss.length;
+    if (hasBillRows) {
+      html += '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">This paycheck covers</div>';
+      payBills.forEach(b    => { html += itemRow(b, false, false); });
+      payEss.forEach(e      => { html += itemRow(e, true,  false); });
+      presaveBills.forEach(b=> { html += itemRow(b, false, true);  });
+      presaveEss.forEach(e  => { html += itemRow(e, true,  true);  });
+      html +=
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:2px solid rgba(0,0,0,0.07)">'+
+          '<span style="font-size:11px;font-weight:700;color:var(--ink-3)">Bills + essentials'+(presaveAmt>0?' + pre-saves':'')+'</span>'+
+          '<span style="font-size:13px;font-weight:800;color:var(--pink-deep)">₱'+Math.round(billsNow+essNow+presaveAmt).toLocaleString()+'</span>'+
+        '</div>';
+    } else {
+      html += '<div style="font-size:12px;color:var(--ink-4);padding:2px 0 8px;font-style:italic">No bills or essentials assigned to this period.</div>';
+    }
+
+    // Fixed allocation grid
+    html += '<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    [
+      { icon:'🐷', label:'Savings (20%)',  amt:savingsPC, color:'var(--green-deep)' },
+      { icon:'🛡️', label:'Emergency (10%)',amt:emerPC,    color:'var(--tan-dark)' },
+      { icon:'🎉', label:'Free to spend',  amt:freePC,    color:freePC>0?'var(--ink-2)':'#EF4444' },
+    ].forEach(r => {
+      html +=
+        '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);background:rgba(0,0,0,0.03)">'+
+          '<span style="font-size:15px">'+r.icon+'</span>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:10px;color:var(--ink-4)">'+r.label+'</div>'+
+            '<div style="font-size:12px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>'+
+          '</div>'+
+        '</div>';
+    });
+    html += '</div>';
+
+    if (isOver) {
+      html += '<div style="margin-top:8px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(224,120,152,0.1);border:1px solid rgba(224,120,152,0.2);font-size:11px;color:var(--pink-deep)">⚠️ This paycheck is over-allocated! Consider enabling split payment on big bills to spread the load.</div>';
+    }
+
+    html += '</div>'; // end period card
+  });
+
+  // Tip if any bills/essentials lack due dates
+  const unscheduled = [...active, ...getActiveEssentials()].filter(b => b.dueDay == null);
+  if (unscheduled.length) {
+    const names = unscheduled.map(b=>b.name).join(', ');
+    html +=
+      '<div style="padding:10px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.2);font-size:11px;color:var(--tan-dark);margin-bottom:8px">'+
+        '💡 <b>'+unscheduled.length+' item'+(unscheduled.length>1?'s have':' has')+' no due date</b> ('+names+') — shown in the 1st paycheck. Tap ✏️ to set due dates for accurate period planning.'+
+      '</div>';
+  }
+
+  el.innerHTML = html;
 }
 
-window.initBudgetTab      = initBudgetTab;
-window.onSalaryInput      = onSalaryInput;
-window.setBudgetFreq      = setBudgetFreq;
-window.openAddBillModal   = openAddBillModal;
+window.initBudgetTab        = initBudgetTab;
+window.onSalaryInput        = onSalaryInput;
+window.setBudgetFreq        = setBudgetFreq;
+window.openAddBillModal     = openAddBillModal;
 window.toggleBillIconPicker = toggleBillIconPicker;
-window.selectBillIcon     = selectBillIcon;
-window.setBillRecurring   = setBillRecurring;
-window.submitBudgetBill   = submitBudgetBill;
-window.deleteBudgetBill   = deleteBudgetBill;
-window.quickEditGroup     = quickEditGroup;
-window.quickDeleteGroup   = quickDeleteGroup;
+window.selectBillIcon       = selectBillIcon;
+window.setBillRecurring     = setBillRecurring;
+window.submitBudgetBill     = submitBudgetBill;
+window.deleteBudgetBill     = deleteBudgetBill;
+window.selectBillDueDay     = selectBillDueDay;
+window.selectEssentialDueDay= selectEssentialDueDay;
+window.selectSplit          = selectSplit;
+window.openEditBillModal    = openEditBillModal;
+window.openEditEssentialModal = openEditEssentialModal;
+window.onDeductionInput     = onDeductionInput;
+window.suggestDeductions    = suggestDeductions;
+window.toggleDeductionsPanel= toggleDeductionsPanel;
+window.renderBudgetEssentials = renderBudgetEssentials;
+window.openAddEssentialPreset = openAddEssentialPreset;
+window.submitEssential      = submitEssential;
+window.deleteEssential      = deleteEssential;
+window.pesoFmt              = pesoFmt;
+window.pesoVal              = pesoVal;
+window.quickEditGroup       = quickEditGroup;
+window.quickDeleteGroup     = quickDeleteGroup;

@@ -14,7 +14,7 @@
       </div>
     </div>
     <div class="input-group"><div class="input-label">Members <span style="font-size:11px;color:var(--ink-4)">(comma-separated names)</span></div><input id="ng-members" type="text" class="glass-input" placeholder="e.g. Carlo, Mark, Ana"></div>
-    <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input id="ng-budget" type="number" class="glass-input" data-t-ph="amountPlaceholder"></div>
+    <div class="input-group"><div class="input-label" data-t="budgetLabel2"></div><input id="ng-budget" type="text" inputmode="decimal" class="glass-input peso-input" data-t-ph="amountPlaceholder"></div>
     <button class="cta-btn pink" onclick="createGroup()" data-t="createGroupBtn"></button>
   </div>
 </div><!DOCTYPE html>
@@ -897,12 +897,14 @@
 
     <!-- BUDGET tab -->
     <div class="tab-panel" id="tp-budget" style="background:linear-gradient(160deg,#f0f9f4 0%,#fef6e8 60%,#f5f0fb 100%);overflow-y:auto;-webkit-overflow-scrolling:touch">
-      <!-- Hero: salary input -->
+
+      <!-- Hero: salary + deductions -->
       <div style="background:linear-gradient(135deg,#1e5c3a,#2e8b57);padding:24px 20px 20px">
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Monthly Salary / Income</div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Monthly Gross Salary / Income</div>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:28px;font-weight:700;color:rgba(255,255,255,0.8)">₱</span>
-          <input id="budget-salary-input" type="number" inputmode="decimal" placeholder="0.00"
+          <input id="budget-salary-input" type="text" inputmode="decimal" placeholder="0"
+            class="peso-input"
             style="flex:1;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,0.4);font-size:30px;font-family:var(--f2);color:#fff;outline:none;padding:0 0 4px;width:100%;letter-spacing:-1px"
             oninput="onSalaryInput()">
         </div>
@@ -913,12 +915,88 @@
           <button id="freq-weekly"  class="freq-pill"        onclick="setBudgetFreq('weekly')">Weekly</button>
           <button id="freq-daily"   class="freq-pill"        onclick="setBudgetFreq('daily')">Daily</button>
         </div>
+
+        <!-- Net take-home summary bar -->
+        <div id="deduction-summary"></div>
+
+        <!-- Deductions toggle row -->
+        <div onclick="toggleDeductionsPanel()"
+          style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:10px 12px;background:rgba(0,0,0,0.15);border-radius:10px;cursor:pointer">
+          <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.85)">📋 Salary Deductions</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:rgba(255,255,255,0.6)">SSS · PhilHealth · Tax…</span>
+            <svg id="deductions-arrow" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:rgba(255,255,255,0.7);fill:none;stroke-width:2.5;transition:transform .2s"><polyline points="6,9 12,15 18,9"/></svg>
+          </div>
+        </div>
+
+        <!-- Expandable deductions panel -->
+        <div id="deductions-panel" style="display:none;margin-top:10px;padding:14px;background:rgba(0,0,0,0.18);border-radius:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.6px">Monthly Deductions</div>
+            <button onclick="suggestDeductions()" style="padding:5px 10px;border-radius:99px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;cursor:pointer">✨ Auto-suggest</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:3px">SSS</div>
+              <div style="display:flex;align-items:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);margin-right:4px">₱</span>
+                <input id="ded-sss" type="text" inputmode="decimal" placeholder="0" class="peso-input"
+                  style="background:transparent;border:none;color:#fff;font-size:13px;font-weight:700;width:100%;outline:none"
+                  oninput="onDeductionInput('sss')">
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:3px">PhilHealth</div>
+              <div style="display:flex;align-items:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);margin-right:4px">₱</span>
+                <input id="ded-philhealth" type="text" inputmode="decimal" placeholder="0" class="peso-input"
+                  style="background:transparent;border:none;color:#fff;font-size:13px;font-weight:700;width:100%;outline:none"
+                  oninput="onDeductionInput('philhealth')">
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:3px">Pag-IBIG</div>
+              <div style="display:flex;align-items:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);margin-right:4px">₱</span>
+                <input id="ded-pagibig" type="text" inputmode="decimal" placeholder="0" class="peso-input"
+                  style="background:transparent;border:none;color:#fff;font-size:13px;font-weight:700;width:100%;outline:none"
+                  oninput="onDeductionInput('pagibig')">
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:3px">Withholding Tax</div>
+              <div style="display:flex;align-items:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);margin-right:4px">₱</span>
+                <input id="ded-tax" type="text" inputmode="decimal" placeholder="0" class="peso-input"
+                  style="background:transparent;border:none;color:#fff;font-size:13px;font-weight:700;width:100%;outline:none"
+                  oninput="onDeductionInput('tax')">
+              </div>
+            </div>
+            <div style="grid-column:span 2">
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:3px">Other (loans, cash advance…)</div>
+              <div style="display:flex;align-items:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);margin-right:4px">₱</span>
+                <input id="ded-other" type="text" inputmode="decimal" placeholder="0" class="peso-input"
+                  style="background:transparent;border:none;color:#fff;font-size:13px;font-weight:700;width:100%;outline:none"
+                  oninput="onDeductionInput('other')">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Essentials -->
+      <div class="pad" style="padding-top:16px">
+        <div class="sec-hdr">
+          <span class="sec-title">🛒 Monthly Essentials</span>
+        </div>
+        <div id="budget-essentials-list"></div>
       </div>
 
       <!-- Bills section -->
-      <div class="pad" style="padding-top:16px">
+      <div class="pad" style="padding-top:4px">
         <div class="sec-hdr">
-          <span class="sec-title">💳 Bills &amp; Recurring Expenses</span>
+          <span class="sec-title">💳 Bills &amp; Subscriptions</span>
           <span class="sec-action" onclick="openAddBillModal()">+ Add</span>
         </div>
         <div id="budget-bills-list"></div>
@@ -1226,7 +1304,7 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Wedding Expense 💐</div>
     <div class="input-group"><div class="input-label">Description</div><input type="text" id="wed-exp-label" class="glass-input" placeholder="e.g. Florist deposit, Videographer…"></div>
-    <div class="input-group"><div class="input-label">Amount</div><input type="number" id="wed-exp-amount" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Amount</div><input type="text" id="wed-exp-amount" class="glass-input peso-input" inputmode="decimal" placeholder="0"></div>
     <div class="input-group"><div class="input-label">Category</div>
       <select id="wed-exp-category" class="glass-input">
         <option value="venue">🏛️ Venue</option><option value="catering">🍽️ Catering</option><option value="florals">💐 Florals</option><option value="photography">📸 Photography</option><option value="attire">👗 Attire</option><option value="music">🎵 Music</option><option value="cake">🎂 Cake</option><option value="invites">💌 Invites</option><option value="other">📦 Other</option>
@@ -1337,7 +1415,7 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Add Money 💰</div>
     <div id="add-money-goal-name" style="font-size:13px;color:var(--ink-3);margin-bottom:16px;padding:10px 14px;background:rgba(245,230,200,0.5);border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)">Goal: —</div>
-    <div class="input-group"><div class="input-label">Amount</div><input id="add-money-amount" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Amount</div><input id="add-money-amount" type="text" class="glass-input peso-input" inputmode="decimal" placeholder="0"></div>
     <div class="input-group"><div class="input-label">Who is contributing?</div>
       <div style="display:flex;gap:8px">
         <button class="split-btn selected" id="contrib-btn-p1" onclick="selectContributor('p1')">👤 Jhoan</button>
@@ -1356,7 +1434,7 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Withdraw 💸</div>
     <div id="withdraw-goal-name" style="font-size:13px;color:var(--ink-3);margin-bottom:16px;padding:10px 14px;background:rgba(252,232,238,0.5);border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.2)">Goal: —</div>
-    <div class="input-group"><div class="input-label">Amount to Withdraw</div><input id="withdraw-amount" type="number" class="glass-input" placeholder="₱ 0.00"></div>
+    <div class="input-group"><div class="input-label">Amount to Withdraw</div><input id="withdraw-amount" type="text" class="glass-input peso-input" inputmode="decimal" placeholder="0"></div>
     <div class="input-group"><div class="input-label">Reason</div><input id="withdraw-reason" type="text" class="glass-input" placeholder="e.g. Used for emergency…"></div>
     <button class="cta-btn pink" onclick="submitWithdraw()">Withdraw →</button>
   </div>
@@ -1904,7 +1982,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="modal-handle"></div>
     <div class="modal-title">➕ Add Entry</div>
     <div class="input-group"><div class="input-label">Description</div><input type="text" id="jee-desc" class="glass-input" placeholder="e.g. May rent payment"></div>
-    <div class="input-group"><div class="input-label">Amount (₱)</div><input type="number" id="jee-amount" class="glass-input" placeholder="0.00"></div>
+    <div class="input-group"><div class="input-label">Amount (₱)</div><input type="text" id="jee-amount" class="glass-input peso-input" inputmode="decimal" placeholder="0"></div>
     <div class="input-group"><div class="input-label">Paid by</div>
       <div style="display:flex;gap:8px">
         <button class="split-btn selected" id="jee-paid-p1" onclick="selectJeePaidBy('p1')">Jhoan</button>
@@ -2001,7 +2079,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="add-bill-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-bill-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Bill / Expense</div>
+    <div class="modal-title" id="bill-modal-title">Add Bill / Expense</div>
 
     <!-- Icon -->
     <div class="input-group">
@@ -2022,7 +2100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- Amount -->
     <div class="input-group">
       <div class="input-label">Monthly Amount (₱)</div>
-      <input type="number" id="bill-amount-input" class="glass-input" inputmode="decimal" placeholder="0.00">
+      <input type="text" id="bill-amount-input" class="glass-input peso-input" inputmode="decimal" placeholder="0">
     </div>
 
     <!-- Type -->
@@ -2035,6 +2113,20 @@ document.addEventListener('DOMContentLoaded', () => {
       </select>
     </div>
 
+    <!-- Due Day -->
+    <div class="input-group">
+      <div class="input-label">Due Date (day of month)</div>
+      <div id="bill-dueday-picker" style="display:flex;gap:5px;overflow-x:auto;padding:4px 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+      <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Which day each month is this bill charged or due?</div>
+    </div>
+
+    <!-- Spread payment across paychecks -->
+    <div class="input-group">
+      <div class="input-label">💰 Pre-save across paychecks</div>
+      <div id="bill-split-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"></div>
+      <div id="bill-split-hint" style="font-size:11px;color:var(--ink-4)">Set aside a portion each paycheck instead of paying all at once.</div>
+    </div>
+
     <!-- Duration -->
     <div class="input-group">
       <div class="input-label">Duration</div>
@@ -2045,7 +2137,40 @@ document.addEventListener('DOMContentLoaded', () => {
       <input type="month" id="bill-until-input" class="glass-input" style="display:none">
     </div>
 
-    <button class="cta-btn pink" onclick="submitBudgetBill()">Add Bill →</button>
+    <button id="bill-submit-btn" class="cta-btn pink" onclick="submitBudgetBill()">Add Bill →</button>
+  </div>
+</div>
+
+<!-- Add / Edit Essential modal -->
+<div id="add-essential-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-essential-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="essential-modal-title">🛒 Add Monthly Essential</div>
+    <div class="input-group">
+      <div class="input-label">Icon</div>
+      <div id="essential-icon-preview" style="font-size:34px;width:52px;height:52px;background:rgba(200,230,255,0.4);border-radius:12px;display:flex;align-items:center;justify-content:center">📦</div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Name</div>
+      <input type="text" id="essential-name-input" class="glass-input" placeholder="e.g. Groceries, Transport">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Monthly Amount (₱)</div>
+      <input type="text" id="essential-amount-input" class="glass-input peso-input" inputmode="decimal" placeholder="0">
+    </div>
+    <!-- Due Day -->
+    <div class="input-group">
+      <div class="input-label">Pay / buy on which day?</div>
+      <div id="essential-dueday-picker" style="display:flex;gap:5px;overflow-x:auto;padding:4px 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+      <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Which day of the month do you usually spend this?</div>
+    </div>
+    <!-- Spread payment -->
+    <div class="input-group">
+      <div class="input-label">💰 Pre-save across paychecks</div>
+      <div id="essential-split-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"></div>
+      <div id="essential-split-hint" style="font-size:11px;color:var(--ink-4)">Set aside a portion each paycheck instead of spending all at once.</div>
+    </div>
+    <button id="essential-submit-btn" class="cta-btn" style="background:linear-gradient(135deg,#3B82F6,#2563EB)" onclick="submitEssential()">Add Essential →</button>
   </div>
 </div>
 
@@ -2072,6 +2197,65 @@ document.addEventListener('DOMContentLoaded', () => {
 #main-tabs .main-tab {
   font-size: 9px;
   padding: 6px 2px 4px;
+}
+/* Due-day chips in bill modal */
+.due-day-chip {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  background: rgba(245,245,245,0.8);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--f);
+  transition: all 0.12s;
+}
+.due-day-chip.active {
+  background: var(--green-deep);
+  color: #fff;
+  border-color: var(--green-deep);
+  transform: scale(1.1);
+}
+.due-day-chip.none-chip {
+  width: auto;
+  padding: 0 8px;
+  font-size: 10px;
+  border-style: dashed;
+}
+/* Split-payment chips in bill/essential modal */
+.split-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  background: rgba(245,245,245,0.8);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--f);
+  transition: all 0.12s;
+}
+.split-chip.active {
+  background: #2e8b57;
+  color: #fff;
+  border-color: #2e8b57;
+}
+/* Paycheck plan period cards */
+.paycheck-period-card {
+  border-radius: var(--r-lg);
+  padding: 14px;
+  margin-bottom: 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
 }
 </style>
 

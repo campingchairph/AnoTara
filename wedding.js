@@ -853,7 +853,7 @@ function addWedGuest() {
 
 function addWedExpense() {
   const label    = document.getElementById('wed-exp-label').value.trim();
-  const amount   = parseFloat(document.getElementById('wed-exp-amount').value)||0;
+  const amount   = (typeof pesoVal==='function') ? pesoVal('wed-exp-amount') : parseFloat((document.getElementById('wed-exp-amount')?.value||'').replace(/,/g,''))||0;
   const category = document.getElementById('wed-exp-category').value;
   if (!label||!amount) { showToast('⚠️ Fill in all fields'); return; }
   WED.expenses.push({ id:Date.now(), category, label, amount, paid:false });
