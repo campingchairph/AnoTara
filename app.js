@@ -1474,7 +1474,6 @@ function renderGroupsList() {
         <button onclick="event.stopPropagation();quickDeleteGroup('${g.id}')" style="padding:5px 9px;border-radius:var(--r-xs);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>
       </div>
     </div>`;
-    </div>`;
   }).join('')
   + `<div class="activity-item glass" style="border-radius:var(--r-lg);cursor:pointer;opacity:0.7" onclick="openModal('new-group-modal')">
       <div style="width:52px;height:52px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">➕</div>
