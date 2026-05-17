@@ -430,8 +430,8 @@
     </div>
   </div>
   <nav class="tabs glass">
-    <button class="tab active" id="tab-tasks"    onclick="switchTab('tasks')"    data-t="tabTasks"></button>
-    <button class="tab"        id="tab-expenses" onclick="switchTab('expenses')" data-t="tabExpenses"></button>
+    <button class="tab active" id="tab-expenses" onclick="switchTab('expenses')" data-t="tabExpenses"></button>
+    <button class="tab"        id="tab-tasks"    onclick="switchTab('tasks')"    data-t="tabTasks"></button>
     <button class="tab"        id="tab-members"  onclick="switchTab('members')"  data-t="tabMembers"></button>
     <button class="tab"        id="tab-settle"   onclick="switchTab('settle')"   data-t="tabSettle"></button>
     <button class="tab"        id="tab-map"      onclick="switchTab('map')"      data-t="tabMap"></button>
@@ -451,17 +451,17 @@
       <div style="display:flex;gap:6px;padding:0 14px 12px;flex-wrap:wrap" id="saan-quick-pills"></div>
     </div>
   </div>
-  <!-- TASKS -->
-  <div id="panel-tasks" class="pad">
-    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="tasksTitle"></span><span class="sec-action" onclick="openModal('add-task-modal')" data-t="addTask"></span></div>
-    <div id="tasks-list"></div>
-  </div>
-  <!-- EXPENSES -->
-  <div id="panel-expenses" class="pad" style="display:none">
+  <!-- EXPENSES — shown first (default tab) -->
+  <div id="panel-expenses" class="pad">
     <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="expensesTitle"></span><span class="sec-action" onclick="openModal('add-expense-modal')" data-t="addExpense"></span></div>
     <div id="expenses-list"></div>
     <div class="budget-bar-wrap"><div class="bud-row"><span class="bud-label" data-t="budgetSpent"></span><span class="bud-val" id="bud-spent-val">₱0</span></div><div class="bud-row" style="margin-top:2px"><span class="bud-label" style="font-size:11.5px" data-t="budgetLabel"></span><span id="bud-total-val" style="font-size:12px;color:var(--ink-3)">—</span></div><div class="prog-track"><div class="prog-fill" id="bud-prog-fill" style="width:0%"></div></div><div class="bud-remain" id="bud-remain-val">—</div></div>
     <button class="cta-btn dark" onclick="renderReceipt();navTo('receipt')" data-t="viewReceipt"></button>
+  </div>
+  <!-- TASKS — hidden by default -->
+  <div id="panel-tasks" class="pad" style="display:none">
+    <div class="sec-hdr"><span class="sec-title" style="font-size:15px" data-t="tasksTitle"></span><span class="sec-action" onclick="openModal('add-task-modal')" data-t="addTask"></span></div>
+    <div id="tasks-list"></div>
   </div>
   <!-- MEMBERS -->
   <div id="panel-members" class="pad" style="display:none">
@@ -707,6 +707,9 @@
     <button class="main-tab" id="main-tab-wedding" onclick="switchMainTab('wedding')">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke-width="2"/><path d="M12 8C12 8 9 5 6.5 6.5S4 11 4 11" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-1.5 2.5" stroke-width="2" stroke-linecap="round"/><ellipse cx="12" cy="12" rx="8" ry="5" stroke-width="2"/><path d="M8 9.5C9.5 8 11 7.5 12 7.5" stroke-width="1.5" stroke-linecap="round"/></svg>Wed
     </button>
+    <button class="main-tab" id="main-tab-budget" onclick="switchMainTab('budget')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M7 7l2 2M15 15l2 2M3 12h3M18 12h3M7 17l2-2M15 9l2-2" stroke-linecap="round"/></svg>Budget
+    </button>
     <button class="main-tab" id="main-tab-settings" onclick="switchMainTab('settings')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
     </button>
@@ -890,6 +893,52 @@
       <div id="wed-panel-checklist" class="pad" style="display:none"><div id="wed-checklist-content"></div></div>
       <div id="wed-panel-schedule"  class="pad" style="display:none"><div id="wed-schedule-content"></div></div>
       <div style="height:40px"></div>
+    </div>
+
+    <!-- BUDGET tab -->
+    <div class="tab-panel" id="tp-budget" style="background:linear-gradient(160deg,#f0f9f4 0%,#fef6e8 60%,#f5f0fb 100%);overflow-y:auto;-webkit-overflow-scrolling:touch">
+      <!-- Hero: salary input -->
+      <div style="background:linear-gradient(135deg,#1e5c3a,#2e8b57);padding:24px 20px 20px">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Monthly Salary / Income</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:28px;font-weight:700;color:rgba(255,255,255,0.8)">₱</span>
+          <input id="budget-salary-input" type="number" inputmode="decimal" placeholder="0.00"
+            style="flex:1;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,0.4);font-size:30px;font-family:var(--f2);color:#fff;outline:none;padding:0 0 4px;width:100%;letter-spacing:-1px"
+            oninput="onSalaryInput()">
+        </div>
+        <!-- Frequency pills -->
+        <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+          <button id="freq-monthly" class="freq-pill active" onclick="setBudgetFreq('monthly')">Monthly</button>
+          <button id="freq-semi"    class="freq-pill"        onclick="setBudgetFreq('semi')">2× Month</button>
+          <button id="freq-weekly"  class="freq-pill"        onclick="setBudgetFreq('weekly')">Weekly</button>
+          <button id="freq-daily"   class="freq-pill"        onclick="setBudgetFreq('daily')">Daily</button>
+        </div>
+      </div>
+
+      <!-- Bills section -->
+      <div class="pad" style="padding-top:16px">
+        <div class="sec-hdr">
+          <span class="sec-title">💳 Bills &amp; Recurring Expenses</span>
+          <span class="sec-action" onclick="openAddBillModal()">+ Add</span>
+        </div>
+        <div id="budget-bills-list"></div>
+      </div>
+
+      <!-- Donut chart + legend -->
+      <div class="pad" style="margin-top:4px">
+        <div class="glass" style="border-radius:var(--r-lg);padding:16px">
+          <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px">📊 Budget Breakdown</div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <canvas id="budget-donut" width="140" height="140" style="flex-shrink:0;width:140px;height:140px"></canvas>
+            <div id="budget-legend" style="flex:1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-paycheck guide -->
+      <div class="pad" style="margin-top:4px" id="budget-paycheck-guide"></div>
+
+      <div style="height:24px"></div>
     </div>
 
     <!-- SETTINGS tab -->
@@ -1945,6 +1994,86 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
 </div>
+
+<!-- ════════ BUDGET MODALS ════════ -->
+
+<!-- Add Bill Modal -->
+<div id="add-bill-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-bill-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Bill / Expense</div>
+
+    <!-- Icon -->
+    <div class="input-group">
+      <div class="input-label">Icon</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="bill-icon-preview" style="font-size:34px;width:52px;height:52px;background:rgba(245,230,200,0.5);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(201,169,110,0.25)" onclick="toggleBillIconPicker()">💳</div>
+        <span style="font-size:12px;color:var(--ink-4)">Tap to change</span>
+      </div>
+      <div id="bill-icon-picker" style="display:none;flex-wrap:wrap;gap:6px;padding:10px 0 4px"></div>
+    </div>
+
+    <!-- Name -->
+    <div class="input-group">
+      <div class="input-label">Bill Name</div>
+      <input type="text" id="bill-name-input" class="glass-input" placeholder="e.g. Electric Bill, Netflix, Car Loan">
+    </div>
+
+    <!-- Amount -->
+    <div class="input-group">
+      <div class="input-label">Monthly Amount (₱)</div>
+      <input type="number" id="bill-amount-input" class="glass-input" inputmode="decimal" placeholder="0.00">
+    </div>
+
+    <!-- Type -->
+    <div class="input-group">
+      <div class="input-label">Type</div>
+      <select id="bill-type-input" class="glass-input">
+        <option value="bill">🏠 Bill (Utilities / Rent)</option>
+        <option value="subscription">📱 Subscription</option>
+        <option value="installment">💳 Installment / Loan</option>
+      </select>
+    </div>
+
+    <!-- Duration -->
+    <div class="input-group">
+      <div class="input-label">Duration</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="bill-rec-forever" class="exp-mode-btn active" onclick="setBillRecurring('forever')">🔄 Forever</button>
+        <button id="bill-rec-until"   class="exp-mode-btn"        onclick="setBillRecurring('until')">📅 Until date</button>
+      </div>
+      <input type="month" id="bill-until-input" class="glass-input" style="display:none">
+    </div>
+
+    <button class="cta-btn pink" onclick="submitBudgetBill()">Add Bill →</button>
+  </div>
+</div>
+
+<style>
+/* Budget tab: salary frequency pills */
+.freq-pill {
+  padding: 7px 13px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--f);
+  transition: all 0.15s;
+}
+.freq-pill.active {
+  background: rgba(255,255,255,0.9);
+  color: #1e5c3a;
+  border-color: rgba(255,255,255,0.9);
+}
+/* Make main tabs slightly smaller text to fit 6 tabs */
+#main-tabs .main-tab {
+  font-size: 9px;
+  padding: 6px 2px 4px;
+}
+</style>
 
 </body>
 </html>

@@ -48,13 +48,14 @@ const PIN_TYPES = ['pinMeetup','pinParking','pinEntrance','pinFood','pinPhoto','
 const PIN_EMOJIS = { pinMeetup:'📍', pinParking:'🅿️', pinEntrance:'🚪', pinFood:'🍽️', pinPhoto:'📸', pinOther:'📌' };
 
 /* ── MAIN APP SHELL ──────────────────────────── */
-const MAIN_TABS = ['home','groups','jowa','wedding','settings'];
+const MAIN_TABS = ['home','groups','jowa','wedding','budget','settings'];
 let _activeMainTab = 'home';
 
 function switchMainTab(name) {
   if (name === 'wedding' && !WEDDING_STATE.activated) { activateWedding(); return; }
-  if (name === 'jowa') setTimeout(animateBars, 150);
-  if (name === 'home') setTimeout(initHomeFeed, 100);
+  if (name === 'jowa')   setTimeout(animateBars, 150);
+  if (name === 'home')   setTimeout(initHomeFeed, 100);
+  if (name === 'budget') setTimeout(() => { if (typeof initBudgetTab === 'function') initBudgetTab(); }, 100);
   _activeMainTab = name;
   MAIN_TABS.forEach((t,i) => {
     const panel = document.getElementById('tp-'+t);
@@ -1429,6 +1430,9 @@ function createGroup() {
   setTimeout(() => { STATE.currentGroup = newId; openGroup(newId); }, 380);
 }
 
+function quickEditGroup(id) { STATE.currentGroup = id; openEditGroup(); }
+function quickDeleteGroup(id) { STATE.currentGroup = id; deleteGroup(); }
+
 function renderGroupsList() {
   const bgMap = { jowa:'glass-pink', familia:'glass-cream', berks:'glass-green', trip:'glass' };
   const gcMap = { jowa:'gc-jowa', familia:'gc-familia', berks:'gc-berks', trip:'gc-berks' };
@@ -1455,17 +1459,21 @@ function renderGroupsList() {
   // Full groups list — render into both home screen list and groups tab panel
   const listHtml = GROUPS.map(g => {
     const budgetBar = g.budget ? `<div style="margin-top:6px;height:4px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden"><div style="width:30%;height:100%;background:linear-gradient(90deg,var(--tan),var(--tan-dark));border-radius:2px"></div></div>` : '';
-    return `<div class="activity-item ${bgMap[g.type]||'glass'}" style="border-radius:var(--r-lg);margin-bottom:11px;cursor:pointer" onclick="openGroup('${g.id}')">
-      <div style="width:52px;height:52px;border-radius:var(--r-md);background:${icMap[g.type]||'rgba(232,245,237,0.80)'};border:1px solid ${brMap[g.type]||'rgba(90,171,122,0.25)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${g.emoji}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:15px;font-weight:700;color:var(--ink)">${g.name}</div>
-        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${g.members.map(m=>m.name.split(' ')[0]).join(', ')}</div>
-        ${budgetBar}
+    const expTotal = (g.expenses||[]).reduce((s,e)=>s+(typeof getExpenseTotal==='function'?getExpenseTotal(e):(e.total||e.amount||0)),0);
+    return `<div class="activity-item ${bgMap[g.type]||'glass'}" style="border-radius:var(--r-lg);margin-bottom:11px;display:flex;align-items:center">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;min-width:0;padding:12px 0 12px 12px" onclick="openGroup('${g.id}')">
+        <div style="width:52px;height:52px;border-radius:var(--r-md);background:${icMap[g.type]||'rgba(232,245,237,0.80)'};border:1px solid ${brMap[g.type]||'rgba(90,171,122,0.25)'};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${g.emoji}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:var(--ink)">${g.name}</div>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${g.members.length} members${expTotal>0?' · ₱'+expTotal.toLocaleString(undefined,{maximumFractionDigits:0})+' spent':''}</div>
+          ${budgetBar}
+        </div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:11px;font-weight:700;color:var(--ink-4)">${g.members.length} members</div>
-        ${g.budget?'<div style="font-size:10.5px;color:var(--ink-4)">\u20b1'+g.budget.toLocaleString()+'</div>':''}
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;padding:8px 12px 8px 6px">
+        <button onclick="event.stopPropagation();quickEditGroup('${g.id}')" style="padding:5px 9px;border-radius:var(--r-xs);border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:13px;cursor:pointer;color:var(--tan-dark)">✏️</button>
+        <button onclick="event.stopPropagation();quickDeleteGroup('${g.id}')" style="padding:5px 9px;border-radius:var(--r-xs);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>
       </div>
+    </div>`;
     </div>`;
   }).join('')
   + `<div class="activity-item glass" style="border-radius:var(--r-lg);cursor:pointer;opacity:0.7" onclick="openModal('new-group-modal')">
@@ -1954,12 +1962,25 @@ function saveProfile() {
   saveAuth();
   localStorage.setItem('at_profile_name', name);
   const firstName = name.split(' ')[0];
+  // Update all name/avatar occurrences in the DOM
   document.querySelectorAll('.profile-av').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
   document.querySelectorAll('.profile-name-el').forEach(el => el.textContent = name);
   document.querySelectorAll('.avatar-btn').forEach(el => el.textContent = firstName.substring(0,2).toUpperCase());
   document.querySelectorAll('.greeting-name').forEach(el => el.textContent = firstName + ' ✨');
   const ovAv = document.getElementById('ov-avatar');
   if (ovAv) ovAv.textContent = firstName.substring(0,2).toUpperCase();
+  // Keep the shell overview in sync
+  updateShellOverview();
+  // Update jowa group owner display name so settlement is correct
+  const jowaGroup = GROUPS.find(g => g.type === 'jowa');
+  if (jowaGroup) {
+    const owner = jowaGroup.members.find(m => m.isOwner);
+    if (owner) { owner.name = name + ' (You)'; owner.id = firstName.substring(0,2).toUpperCase(); }
+    saveGroups();
+    renderGroupsList();
+  }
+  // Refresh jowa hero (getP1 reads from AUTH.user.name)
+  updateJowaHero();
   closeModalById('profile-edit-modal');
   showToast('✅ Profile updated!');
 }
@@ -4249,7 +4270,7 @@ window.addSupplierFromDir    = addSupplierFromDir;
    TAB SWIPE — swipe content area to switch tabs
    ═══════════════════════════════════════════════ */
 
-const TAB_ORDER = ['tasks','expenses','members','settle','map'];
+const TAB_ORDER = ['expenses','tasks','members','settle','map'];
 
 function initTabSwipe() {
   const content = document.getElementById('group-detail');
@@ -5139,18 +5160,41 @@ function renderExpenseTrendChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  // Build 6-month data from GROUPS expenses
-  const months = [];
-  const now = new Date();
-  for (let i=5; i>=0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    months.push({ label: d.toLocaleString('en-PH',{month:'short'}), year:d.getFullYear(), month:d.getMonth(), total:0 });
-  }
+  // Find the earliest expense date across all groups
+  let earliest = null;
   if (typeof GROUPS !== 'undefined') {
     GROUPS.forEach(g => (g.expenses||[]).forEach(e => {
-      const d = new Date(e.date||Date.now());
-      const m = months.find(m=>m.year===d.getFullYear()&&m.month===d.getMonth());
-      if (m) m.total += (e.amount||0);
+      const d = new Date(e.date || Date.now());
+      if (!earliest || d < earliest) earliest = d;
+    }));
+  }
+
+  // Start from earliest expense month (cap at 12 months back); default 3 months if none
+  const now = new Date();
+  const maxBack = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  let startDate;
+  if (!earliest) {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  } else {
+    const em = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+    startDate = em < maxBack ? maxBack : em;
+  }
+
+  // Build months array from startDate to today
+  const months = [];
+  let d = new Date(startDate);
+  const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  while (d <= endDate) {
+    months.push({ label: d.toLocaleString('en-PH',{month:'short'}), year:d.getFullYear(), month:d.getMonth(), total:0 });
+    d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  }
+
+  // Populate totals from all group expenses
+  if (typeof GROUPS !== 'undefined') {
+    GROUPS.forEach(g => (g.expenses||[]).forEach(e => {
+      const ed = new Date(e.date||Date.now());
+      const m = months.find(m=>m.year===ed.getFullYear()&&m.month===ed.getMonth());
+      if (m) m.total += (typeof getExpenseTotal==='function' ? getExpenseTotal(e) : (e.total||e.amount||0));
     }));
   }
   _chartData = months;
@@ -5231,3 +5275,295 @@ function drawChart(ctx, canvas, data, selIdx) {
 
 window.initHomeFeed = initHomeFeed;
 window.renderExpenseTrendChart = renderExpenseTrendChart;
+
+/* ═══════════════════════════════════════════════
+   BUDGET PLANNER
+   ═══════════════════════════════════════════════ */
+let BUDGET_PROFILE = JSON.parse(localStorage.getItem('at_budget') || 'null') || { salary:0, freq:'monthly', bills:[] };
+function saveBudgetProfile() { localStorage.setItem('at_budget', JSON.stringify(BUDGET_PROFILE)); }
+
+const FREQ_PER_MONTH = { monthly:1, semi:2, weekly:4.33, daily:21.7 };
+function getMonthlyIncome() { return (BUDGET_PROFILE.salary||0) * (FREQ_PER_MONTH[BUDGET_PROFILE.freq||'monthly']||1); }
+
+let _billIcon = '💳';
+let _billRecurring = 'forever';
+const BILL_ICONS = ['💡','💧','📶','🏠','🚗','📱','💳','🛒','🎬','🎵','🏋️','💊','📚','🎮','✈️','🍱','🏥','🎓','🛡️','💰','☕','🎁','🔧','🏫','🐾'];
+
+function initBudgetTab() {
+  const salEl = document.getElementById('budget-salary-input');
+  if (salEl) salEl.value = BUDGET_PROFILE.salary || '';
+  ['monthly','semi','weekly','daily'].forEach(f => {
+    const btn = document.getElementById('freq-'+f);
+    if (btn) btn.classList.toggle('active', f === (BUDGET_PROFILE.freq||'monthly'));
+  });
+  renderBudgetBills();
+  renderBudgetChart();
+  renderPaycheckGuide();
+}
+
+function onSalaryInput() {
+  const val = parseFloat(document.getElementById('budget-salary-input')?.value) || 0;
+  BUDGET_PROFILE.salary = val;
+  saveBudgetProfile();
+  renderBudgetChart();
+  renderPaycheckGuide();
+}
+
+function setBudgetFreq(f) {
+  BUDGET_PROFILE.freq = f;
+  saveBudgetProfile();
+  ['monthly','semi','weekly','daily'].forEach(k => {
+    const btn = document.getElementById('freq-'+k);
+    if (btn) btn.classList.toggle('active', k === f);
+  });
+  renderBudgetChart();
+  renderPaycheckGuide();
+}
+
+function openAddBillModal() {
+  _billIcon = '💳';
+  _billRecurring = 'forever';
+  const prev = document.getElementById('bill-icon-preview');
+  if (prev) prev.textContent = _billIcon;
+  const picker = document.getElementById('bill-icon-picker');
+  if (picker) {
+    picker.style.display = 'none';
+    picker.innerHTML = BILL_ICONS.map(ic =>
+      '<button style="font-size:22px;padding:7px;border:none;background:rgba(245,230,200,0.45);border-radius:8px;cursor:pointer" onclick="selectBillIcon(\''+ic+'\')" >'+ic+'</button>'
+    ).join('');
+  }
+  const n = document.getElementById('bill-name-input');    if (n) n.value = '';
+  const a = document.getElementById('bill-amount-input');  if (a) a.value = '';
+  const t = document.getElementById('bill-type-input');    if (t) t.value = 'bill';
+  const u = document.getElementById('bill-until-input');   if (u) { u.style.display='none'; u.value=''; }
+  const rf = document.getElementById('bill-rec-forever');  if (rf) rf.classList.add('active');
+  const ru = document.getElementById('bill-rec-until');    if (ru) ru.classList.remove('active');
+  openModal('add-bill-modal');
+}
+
+function toggleBillIconPicker() {
+  const el = document.getElementById('bill-icon-picker');
+  if (el) el.style.display = el.style.display === 'none' || !el.style.display ? 'flex' : 'none';
+}
+
+function selectBillIcon(icon) {
+  _billIcon = icon;
+  const prev = document.getElementById('bill-icon-preview');
+  if (prev) prev.textContent = icon;
+  const picker = document.getElementById('bill-icon-picker');
+  if (picker) picker.style.display = 'none';
+}
+
+function setBillRecurring(type) {
+  _billRecurring = type;
+  const rf = document.getElementById('bill-rec-forever');
+  const ru = document.getElementById('bill-rec-until');
+  if (rf) rf.classList.toggle('active', type === 'forever');
+  if (ru) ru.classList.toggle('active', type === 'until');
+  const u = document.getElementById('bill-until-input');
+  if (u) u.style.display = type === 'until' ? 'block' : 'none';
+}
+
+function submitBudgetBill() {
+  const name   = (document.getElementById('bill-name-input')?.value||'').trim();
+  const amount = parseFloat(document.getElementById('bill-amount-input')?.value)||0;
+  const type   = document.getElementById('bill-type-input')?.value || 'bill';
+  const until  = _billRecurring === 'until' ? (document.getElementById('bill-until-input')?.value||null) : null;
+  if (!name)   { showToast('⚠️ Enter a bill name'); return; }
+  if (!amount) { showToast('⚠️ Enter an amount'); return; }
+  BUDGET_PROFILE.bills.push({ id:'bill_'+Date.now(), icon:_billIcon, name, amount, type, until });
+  saveBudgetProfile();
+  closeModalById('add-bill-modal');
+  renderBudgetBills();
+  renderBudgetChart();
+  renderPaycheckGuide();
+  showToast('💳 '+name+' added!');
+}
+
+function deleteBudgetBill(id) {
+  const bill = BUDGET_PROFILE.bills.find(b=>b.id===id);
+  if (!bill || !confirm('Remove "'+bill.name+'"?')) return;
+  BUDGET_PROFILE.bills = BUDGET_PROFILE.bills.filter(b=>b.id!==id);
+  saveBudgetProfile();
+  renderBudgetBills();
+  renderBudgetChart();
+  renderPaycheckGuide();
+  showToast('🗑 Removed!');
+}
+
+function getActiveBills() {
+  const now = new Date();
+  const nowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  return BUDGET_PROFILE.bills.filter(b => {
+    if (!b.until) return true;
+    const [y, m] = b.until.split('-').map(Number);
+    return new Date(y, m-1, 1) >= nowMonth;
+  });
+}
+
+function renderBudgetBills() {
+  const el = document.getElementById('budget-bills-list');
+  if (!el) return;
+  const active = getActiveBills();
+  if (!active.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px 16px;color:var(--ink-4);font-size:13px">No bills added yet — tap <b>+ Add</b> to start.</div>';
+    return;
+  }
+  const typeLabel = { bill:'Bill', subscription:'Subscription', installment:'Installment' };
+  el.innerHTML = active.map(b =>
+    '<div class="glass" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);margin-bottom:8px">' +
+      '<div style="font-size:26px;width:42px;height:42px;background:rgba(245,230,200,0.5);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+b.icon+'</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:14px;font-weight:700;color:var(--ink)">'+b.name+'</div>' +
+        '<div style="font-size:11px;color:var(--ink-4);margin-top:1px">'+(typeLabel[b.type]||b.type)+' · '+(b.until?'Until '+b.until:'Ongoing')+'</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0;margin-right:6px">' +
+        '<div style="font-size:15px;font-weight:700;color:var(--ink)">₱'+b.amount.toLocaleString()+'</div>' +
+        '<div style="font-size:10px;color:var(--ink-4)">/month</div>' +
+      '</div>' +
+      '<button onclick="deleteBudgetBill(\''+b.id+'\')" style="padding:5px 8px;border-radius:var(--r-xs);border:none;background:rgba(224,120,152,0.15);color:var(--pink-deep);font-size:13px;cursor:pointer;flex-shrink:0">🗑</button>' +
+    '</div>'
+  ).join('');
+}
+
+function renderBudgetChart() {
+  const canvas   = document.getElementById('budget-donut');
+  const legendEl = document.getElementById('budget-legend');
+  if (!canvas) return;
+
+  const monthly    = getMonthlyIncome();
+  const billsTotal = getActiveBills().reduce((s,b)=>s+b.amount, 0);
+  const savings    = monthly * 0.20;
+  const emergency  = monthly * 0.10;
+  const remainder  = Math.max(0, monthly - billsTotal - savings - emergency);
+
+  const segments = monthly > 0 ? [
+    { label:'Bills',          value:billsTotal, color:'#E07898', pct:(monthly>0?billsTotal/monthly*100:0) },
+    { label:'Savings (20%)',  value:savings,    color:'#5AAB7A', pct:20 },
+    { label:'Emergency (10%)',value:emergency,  color:'#D4A853', pct:10 },
+    { label:'Free Spending',  value:remainder,  color:'#9CA3AF', pct:(monthly>0?remainder/monthly*100:0) },
+  ].filter(s=>s.value>0) : [];
+
+  drawBudgetDonut(canvas, segments, monthly);
+
+  if (legendEl) {
+    if (!monthly) {
+      legendEl.innerHTML = '<div style="color:var(--ink-4);font-size:12px;padding:8px 0">Enter your salary above to see the breakdown.</div>';
+    } else {
+      legendEl.innerHTML = segments.map(s =>
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">' +
+          '<div style="width:11px;height:11px;border-radius:3px;background:'+s.color+';flex-shrink:0"></div>' +
+          '<div style="flex:1;font-size:12px;color:var(--ink-3)">'+s.label+'</div>' +
+          '<div style="font-size:12px;font-weight:700;color:var(--ink)">₱'+Math.round(s.value).toLocaleString()+'</div>' +
+          '<div style="font-size:10px;color:var(--ink-4);min-width:30px;text-align:right">'+s.pct.toFixed(1)+'%</div>' +
+        '</div>'
+      ).join('');
+    }
+  }
+}
+
+function drawBudgetDonut(canvas, segments, total) {
+  const dpr  = window.devicePixelRatio || 1;
+  const size = 140;
+  canvas.width  = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width  = size + 'px';
+  canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cx = size/2, cy = size/2, R = 60, r = 36;
+  ctx.clearRect(0, 0, size, size);
+
+  if (!segments.length || !total) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, (R+r)/2, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+    ctx.lineWidth = R - r;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.font = 'bold 12px Nunito,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('₱0', cx, cy-4);
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '10px Nunito,sans-serif';
+    ctx.fillText('income', cx, cy+10);
+    return;
+  }
+
+  let angle = -Math.PI / 2;
+  segments.forEach(seg => {
+    const sweep = (seg.value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.arc(cx, cy, R, angle, angle + sweep);
+    ctx.arc(cx, cy, r, angle + sweep, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    angle += sweep + 0.015; // tiny gap between segments
+  });
+
+  // Center text
+  ctx.fillStyle = '#1a1009';
+  ctx.font = 'bold 12px Nunito,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('₱' + Math.round(total).toLocaleString(), cx, cy - 5);
+  ctx.fillStyle = '#6B7280';
+  ctx.font = '10px Nunito,sans-serif';
+  ctx.fillText('per month', cx, cy + 9);
+}
+
+function renderPaycheckGuide() {
+  const el = document.getElementById('budget-paycheck-guide');
+  if (!el) return;
+  if (!BUDGET_PROFILE.salary) { el.innerHTML = ''; return; }
+
+  const freq      = BUDGET_PROFILE.freq || 'monthly';
+  const paychecks = FREQ_PER_MONTH[freq];
+  const salaryPC  = BUDGET_PROFILE.salary;
+  const monthly   = getMonthlyIncome();
+  const billsPC   = getActiveBills().reduce((s,b)=>s+b.amount, 0) / paychecks;
+  const savingsPC = monthly * 0.20 / paychecks;
+  const emerPC    = monthly * 0.10 / paychecks;
+  const freePC    = Math.max(0, salaryPC - billsPC - savingsPC - emerPC);
+  const freqLabel = { monthly:'each paycheck', semi:'each paycheck (2×/month)', weekly:'each weekly pay', daily:'each daily pay' }[freq];
+
+  const billsPct   = monthly > 0 ? (getActiveBills().reduce((s,b)=>s+b.amount,0)/monthly*100) : 0;
+  const billsAlert = billsPct > 50 ? '⚠️ Over 50%! Consider reducing fixed bills.' : '✅ Looking healthy.';
+
+  el.innerHTML =
+    '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">' +
+      '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>' +
+      '<div style="font-size:12px;color:var(--ink-4);margin-bottom:14px">You receive <b>₱'+salaryPC.toLocaleString(undefined,{maximumFractionDigits:0})+'</b> '+freqLabel+'. Set aside:</div>' +
+      [
+        { icon:'💳', label:'Bills',           amt:billsPC,   color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
+        { icon:'🐷', label:'Savings',         amt:savingsPC, color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
+        { icon:'🛡️', label:'Emergency fund',  amt:emerPC,    color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
+        { icon:'🎉', label:'Free to spend',   amt:freePC,    color:'var(--ink-2)',       bg:'rgba(0,0,0,0.03)' },
+      ].map(r =>
+        '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:'+r.bg+';margin-bottom:6px">' +
+          '<div style="font-size:20px;flex-shrink:0">'+r.icon+'</div>' +
+          '<div style="flex:1;font-size:12px;color:var(--ink-3)">'+r.label+'</div>' +
+          '<div style="font-size:16px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>' +
+        '</div>'
+      ).join('') +
+      '<div style="margin-top:8px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:3px">Bills vs. Income</div>' +
+        '<div style="font-size:12px;color:var(--ink-3)"><b>'+billsPct.toFixed(1)+'%</b> of monthly income goes to bills. '+billsAlert+'</div>' +
+      '</div>' +
+    '</div>';
+}
+
+window.initBudgetTab      = initBudgetTab;
+window.onSalaryInput      = onSalaryInput;
+window.setBudgetFreq      = setBudgetFreq;
+window.openAddBillModal   = openAddBillModal;
+window.toggleBillIconPicker = toggleBillIconPicker;
+window.selectBillIcon     = selectBillIcon;
+window.setBillRecurring   = setBillRecurring;
+window.submitBudgetBill   = submitBudgetBill;
+window.deleteBudgetBill   = deleteBudgetBill;
+window.quickEditGroup     = quickEditGroup;
+window.quickDeleteGroup   = quickDeleteGroup;
