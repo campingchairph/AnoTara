@@ -336,7 +336,7 @@ body {
    APP SHELL
    ═══════════════════════════════════════════════ */
 .app-shell {
-  max-width: 680px;
+  max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
@@ -645,6 +645,12 @@ body {
   border-color: rgba(184,145,106,0.60);
   box-shadow: 0 0 0 3px rgba(184,145,106,0.10);
 }
+textarea.glass-input {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.55;
+  box-sizing: border-box;
+}
 
 /* ── BUTTONS ─────────────────────────────────── */
 .cta-btn {
@@ -706,6 +712,22 @@ body {
 
 /* ── CANVAS ──────────────────────────────────── */
 .canvas-section { padding: 0; }
+/* ── SEATING PANEL LAYOUT ────────────────────── */
+#seating-layout {
+  display: flex;
+  flex-direction: column;
+}
+#seating-canvas-col  { flex: 1; min-width: 0; }
+#seating-sidebar-col { flex-shrink: 0; }
+
+.canvas-hint {
+  font-size: 11px;
+  color: var(--ink-4);
+  margin-bottom: 8px;
+  text-align: center;
+  line-height: 1.5;
+}
+
 #canvas-wrap {
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -718,14 +740,24 @@ body {
   display: block;
   width: 100%;
   cursor: crosshair;
-  touch-action: pan-y;
+  touch-action: none;
 }
 #seating-canvas:active { cursor: grabbing; }
 .canvas-toolbar {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 10px;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.canvas-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(184,145,106,0.2);
 }
 .canvas-tool-btn {
   padding: 7px 14px;
@@ -879,4 +911,45 @@ body {
   body { background: #EAE0CE; }
   .app-shell { margin: 0 auto; }
   .lp-features { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+
+/* ── DESKTOP SEATING LAYOUT (≥ 900px) ─────────── */
+@media (min-width: 900px) {
+  #panel-seating { padding-bottom: 0; }
+
+  #seating-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    min-height: calc(100vh - 130px);
+  }
+
+  #seating-canvas-col {
+    flex: 1;
+    padding: 20px 8px 20px 20px !important;
+  }
+
+  #seating-sidebar-col {
+    width: 300px;
+    flex-shrink: 0;
+    padding: 20px 20px 80px 8px !important;
+    position: sticky;
+    top: 60px;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+  #seating-sidebar-col::-webkit-scrollbar { width: 4px; }
+  #seating-sidebar-col::-webkit-scrollbar-thumb { background: rgba(184,145,106,0.3); border-radius: 2px; }
+
+  /* Canvas fills viewport height minus header/tabs/toolbar */
+  #canvas-wrap {
+    height: calc(100vh - 230px) !important;
+    min-height: 480px;
+  }
+  #seating-canvas { height: 100% !important; }
+
+  /* Hide drag-to-resize handle on desktop — pan/zoom replaces it */
+  #canvas-resize-handle { display: none; }
+
+  /* Wider non-seating panels on desktop */
+  .panel { max-width: 720px; margin: 0 auto; }
 }

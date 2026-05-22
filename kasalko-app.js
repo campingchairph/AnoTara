@@ -661,6 +661,23 @@ const SUGGESTED_SUPPLIERS = [
 const VENDOR_EMOJI = { venue:'🏛️',catering:'🍽️',photography:'📸',videography:'🎬',florals:'💐',attire:'👗',music:'🎵',coordination:'📋',cake:'🎂',invites:'💌',hair:'💄','photo-booth':'🖼️',other:'📦' };
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
+// Featured partner suppliers per category — update with real partners as they sign on
+const PARTNER_SUPPLIERS = {
+  venue:        [{ name:'Fernwood Gardens',          area:'Quezon City',   link:'https://fernwoodgardens.com' },
+                 { name:'The Ruins',                  area:'Bacolod City',  link:'https://theruins.com.ph' }],
+  catering:     [{ name:"Hizon's Catering",           area:'Metro Manila',  link:'https://hizons.com' }],
+  photography:  [{ name:'Nice Print Photography',     area:'Manila',        link:'https://niceprintphoto.com' }],
+  videography:  [{ name:'Nice Print Photography',     area:'Manila',        link:'https://niceprintphoto.com' }],
+  florals:      [{ name:'Gideon Hermosa Florals',     area:'Manila',        link:'https://www.facebook.com/gideonhermosaflorals' }],
+  attire:       [{ name:'Veluz Realty Bridal',        area:'Makati',        link:'https://veluzrealty.com' }],
+  music:        [],
+  coordination: [],
+  cake:         [{ name:'Goldilocks Wedding Cakes',   area:'Nationwide',    link:'https://goldilocks.com.ph' }],
+  invites:      [],
+  hair:         [],
+  'photo-booth':[],
+};
+
 function renderSuppliers() {
   const el = document.getElementById('wed-suppliers-content');
   if (!el) return;
@@ -686,11 +703,18 @@ function renderSuppliers() {
             <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${s.label}</span>
           </div>
           <div style="font-size:9.5px;color:var(--ink-4);margin-bottom:8px;line-height:1.4">${s.tip}</div>
+          ${(PARTNER_SUPPLIERS[s.cat]||[]).map(p=>`
+            <a href="${p.link}" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(184,145,106,0.09);border:1px solid rgba(184,145,106,0.22);margin-bottom:4px;text-decoration:none">
+              <span style="font-size:8px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold-dark);background:rgba(184,145,106,0.18);padding:1px 5px;border-radius:4px;flex-shrink:0">Partner</span>
+              <span style="font-size:10.5px;font-weight:700;color:var(--ink-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+              <span style="font-size:9px;color:var(--ink-4);flex-shrink:0">${p.area}</span>
+            </a>`).join('')}
           ${mine.map(v => `
             <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.18);margin-bottom:4px">
               <span style="font-size:10.5px;font-weight:700;color:var(--green-deep);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</span>
-              ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="font-size:13px;text-decoration:none" title="${v.phone}">📞</a>`:''}
-              <button onclick="deleteVendor(${v.id})" style="font-size:11px;border:none;background:none;color:var(--pink-deep);cursor:pointer;padding:0;line-height:1">✕</button>
+              ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="font-size:11px;font-weight:700;text-decoration:none;color:var(--green-deep)" title="${v.phone}">Call</a>`:''}
+              <button onclick="deleteVendor(${v.id})" style="font-size:11px;border:none;background:none;color:var(--pink-deep);cursor:pointer;padding:0;line-height:1">×</button>
             </div>`).join('')}
           <div style="display:flex;gap:5px;margin-top:4px">
             <a href="${s.link}" target="_blank" rel="noopener sponsored"
@@ -862,12 +886,20 @@ function renderChecklist() {
           <div style="width:${pp}%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--tan));border-radius:2px"></div>
         </div>
         ${phase.items.map(item=>`
-          <div class="glass" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:var(--r-md);margin-bottom:6px">
-            <div onclick="toggleChecklist('${item.id}')" style="width:22px;height:22px;border-radius:7px;border:2px solid ${item.done?'var(--green-accent)':'var(--ink-4)'};background:${item.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s">
-              ${item.done?'<span style="color:white;font-size:12px;font-weight:700">✓</span>':''}
+          <div class="glass" style="padding:10px 13px;border-radius:var(--r-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div onclick="toggleChecklist('${item.id}')" style="width:22px;height:22px;border-radius:7px;border:2px solid ${item.done?'var(--green-accent)':'var(--ink-4)'};background:${item.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s">
+                ${item.done?'<span style="color:white;font-size:12px;font-weight:700">✓</span>':''}
+              </div>
+              <span onclick="toggleChecklist('${item.id}')" style="font-size:13px;font-weight:500;color:${item.done?'var(--ink-4)':'var(--ink)'};text-decoration:${item.done?'line-through':'none'};flex:1;cursor:pointer;line-height:1.4">${item.text}</span>
+              <button onclick="openChecklistNoteEditor('${item.id}')"
+                style="padding:3px 8px;border-radius:6px;border:1px solid ${item.note?'rgba(184,145,106,0.35)':'rgba(44,31,14,0.1)'};background:${item.note?'rgba(184,145,106,0.12)':'transparent'};font-size:9.5px;font-weight:700;color:${item.note?'var(--gold-dark)':'var(--ink-4)'};cursor:pointer;flex-shrink:0;font-family:var(--f)"
+                title="${item.note?'Edit decision note':'Add decision note'}">
+                ${item.note?'◇ Note':'+ Note'}
+              </button>
+              <button onclick="deleteChecklistItem('${item.id}')" style="width:24px;height:24px;border-radius:7px;border:none;background:rgba(224,120,152,0.1);color:var(--pink-deep);font-size:14px;cursor:pointer;flex-shrink:0;line-height:1">×</button>
             </div>
-            <span onclick="toggleChecklist('${item.id}')" style="font-size:13px;font-weight:500;color:${item.done?'var(--ink-4)':'var(--ink)'};text-decoration:${item.done?'line-through':'none'};flex:1;cursor:pointer">${item.text}</span>
-            <button onclick="deleteChecklistItem('${item.id}')" style="width:24px;height:24px;border-radius:7px;border:none;background:rgba(224,120,152,0.1);color:var(--pink-deep);font-size:14px;cursor:pointer;flex-shrink:0;line-height:1">×</button>
+            ${item.note?`<div style="margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(184,145,106,0.08);border-left:2px solid rgba(184,145,106,0.3);font-size:11.5px;color:var(--ink-3);font-style:italic;line-height:1.5">"${item.note}"</div>`:''}
           </div>`).join('')}
       </div>`;
     }).join('')}`;
@@ -875,9 +907,46 @@ function renderChecklist() {
 
 function toggleChecklist(id) {
   for (const phase of WED.checklist) {
-    const item = phase.items.find(i=>i.id===id);
-    if (item) { item.done = !item.done; saveState(); renderChecklist(); renderOverview(); showToast(item.done?'✅ Task done!':'↩ Task unchecked'); return; }
+    const item = phase.items.find(i => i.id === id);
+    if (item) {
+      item.done = !item.done;
+      saveState(); renderChecklist(); renderOverview();
+      showToast(item.done ? 'Task done' : 'Task unchecked');
+      return;
+    }
   }
+}
+
+let _editNoteId = null;
+
+function openChecklistNoteEditor(id) {
+  _editNoteId = id;
+  let item = null;
+  for (const phase of WED.checklist) {
+    item = phase.items.find(i => i.id === id);
+    if (item) break;
+  }
+  if (!item) return;
+  const labelEl = document.getElementById('checklist-note-item-label');
+  const inputEl = document.getElementById('checklist-note-input');
+  if (labelEl) labelEl.textContent = item.text;
+  if (inputEl) inputEl.value = item.note || '';
+  openModal('checklist-note-modal');
+  setTimeout(() => inputEl?.focus(), 200);
+}
+
+function saveChecklistNote() {
+  const note = (document.getElementById('checklist-note-input')?.value || '').trim();
+  for (const phase of WED.checklist) {
+    const item = phase.items.find(i => i.id === _editNoteId);
+    if (item) {
+      item.note = note;
+      saveState();
+      break;
+    }
+  }
+  closeModal('checklist-note-modal');
+  renderChecklist();
 }
 
 function openAddChecklistItem()           { _addToPhaseIndex = null; openModal('wed-add-checklist-modal'); }
@@ -888,9 +957,9 @@ function submitChecklistItem() {
   if (!text) { showToast('⚠️ Enter a task'); return; }
   const id = 'c'+Date.now();
   if (_addToPhaseIndex !== null && WED.checklist[_addToPhaseIndex]) {
-    WED.checklist[_addToPhaseIndex].items.push({ id, text, done:false });
+    WED.checklist[_addToPhaseIndex].items.push({ id, text, done:false, note:'' });
   } else {
-    WED.checklist[WED.checklist.length-1].items.push({ id, text, done:false });
+    WED.checklist[WED.checklist.length-1].items.push({ id, text, done:false, note:'' });
   }
   document.getElementById('checklist-item-text').value = '';
   saveState();
@@ -1018,6 +1087,11 @@ function deleteSchedItem(i) {
    SEATING CANVAS
 ═══════════════════════════════════════════════ */
 let cvs, cx;
+let cTx = { scale: 1, ox: 20, oy: 20 };  // canvas pan/zoom transform
+
+function screenToWorld(sx, sy) {
+  return { x: (sx - cTx.ox) / cTx.scale, y: (sy - cTx.oy) / cTx.scale };
+}
 
 function initCanvas() {
   cvs = document.getElementById('seating-canvas');
@@ -1029,6 +1103,7 @@ function initCanvas() {
   drawCanvas();
   bindCanvasEvents();
   bindCanvasRotate();
+  bindCanvasZoom();
   bindCanvasResize();
   renderFurniturePalette();
   renderCanvasActions();
@@ -1038,8 +1113,14 @@ function initCanvas() {
 function resizeCanvas() {
   const wrap = document.getElementById('canvas-wrap');
   if (!wrap || !cvs) return;
-  cvs.width  = wrap.clientWidth || 380;
-  cvs.height = cvs._userHeight  || 400;
+  const W = wrap.clientWidth || 380;
+  const isDesk = window.innerWidth >= 900;
+  const defaultH = isDesk
+    ? Math.max(520, window.innerHeight - 200)
+    : (cvs._userHeight || 420);
+  cvs.width  = W;
+  cvs.height = cvs._userHeight || defaultH;
+  if (!cvs._userHeight) cvs._userHeight = cvs.height;
 }
 
 function bindCanvasResize() {
@@ -1076,15 +1157,40 @@ function bindCanvasResize() {
 
 function drawCanvas() {
   if (!cx || !cvs) return;
-  cx.clearRect(0,0,cvs.width,cvs.height);
-  const bg = cx.createLinearGradient(0,0,cvs.width,cvs.height);
-  bg.addColorStop(0,'#fef6e8'); bg.addColorStop(1,'#f5e6c8');
-  cx.fillStyle = bg; cx.fillRect(0,0,cvs.width,cvs.height);
+  cx.clearRect(0, 0, cvs.width, cvs.height);
+
+  // Flat base fill (shows at edges when panned far)
+  cx.fillStyle = '#ede4d3';
+  cx.fillRect(0, 0, cvs.width, cvs.height);
+
+  cx.save();
+  cx.setTransform(cTx.scale, 0, 0, cTx.scale, cTx.ox, cTx.oy);
+
+  // Visible world bounds (for culling)
+  const vL = -cTx.ox / cTx.scale - 20;
+  const vT = -cTx.oy / cTx.scale - 20;
+  const vR = vL + cvs.width  / cTx.scale + 40;
+  const vB = vT + cvs.height / cTx.scale + 40;
+
+  // Gradient background in world space
+  const bg = cx.createLinearGradient(vL, vT, vR, vB);
+  bg.addColorStop(0, '#fef6e8'); bg.addColorStop(1, '#f5e6c8');
+  cx.fillStyle = bg;
+  cx.fillRect(vL, vT, vR - vL, vB - vT);
+
+  // Dot grid (only visible dots)
+  const GRID = 20;
   cx.fillStyle = 'rgba(201,169,110,0.22)';
-  for(let x=16;x<cvs.width;x+=20) for(let y=16;y<cvs.height;y+=20) {
-    cx.beginPath(); cx.arc(x,y,1.5,0,Math.PI*2); cx.fill();
+  const gStartX = Math.floor(vL / GRID) * GRID;
+  const gStartY = Math.floor(vT / GRID) * GRID;
+  for (let gx = gStartX; gx < vR; gx += GRID) {
+    for (let gy = gStartY; gy < vB; gy += GRID) {
+      cx.beginPath(); cx.arc(gx, gy, 1.5, 0, Math.PI * 2); cx.fill();
+    }
   }
+
   WED.furniture.forEach(f => drawFurniture(f));
+  cx.restore();
 }
 
 function drawFurniture(f) {
@@ -1187,12 +1293,14 @@ function drawFurniture(f) {
     cx.fill();
     cx.strokeStyle = selected ? '#e07898' : 'rgba(224,120,152,0.5)';
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+    if (selected) { cx.fillStyle='rgba(224,120,152,0.9)'; cx.font='bold 11px serif'; cx.textAlign='center'; cx.fillText('⟳',x+w/2,y-5); }
   } else if (f.type === 'entrance') {
     cx.beginPath(); cx.roundRect(x,y,w,h,8);
     cx.fillStyle = selected ? 'rgba(90,171,122,0.22)' : 'rgba(232,245,237,0.88)';
     cx.fill();
     cx.strokeStyle = selected ? '#5aab7a' : 'rgba(90,171,122,0.5)';
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
+    if (selected) { cx.fillStyle='rgba(90,171,122,0.9)'; cx.font='bold 11px serif'; cx.textAlign='center'; cx.fillText('⟳',x+w/2,y-5); }
   } else {
     cx.beginPath(); cx.roundRect(x,y,w,h,8);
     cx.fillStyle = selected ? 'rgba(245,230,200,0.7)' : 'rgba(255,253,248,0.88)';
@@ -1209,110 +1317,154 @@ function drawFurniture(f) {
 }
 
 function bindCanvasEvents() {
-  const getTouchPos = (e,t) => {
+  let _pinchState = null;
+
+  const getScreenPos = (e, isTouch) => {
     const r = cvs.getBoundingClientRect();
-    const src = t ? e.touches[0] : e;
-    return { x: src.clientX-r.left, y: src.clientY-r.top };
+    const src = isTouch ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
   };
+
   const onDown = (e) => {
     if (e.type !== 'touchstart') e.preventDefault();
-    const {x,y} = getTouchPos(e, e.type==='touchstart');
+    if (e.touches && e.touches.length > 1) return; // multi-touch → pinch handles it
+    _pinchState = null;
+
+    const { x: sx, y: sy } = getScreenPos(e, e.type === 'touchstart');
+    const { x, y } = screenToWorld(sx, sy); // world coords
+
     const hit = [...WED.furniture].reverse().find(f => {
-      // Chairs/freechairs use a standard rect hit test
-      if (f.type==='chair'||f.type==='freechair')
-        return x>=f.x-4&&x<=f.x+f.w+4&&y>=f.y-4&&y<=f.y+f.h+4;
-      // Round tables: hit within radius (tight — chairs on ring shouldn't activate table)
-      if (f.type==='round') { const dx=x-(f.x+f.w/2),dy=y-(f.y+f.h/2); return Math.sqrt(dx*dx+dy*dy)<=f.w/2+6; }
-      return x>=f.x-8&&x<=f.x+f.w+8&&y>=f.y-8&&y<=f.y+f.h+8;
+      if (f.type === 'chair' || f.type === 'freechair')
+        return x >= f.x-4 && x <= f.x+f.w+4 && y >= f.y-4 && y <= f.y+f.h+4;
+      if (f.type === 'round') {
+        const dx = x-(f.x+f.w/2), dy = y-(f.y+f.h/2);
+        return Math.sqrt(dx*dx+dy*dy) <= f.w/2+6;
+      }
+      return x >= f.x-8 && x <= f.x+f.w+8 && y >= f.y-8 && y <= f.y+f.h+8;
     });
+
     if (hit) {
-      if (hit.type==='chair' || hit.type==='freechair') {
-        const now=Date.now(), key='_lastTap_'+hit.id;
-        const isDouble = (now-(WED[key]||0))<400;
+      if (hit.type === 'chair' || hit.type === 'freechair') {
+        const now = Date.now(), key = '_lastTap_' + hit.id;
+        const isDouble = (now - (WED[key]||0)) < 400;
         WED[key] = isDouble ? 0 : now;
         WED.selectedFurniture = hit.id;
         drawCanvas(); renderFurniturePalette(); renderCanvasActions();
         if (isDouble) { openChairGuestPicker(hit.id); return; }
       }
-      WED.dragging = hit;
-      WED.dragOffX = x-hit.x;
-      WED.dragOffY = y-hit.y;
+      WED.dragging  = hit;
+      WED.dragOffX  = x - hit.x;  // offset in world coords
+      WED.dragOffY  = y - hit.y;
+      WED._panStart = null;
       WED.selectedFurniture = hit.id;
       renderSeatAssignments();
       drawCanvas(); renderFurniturePalette(); renderCanvasActions();
     } else {
+      // Begin canvas pan
+      WED._panStart = { sx, sy, ox: cTx.ox, oy: cTx.oy };
+      WED.dragging  = null;
       WED.selectedFurniture = null;
       drawCanvas(); renderFurniturePalette(); renderCanvasActions();
     }
   };
+
   const onMove = (e) => {
-    if (!WED.dragging) return;
     if (e.cancelable) e.preventDefault();
-    const {x,y} = getTouchPos(e, e.type==='touchmove');
+
+    // ── Two-finger pinch-zoom ──────────────────────
+    if (e.touches && e.touches.length === 2) {
+      const r = cvs.getBoundingClientRect();
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const x1 = t1.clientX-r.left, y1 = t1.clientY-r.top;
+      const x2 = t2.clientX-r.left, y2 = t2.clientY-r.top;
+      const dist = Math.sqrt((x2-x1)**2+(y2-y1)**2);
+      const mx = (x1+x2)/2, my = (y1+y2)/2;
+      if (_pinchState) {
+        const factor = dist / _pinchState.dist;
+        const ns = Math.max(0.15, Math.min(6, cTx.scale * factor));
+        cTx.ox = mx - (mx - cTx.ox) * (ns / cTx.scale);
+        cTx.oy = my - (my - cTx.oy) * (ns / cTx.scale);
+        cTx.ox += mx - _pinchState.mx;
+        cTx.oy += my - _pinchState.my;
+        cTx.scale = ns;
+        drawCanvas(); _updateZoomLabel();
+      }
+      _pinchState = { dist, mx, my };
+      WED.dragging  = null;
+      WED._panStart = null;
+      return;
+    }
+    _pinchState = null;
+
+    const { x: sx, y: sy } = getScreenPos(e, e.type === 'touchmove');
+
+    // ── Pan ──────────────────────────────────────
+    if (WED._panStart) {
+      cTx.ox = WED._panStart.ox + (sx - WED._panStart.sx);
+      cTx.oy = WED._panStart.oy + (sy - WED._panStart.sy);
+      drawCanvas();
+      return;
+    }
+
+    if (!WED.dragging) return;
+
+    const { x, y } = screenToWorld(sx, sy); // world coords
     const drag = WED.dragging;
-    const W = cvs.width, H = cvs.height;
 
     if (drag.type === 'round' || drag.type === 'long') {
-      // ── TABLE drag: move table + all linked chairs by the same delta ──
+      // Table drag — move table + all linked chairs by same delta
       const oldX = drag.x, oldY = drag.y;
-      drag.x = Math.max(0, Math.min(W - drag.w, x - WED.dragOffX));
-      drag.y = Math.max(0, Math.min(H - drag.h, y - WED.dragOffY));
+      drag.x = x - WED.dragOffX;
+      drag.y = y - WED.dragOffY;
       const dx = drag.x - oldX, dy = drag.y - oldY;
-      if (dx !== 0 || dy !== 0) {
+      if (dx || dy) {
         WED.furniture.forEach(f => {
-          if (f.parentTableId === drag.id) {
-            f.x = Math.max(0, Math.min(W - f.w, f.x + dx));
-            f.y = Math.max(0, Math.min(H - f.h, f.y + dy));
-          }
+          if (f.parentTableId === drag.id) { f.x += dx; f.y += dy; }
         });
       }
-
-    } else if ((drag.type === 'chair') && drag.parentTableId) {
+    } else if (drag.type === 'chair' && drag.parentTableId) {
       const parent = WED.furniture.find(f => f.id === drag.parentTableId);
       if (parent && parent.type === 'round') {
-        // ── ROUND TABLE child: lock to orbital ring ──
-        const tableCX = parent.x + parent.w / 2;
-        const tableCY = parent.y + parent.h / 2;
-        const tableR  = parent.w / 2;
-        const orbitR  = tableR + drag.w / 2 + 6;  // chair center sits just outside table edge
-        // Angle is driven by raw cursor position (intuitive orbital pointing)
-        const angle = Math.atan2(y - tableCY, x - tableCX);
-        drag.x = Math.max(0, Math.min(W - drag.w, Math.round(tableCX + orbitR * Math.cos(angle) - drag.w / 2)));
-        drag.y = Math.max(0, Math.min(H - drag.h, Math.round(tableCY + orbitR * Math.sin(angle) - drag.h / 2)));
-
+        // Orbital ring lock
+        const tCX = parent.x+parent.w/2, tCY = parent.y+parent.h/2;
+        const orbitR = parent.w/2 + drag.w/2 + 6;
+        const angle  = Math.atan2(y - tCY, x - tCX);
+        drag.x = Math.round(tCX + orbitR*Math.cos(angle) - drag.w/2);
+        drag.y = Math.round(tCY + orbitR*Math.sin(angle) - drag.h/2);
       } else if (parent && parent.type === 'long') {
-        // ── LONG TABLE child: clamp X inside table, snap Y to top or bottom edge ──
-        const tL = parent.x, tR = parent.x + parent.w;
-        const tT = parent.y, tB = parent.y + parent.h;
-        const wantedX = x - WED.dragOffX;
-        const wantedCY = (y - WED.dragOffY) + drag.h / 2;
-        const clampedX = Math.max(0, Math.min(W - drag.w, Math.max(tL, Math.min(tR - drag.w, wantedX))));
-        const snapY = (wantedCY < (tT + tB) / 2)
-          ? tT - drag.h - 4    // above table
-          : tB + 4;             // below table
-        drag.x = clampedX;
-        drag.y = Math.max(0, Math.min(H - drag.h, snapY));
-
+        // Snap to top or bottom edge
+        const tL = parent.x, tR = parent.x+parent.w;
+        const tT = parent.y, tB = parent.y+parent.h;
+        const wX  = x - WED.dragOffX;
+        const wCY = (y - WED.dragOffY) + drag.h/2;
+        drag.x = Math.max(tL, Math.min(tR-drag.w, wX));
+        drag.y = (wCY < (tT+tB)/2) ? tT-drag.h-4 : tB+4;
       } else {
-        // Parent gone — free drag
-        drag.x = Math.max(0, Math.min(W - drag.w, x - WED.dragOffX));
-        drag.y = Math.max(0, Math.min(H - drag.h, y - WED.dragOffY));
+        drag.x = x - WED.dragOffX;
+        drag.y = y - WED.dragOffY;
       }
-
     } else {
-      // ── FREE drag (stage, entrance, freechair, unlinked items) ──
-      drag.x = Math.max(0, Math.min(W - drag.w, x - WED.dragOffX));
-      drag.y = Math.max(0, Math.min(H - drag.h, y - WED.dragOffY));
+      // Free drag — stage, entrance, freechair
+      drag.x = x - WED.dragOffX;
+      drag.y = y - WED.dragOffY;
     }
 
     drawCanvas();
   };
-  const onUp = () => { if (!WED.dragging) return; WED.dragging = null; saveState(); renderCanvasActions(); };
+
+  const onUp = () => {
+    _pinchState   = null;
+    WED._panStart = null;
+    if (!WED.dragging) return;
+    WED.dragging  = null;
+    saveState(); renderCanvasActions();
+  };
+
   cvs.addEventListener('mousedown',  onDown);
   cvs.addEventListener('mousemove',  onMove);
   cvs.addEventListener('mouseup',    onUp);
-  cvs.addEventListener('touchstart', onDown, {passive:true});
-  cvs.addEventListener('touchmove',  onMove, {passive:false});
+  cvs.addEventListener('touchstart', onDown, { passive: true });
+  cvs.addEventListener('touchmove',  onMove, { passive: false });
   cvs.addEventListener('touchend',   onUp);
 }
 
@@ -1320,15 +1472,125 @@ function bindCanvasRotate() {
   let lastTap = 0;
   const handleDbl = (e) => {
     const now = Date.now();
-    const sel = WED.furniture.find(f=>f.id===WED.selectedFurniture);
-    if (sel && sel.type==='long' && now-lastTap<350) {
-      sel.rot = !sel.rot;
-      const tmp = sel.w; sel.w = sel.h; sel.h = tmp;
-      drawCanvas(); showToast('🔄 Table rotated');
+    if (now - lastTap < 350) {
+      const sel = WED.furniture.find(f => f.id === WED.selectedFurniture);
+      if (sel && (sel.type === 'long' || sel.type === 'stage' || sel.type === 'entrance')) {
+        rotateFurniture(sel);
+      }
     }
     lastTap = now;
   };
-  if (cvs) { cvs.addEventListener('mousedown',handleDbl); cvs.addEventListener('touchstart',handleDbl,{passive:true}); }
+  if (cvs) {
+    cvs.addEventListener('mousedown',  handleDbl);
+    cvs.addEventListener('touchstart', handleDbl, { passive: true });
+  }
+}
+
+function rotateFurniture(sel) {
+  if (!sel) return;
+  if (sel.type === 'long') {
+    const wasHoriz = sel.w >= sel.h;
+    const oldW = sel.w, oldH = sel.h;
+    const children = WED.furniture.filter(f => f.parentTableId === sel.id);
+
+    // Capture each chair's relative position + which side of the table it's on
+    const childData = children.map(chair => {
+      let isFirstSide, relativeAlong;
+      if (wasHoriz) {
+        // Horizontal table: chairs are above (y < center) or below (y > center)
+        isFirstSide   = (chair.y + chair.h/2) < (sel.y + sel.h/2);
+        relativeAlong = (chair.x + chair.w/2 - sel.x) / sel.w;
+      } else {
+        // Vertical table: chairs are left (x < center) or right (x > center)
+        isFirstSide   = (chair.x + chair.w/2) < (sel.x + sel.w/2);
+        relativeAlong = (chair.y + chair.h/2 - sel.y) / sel.h;
+      }
+      relativeAlong = Math.max(0, Math.min(1, relativeAlong));
+      return { chair, isFirstSide, relativeAlong };
+    });
+
+    // Rotate the table (swap w/h, keep top-left anchor)
+    sel.rot = !sel.rot;
+    sel.w = oldH;
+    sel.h = oldW;
+
+    // Reposition each child chair using its stored relative data
+    childData.forEach(({ chair, isFirstSide, relativeAlong }) => {
+      const nCW = chair.h, nCH = chair.w;  // also swap chair dims
+      chair.w = nCW;
+      chair.h = nCH;
+      if (wasHoriz) {
+        // Horizontal → Vertical: above → left side, below → right side
+        chair.x = isFirstSide ? sel.x - nCW - 4 : sel.x + sel.w + 4;
+        chair.y = sel.y + relativeAlong * sel.h - nCH / 2;
+      } else {
+        // Vertical → Horizontal: left → above, right → below
+        chair.y = isFirstSide ? sel.y - nCH - 4 : sel.y + sel.h + 4;
+        chair.x = sel.x + relativeAlong * sel.w - nCW / 2;
+      }
+    });
+
+    saveState(); drawCanvas();
+    showToast('Table rotated · chairs followed');
+  } else {
+    // Stage or Entrance — simple dimension swap
+    const tmp = sel.w; sel.w = sel.h; sel.h = tmp;
+    sel.rot = !sel.rot;
+    saveState(); drawCanvas();
+    showToast('Rotated');
+  }
+}
+
+/* ── CANVAS ZOOM / PAN CONTROLS ──────────────── */
+function bindCanvasZoom() {
+  if (!cvs) return;
+  cvs.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = cvs.getBoundingClientRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    const ns = Math.max(0.15, Math.min(6, cTx.scale * factor));
+    cTx.ox = sx - (sx - cTx.ox) * (ns / cTx.scale);
+    cTx.oy = sy - (sy - cTx.oy) * (ns / cTx.scale);
+    cTx.scale = ns;
+    drawCanvas(); _updateZoomLabel();
+  }, { passive: false });
+}
+
+function _updateZoomLabel() {
+  const el = document.getElementById('canvas-zoom-label');
+  if (el) el.textContent = Math.round(cTx.scale * 100) + '%';
+}
+
+function zoomCanvas(factor) {
+  if (!cvs) return;
+  const sx = cvs.width / 2, sy = cvs.height / 2;
+  const ns = Math.max(0.15, Math.min(6, cTx.scale * factor));
+  cTx.ox = sx - (sx - cTx.ox) * (ns / cTx.scale);
+  cTx.oy = sy - (sy - cTx.oy) * (ns / cTx.scale);
+  cTx.scale = ns;
+  drawCanvas(); _updateZoomLabel();
+}
+
+function fitCanvas() {
+  if (!cvs) return;
+  if (!WED.furniture.length) {
+    cTx = { scale: 1, ox: 20, oy: 20 };
+    drawCanvas(); _updateZoomLabel();
+    return;
+  }
+  const margin = 60;
+  const xs = WED.furniture.flatMap(f => [f.x, f.x + f.w]);
+  const ys = WED.furniture.flatMap(f => [f.y, f.y + f.h]);
+  const minX = Math.min(...xs) - margin, maxX = Math.max(...xs) + margin;
+  const minY = Math.min(...ys) - margin, maxY = Math.max(...ys) + margin;
+  const scaleX = cvs.width  / (maxX - minX);
+  const scaleY = cvs.height / (maxY - minY);
+  const ns = Math.min(2.5, scaleX, scaleY);
+  cTx.scale = ns;
+  cTx.ox = -minX * ns + (cvs.width  - (maxX - minX) * ns) / 2;
+  cTx.oy = -minY * ns + (cvs.height - (maxY - minY) * ns) / 2;
+  drawCanvas(); _updateZoomLabel();
 }
 
 function addFurniture(type, label) {
@@ -1680,14 +1942,16 @@ function renderCanvasActions() {
   const sel = WED.furniture.find(f => f.id === WED.selectedFurniture);
   if (!sel) { el.innerHTML = ''; return; }
 
-  const isLong  = sel.type === 'long';
-  const isChair = sel.type === 'chair' || sel.type === 'freechair';
+  const isLong      = sel.type === 'long';
+  const isChair     = sel.type === 'chair' || sel.type === 'freechair';
+  const isRotatable = sel.type === 'long' || sel.type === 'stage' || sel.type === 'entrance';
 
   const btnBase = 'padding:5px 13px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--f)';
   let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 0;border-bottom:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
-    <span style="font-size:11.5px;font-weight:700;color:var(--ink-3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📌 ${sel.label}</span>
-    ${isChair ? `<button onclick="openChairGuestPicker('${sel.id}')" style="${btnBase};border:1px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.1);color:var(--green-deep)">👤 Assign</button>` : ''}
-    <button onclick="deleteSelectedFurniture()" style="${btnBase};border:1px solid rgba(224,120,152,0.3);background:rgba(252,232,238,0.7);color:var(--pink-deep)">🗑 Delete</button>
+    <span style="font-size:11.5px;font-weight:700;color:var(--ink-3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">◇ ${sel.label}</span>
+    ${isChair ? `<button onclick="openChairGuestPicker('${sel.id}')" style="${btnBase};border:1px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.1);color:var(--green-deep)">Assign</button>` : ''}
+    ${isRotatable ? `<button onclick="rotateFurniture(WED.furniture.find(f=>f.id==='${sel.id}'))" style="${btnBase};border:1px solid rgba(184,145,106,0.3);background:rgba(242,232,213,0.7);color:var(--gold-dark)">Rotate ↻</button>` : ''}
+    <button onclick="deleteSelectedFurniture()" style="${btnBase};border:1px solid rgba(224,120,152,0.3);background:rgba(252,232,238,0.7);color:var(--pink-deep)">Delete</button>
   </div>`;
 
   if (isLong) {
@@ -1894,3 +2158,8 @@ window.deleteVendor            = deleteVendor;
 window.openQuickDials          = openQuickDials;
 window.closeQuickDials         = closeQuickDials;
 window.enterApp                = enterApp;
+window.rotateFurniture         = rotateFurniture;
+window.zoomCanvas              = zoomCanvas;
+window.fitCanvas               = fitCanvas;
+window.openChecklistNoteEditor = openChecklistNoteEditor;
+window.saveChecklistNote       = saveChecklistNote;

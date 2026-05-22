@@ -165,25 +165,40 @@
   </div>
 
   <!-- Seating -->
-  <div id="panel-seating" style="display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:32px">
-    <div style="padding:16px 16px 8px">
-      <div class="canvas-toolbar">
-        <button class="canvas-tool-btn" onclick="WED.furniture=[];drawCanvas();showToast('Canvas cleared')">Clear All</button>
-        <button class="canvas-tool-btn" onclick="saveState();showToast('Layout saved')">Save Layout</button>
+  <div id="panel-seating" style="display:none;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div id="seating-layout">
+
+      <!-- Canvas column -->
+      <div id="seating-canvas-col" style="padding:16px 16px 8px">
+        <div class="canvas-toolbar">
+          <button class="canvas-tool-btn" onclick="WED.furniture=[];cTx={scale:1,ox:20,oy:20};drawCanvas();showToast('Canvas cleared')">Clear All</button>
+          <button class="canvas-tool-btn" onclick="saveState();showToast('Layout saved')">Save Layout</button>
+          <div class="canvas-zoom-controls">
+            <button class="canvas-tool-btn" onclick="zoomCanvas(1.25)" title="Zoom in">＋</button>
+            <button class="canvas-tool-btn" onclick="zoomCanvas(0.8)"  title="Zoom out">−</button>
+            <button class="canvas-tool-btn" onclick="fitCanvas()" title="Fit all to screen">Fit</button>
+            <span id="canvas-zoom-label" style="font-size:10.5px;font-weight:700;color:var(--ink-4);min-width:34px;text-align:center">100%</span>
+          </div>
+        </div>
+        <div class="canvas-hint">
+          Drag to pan · scroll/pinch to zoom · double-tap or use Rotate ↻ button for Stage, Entrance &amp; Tables
+        </div>
+        <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+        <div id="canvas-resize-handle" style="width:100%;height:22px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;user-select:none;touch-action:none">
+          <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
+        </div>
+        <!-- Selected item actions (delete / resize / rotate) -->
+        <div id="canvas-actions" style="min-height:0"></div>
       </div>
-      <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">
-        Tap a table to select it · add chairs to it · double-tap a chair to assign guest · double-tap long table to rotate
+
+      <!-- Sidebar column: palette + seat assignments -->
+      <div id="seating-sidebar-col" style="padding:0 16px 80px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;padding-top:8px">Add Furniture</div>
+        <div id="furniture-palette" class="furniture-palette"></div>
+        <div id="seat-assignments"></div>
       </div>
-      <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
-      <div id="canvas-resize-handle" style="width:100%;height:22px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;user-select:none;touch-action:none">
-        <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
-      </div>
-      <!-- Selected item actions (delete / resize) -->
-      <div id="canvas-actions" style="min-height:0"></div>
-      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Add Furniture</div>
-      <div id="furniture-palette" class="furniture-palette"></div>
+
     </div>
-    <div style="padding:0 16px 80px"><div id="seat-assignments"></div></div>
   </div>
 
   <!-- Checklist -->
@@ -390,6 +405,21 @@
       <input id="checklist-item-text" type="text" class="glass-input" placeholder="e.g. Book hair and makeup…">
     </div>
     <button class="cta-btn" onclick="submitChecklistItem()">Add Task →</button>
+  </div>
+</div>
+
+<!-- Checklist Decision Note -->
+<div id="checklist-note-modal" class="modal-overlay" onclick="closeModalOutside(event,'checklist-note-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Decision Note</div>
+    <div id="checklist-note-item-label" style="font-size:12.5px;font-weight:600;color:var(--ink-3);margin-bottom:12px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.18)"></div>
+    <div class="input-group">
+      <div class="input-label">What was decided? (optional)</div>
+      <textarea id="checklist-note-input" class="glass-input" rows="3" placeholder="e.g. Booked via referral — ₱35,000 deposit paid on April 3. Contact: 0917-xxx-xxxx" style="resize:vertical;min-height:72px;line-height:1.55"></textarea>
+    </div>
+    <button class="cta-btn green" onclick="saveChecklistNote()">Save Note →</button>
+    <button onclick="closeModal('checklist-note-modal')" style="display:block;width:100%;padding:10px;border:none;background:none;font-size:13px;color:var(--ink-4);cursor:pointer;margin-top:4px;font-family:var(--f)">Cancel</button>
   </div>
 </div>
 
