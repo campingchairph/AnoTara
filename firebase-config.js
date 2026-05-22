@@ -13,12 +13,12 @@
    ═══════════════════════════════════════════════ */
 
 const FIREBASE_CONFIG = {
-  apiKey:            "PASTE_API_KEY_HERE",            // ← from Firebase console
+  apiKey:            "AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs",
   authDomain:        "weddingthings.firebaseapp.com",
   projectId:         "weddingthings",
-  storageBucket:     "weddingthings.appspot.com",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE", // ← from Firebase console
-  appId:             "PASTE_APP_ID_HERE",              // ← from Firebase console
+  storageBucket:     "weddingthings.firebasestorage.app",
+  messagingSenderId: "732042029649",
+  appId:             "1:732042029649:web:21bbe63214e8b36770e670",
 };
 
 /* ── INIT ─────────────────────────────────────── */
