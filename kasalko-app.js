@@ -221,7 +221,7 @@ function renderOverview() {
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
       <div class="wed-stat-card glass-pink">
         <div class="wed-stat-emoji">💍</div>
         <div class="wed-stat-val">${getCountdown()}</div>
@@ -661,22 +661,41 @@ const SUGGESTED_SUPPLIERS = [
 const VENDOR_EMOJI = { venue:'🏛️',catering:'🍽️',photography:'📸',videography:'🎬',florals:'💐',attire:'👗',music:'🎵',coordination:'📋',cake:'🎂',invites:'💌',hair:'💄','photo-booth':'🖼️',other:'📦' };
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
-// Featured partner suppliers per category — update with real partners as they sign on
+// Partner suppliers per category — populated when partnership agreements are in place
 const PARTNER_SUPPLIERS = {
-  venue:        [{ name:'Fernwood Gardens',          area:'Quezon City',   link:'https://fernwoodgardens.com' },
-                 { name:'The Ruins',                  area:'Bacolod City',  link:'https://theruins.com.ph' }],
-  catering:     [{ name:"Hizon's Catering",           area:'Metro Manila',  link:'https://hizons.com' }],
-  photography:  [{ name:'Nice Print Photography',     area:'Manila',        link:'https://niceprintphoto.com' }],
-  videography:  [{ name:'Nice Print Photography',     area:'Manila',        link:'https://niceprintphoto.com' }],
-  florals:      [{ name:'Gideon Hermosa Florals',     area:'Manila',        link:'https://www.facebook.com/gideonhermosaflorals' }],
-  attire:       [{ name:'Veluz Realty Bridal',        area:'Makati',        link:'https://veluzrealty.com' }],
-  music:        [],
-  coordination: [],
-  cake:         [{ name:'Goldilocks Wedding Cakes',   area:'Nationwide',    link:'https://goldilocks.com.ph' }],
-  invites:      [],
-  hair:         [],
-  'photo-booth':[],
+  venue:[], catering:[], photography:[], videography:[], florals:[],
+  attire:[], music:[], coordination:[], cake:[], invites:[], hair:[], 'photo-booth':[],
 };
+
+function openPartnerBrowse(cat, label) {
+  const partners = PARTNER_SUPPLIERS[cat] || [];
+  const titleEl   = document.getElementById('partner-browse-title');
+  const contentEl = document.getElementById('partner-browse-content');
+  if (titleEl)   titleEl.textContent = label + ' — Featured Partners';
+  if (contentEl) {
+    contentEl.innerHTML = partners.length
+      ? partners.map(p => `
+          <a href="${p.link}" target="_blank" rel="noopener"
+             style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(184,145,106,0.22);margin-bottom:8px;text-decoration:none">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">${p.name}</div>
+              <div style="font-size:11px;color:var(--ink-4)">${p.area}</div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:var(--gold-dark)">View →</span>
+          </a>`).join('')
+      : `<div style="text-align:center;padding:32px 16px">
+           <div style="font-size:32px;margin-bottom:12px">◇</div>
+           <div style="font-size:14px;font-weight:700;color:var(--ink-2);margin-bottom:8px">Partner suppliers coming soon</div>
+           <div style="font-size:12.5px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">
+             We're curating the best vetted ${label.toLowerCase()} suppliers<br>for Philippine weddings.
+           </div>
+           <div style="font-size:11.5px;color:var(--gold-dark);font-weight:600">Are you a ${label.toLowerCase()} supplier?<br>
+             <a href="mailto:hello@anotara.com" style="color:var(--gold-dark)">Reach out to be featured →</a>
+           </div>
+         </div>`;
+  }
+  openModal('partner-browse-modal');
+}
 
 function renderSuppliers() {
   const el = document.getElementById('wed-suppliers-content');
@@ -703,23 +722,16 @@ function renderSuppliers() {
             <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${s.label}</span>
           </div>
           <div style="font-size:9.5px;color:var(--ink-4);margin-bottom:8px;line-height:1.4">${s.tip}</div>
-          ${(PARTNER_SUPPLIERS[s.cat]||[]).map(p=>`
-            <a href="${p.link}" target="_blank" rel="noopener"
-               style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(184,145,106,0.09);border:1px solid rgba(184,145,106,0.22);margin-bottom:4px;text-decoration:none">
-              <span style="font-size:8px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold-dark);background:rgba(184,145,106,0.18);padding:1px 5px;border-radius:4px;flex-shrink:0">Partner</span>
-              <span style="font-size:10.5px;font-weight:700;color:var(--ink-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
-              <span style="font-size:9px;color:var(--ink-4);flex-shrink:0">${p.area}</span>
-            </a>`).join('')}
-          ${mine.map(v => `
+              ${mine.map(v => `
             <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.18);margin-bottom:4px">
               <span style="font-size:10.5px;font-weight:700;color:var(--green-deep);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</span>
               ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="font-size:11px;font-weight:700;text-decoration:none;color:var(--green-deep)" title="${v.phone}">Call</a>`:''}
               <button onclick="deleteVendor(${v.id})" style="font-size:11px;border:none;background:none;color:var(--pink-deep);cursor:pointer;padding:0;line-height:1">×</button>
             </div>`).join('')}
           <div style="display:flex;gap:5px;margin-top:4px">
-            <a href="${s.link}" target="_blank" rel="noopener sponsored"
-               style="flex:1;display:block;text-align:center;padding:6px 4px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:9.5px;font-weight:700;color:var(--tan-dark);text-decoration:none">
-               Browse →</a>
+            <button onclick="openPartnerBrowse('${s.cat}','${s.label}')"
+               style="flex:1;padding:6px 4px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:9.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">
+               Browse →</button>
             <button onclick="openAddVendorModal('${s.cat}','${s.label}')"
               style="padding:6px 9px;border-radius:8px;border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:9.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">
               + Add</button>
@@ -2099,10 +2111,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Start on overview
   wedTab('overview');
-  // Skip landing if already seen this session or URL has #app
-  if (sessionStorage.getItem('dtti_entered') || location.hash === '#app') {
-    enterApp(true);
-  }
+  // Landing page is always the home — always show on fresh page load
+  // enterApp() is called by the user clicking a CTA on the landing page
 });
 
 /* ── WINDOW EXPORTS ──────────────────────────── */
@@ -2163,3 +2173,4 @@ window.zoomCanvas              = zoomCanvas;
 window.fitCanvas               = fitCanvas;
 window.openChecklistNoteEditor = openChecklistNoteEditor;
 window.saveChecklistNote       = saveChecklistNote;
+window.openPartnerBrowse       = openPartnerBrowse;

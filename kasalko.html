@@ -170,25 +170,31 @@
 
       <!-- Canvas column -->
       <div id="seating-canvas-col" style="padding:16px 16px 8px">
-        <div class="canvas-toolbar">
-          <button class="canvas-tool-btn" onclick="WED.furniture=[];cTx={scale:1,ox:20,oy:20};drawCanvas();showToast('Canvas cleared')">Clear All</button>
-          <button class="canvas-tool-btn" onclick="saveState();showToast('Layout saved')">Save Layout</button>
-          <div class="canvas-zoom-controls">
-            <button class="canvas-tool-btn" onclick="zoomCanvas(1.25)" title="Zoom in">＋</button>
-            <button class="canvas-tool-btn" onclick="zoomCanvas(0.8)"  title="Zoom out">−</button>
-            <button class="canvas-tool-btn" onclick="fitCanvas()" title="Fit all to screen">Fit</button>
-            <span id="canvas-zoom-label" style="font-size:10.5px;font-weight:700;color:var(--ink-4);min-width:34px;text-align:center">100%</span>
+
+        <!-- Canvas scene: canvas + floating toolbar overlaid at top -->
+        <div id="canvas-scene">
+          <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+
+          <!-- Floating tool bar — sits at the top of the canvas -->
+          <div id="canvas-float-bar">
+            <div class="cfb-row">
+              <button class="cfb-btn cfb-danger" onclick="WED.furniture=[];cTx={scale:1,ox:20,oy:20};drawCanvas();showToast('Canvas cleared')" title="Clear all furniture">🗑 Clear</button>
+              <button class="cfb-btn cfb-save"   onclick="saveState();showToast('Layout saved ✓')" title="Save layout">💾 Save</button>
+              <div class="cfb-sep"></div>
+              <button class="cfb-btn" onclick="zoomCanvas(1.25)" title="Zoom in">＋</button>
+              <button class="cfb-btn" onclick="zoomCanvas(0.8)"  title="Zoom out">−</button>
+              <button class="cfb-btn" onclick="fitCanvas()"      title="Fit all to screen">Fit</button>
+              <span id="canvas-zoom-label" class="cfb-label">100%</span>
+            </div>
+            <!-- Contextual: selected item actions (rotate / resize / delete) -->
+            <div id="canvas-actions"></div>
           </div>
         </div>
-        <div class="canvas-hint">
-          Drag to pan · scroll/pinch to zoom · double-tap or use Rotate ↻ button for Stage, Entrance &amp; Tables
-        </div>
-        <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
+
+        <div class="canvas-hint">Drag to pan · scroll/pinch to zoom · double-tap or ↻ Rotate to rotate furniture</div>
         <div id="canvas-resize-handle" style="width:100%;height:22px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;user-select:none;touch-action:none">
           <div style="width:32px;height:3px;border-radius:2px;background:rgba(201,169,110,0.5)"></div>
         </div>
-        <!-- Selected item actions (delete / resize / rotate) -->
-        <div id="canvas-actions" style="min-height:0"></div>
       </div>
 
       <!-- Sidebar column: palette + seat assignments -->
@@ -420,6 +426,16 @@
     </div>
     <button class="cta-btn green" onclick="saveChecklistNote()">Save Note →</button>
     <button onclick="closeModal('checklist-note-modal')" style="display:block;width:100%;padding:10px;border:none;background:none;font-size:13px;color:var(--ink-4);cursor:pointer;margin-top:4px;font-family:var(--f)">Cancel</button>
+  </div>
+</div>
+
+<!-- Partner Browse -->
+<div id="partner-browse-modal" class="modal-overlay" onclick="closeModalOutside(event,'partner-browse-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="partner-browse-title">Browse Partners</div>
+    <div id="partner-browse-content" style="margin-bottom:16px"></div>
+    <button onclick="closeModal('partner-browse-modal')" style="display:block;width:100%;padding:11px;border:1px solid rgba(201,169,110,0.2);border-radius:var(--r-md);background:rgba(245,230,200,0.45);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">Close</button>
   </div>
 </div>
 

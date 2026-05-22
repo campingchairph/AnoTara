@@ -333,20 +333,16 @@ function openUserMenu() {
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:700;color:var(--ink)">${name}</div>
           <div style="font-size:11px;color:var(--ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.email}</div>
-          <div style="font-size:10.5px;font-weight:700;color:var(--green-deep);margin-top:2px">☁️ Cloud Sync Active</div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--green-deep);margin-top:2px">☁️ Cloud Sync Active — auto-saves on every change</div>
         </div>
         <button onclick="document.getElementById('user-menu-sheet').remove()" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(44,31,14,0.07);font-size:16px;cursor:pointer;flex-shrink:0">×</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button onclick="cloudSaveNow();document.getElementById('user-menu-sheet').remove()"
-          style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);text-align:left">
-          ☁️ Sync to Cloud Now</button>
-        <button onclick="exportTemplate();document.getElementById('user-menu-sheet').remove()"
-          style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);text-align:left">
-          📦 Export Template (.json)</button>
-        <button onclick="triggerImportTemplate();document.getElementById('user-menu-sheet').remove()"
-          style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);text-align:left">
-          📂 Import Template</button>
+        <div style="padding:14px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:linear-gradient(135deg,rgba(245,230,200,0.6),rgba(252,232,238,0.45));text-align:left">
+          <div style="font-size:12.5px;font-weight:800;color:var(--tan-dark);margin-bottom:4px">💰 Save &amp; Sell Your Wedding Plan</div>
+          <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55">Couples on TikTok always ask about your budget, suppliers &amp; planning. Coming soon — publish your plan and earn from it.</div>
+          <div style="margin-top:8px;display:inline-block;padding:3px 10px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:10px;font-weight:700;color:var(--tan-dark)">Coming Soon ✨</div>
+        </div>
         <button onclick="kasalkoSignOut();document.getElementById('user-menu-sheet').remove()"
           style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f);text-align:left">
           🚪 Sign Out</button>
@@ -362,20 +358,23 @@ function kasalkoSignOut() {
 }
 
 /* ── OVERVIEW CLOUD SECTION ──────────────────── */
-function renderCloudSection() {
-  const btnBase = `width:100%;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);color:var(--tan-dark)`;
-  const pinkBtn = `width:100%;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);color:var(--pink-deep)`;
+const _saveSellCard = `
+  <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(245,230,200,0.65),rgba(252,232,238,0.5));border:1px solid rgba(201,169,110,0.22)">
+    <div style="font-size:13px;font-weight:800;color:var(--tan-dark);margin-bottom:5px">💰 Save &amp; Sell Your Wedding Plan</div>
+    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-bottom:8px">
+      Couples on TikTok always ask — <em>"What's your budget?"</em> <em>"Who did your florals?"</em> <em>"Can I see your full plan?"</em><br>
+      Why not earn from it? Publish your complete wedding plan and help other couples plan their dream day — while making a little extra too.
+    </div>
+    <div style="display:inline-block;padding:4px 12px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:10.5px;font-weight:700;color:var(--tan-dark)">Coming Soon ✨</div>
+  </div>`;
 
+function renderCloudSection() {
   if (!_fbReady) {
-    // Firebase not configured yet
     return `
       <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
-        <span class="sec-title">📦 Templates &amp; Backup</span>
-        <div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Export your wedding plan as a .json file to back it up or share it.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button onclick="exportTemplate()" style="${btnBase}">📦 Export</button>
-          <button onclick="triggerImportTemplate()" style="${btnBase}">📂 Import</button>
-        </div>
+        <span class="sec-title">☁️ Cloud &amp; Backup</span>
+        <div style="font-size:12px;color:var(--ink-4);margin-bottom:4px;line-height:1.5">Create a free account to keep your plans safe and synced across all your devices.</div>
+        ${_saveSellCard}
       </div>`;
   }
 
@@ -384,30 +383,23 @@ function renderCloudSection() {
     const name = user.displayName || user.email.split('@')[0];
     return `
       <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span class="sec-title" style="margin-bottom:0">☁️ Cloud &amp; Templates</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span class="sec-title" style="margin-bottom:0">☁️ Cloud Sync</span>
           <span style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">● Live</span>
         </div>
-        <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">Signed in as <b>${name}</b> — plans auto-sync on save.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button onclick="cloudSaveNow()" style="${btnBase}">☁️ Sync Now</button>
-          <button onclick="openUserMenu()" style="${btnBase}">👤 Account</button>
-          <button onclick="exportTemplate()" style="${btnBase}">📦 Export</button>
-          <button onclick="triggerImportTemplate()" style="${btnBase}">📂 Import</button>
-        </div>
+        <div style="font-size:12px;color:var(--ink-3);line-height:1.5">Signed in as <b>${name}</b> — your plan auto-saves to the cloud on every change.</div>
+        <button onclick="openUserMenu()" style="margin-top:10px;width:100%;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);color:var(--tan-dark)">👤 Account &amp; Settings</button>
+        ${_saveSellCard}
       </div>`;
   }
 
   // Not signed in
   return `
     <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass-pink">
-      <span class="sec-title">☁️ Cloud Sync &amp; Templates</span>
-      <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Sign in to save your plans to the cloud, sync across devices, and share templates.</div>
-      <button onclick="openAuthModal()" class="cta-btn" style="margin-bottom:10px">☁️ Sign In / Create Account</button>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <button onclick="exportTemplate()" style="${btnBase}">📦 Export .json</button>
-        <button onclick="triggerImportTemplate()" style="${btnBase}">📂 Import .json</button>
-      </div>
+      <span class="sec-title">☁️ Cloud Sync</span>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Sign in to save your plans to the cloud and keep everything synced across all your devices — for free.</div>
+      <button onclick="openAuthModal()" class="cta-btn">☁️ Sign In / Create Account</button>
+      ${_saveSellCard}
     </div>`;
 }
 
