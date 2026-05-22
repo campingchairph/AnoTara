@@ -1,0 +1,559 @@
+/* ═══════════════════════════════════════════════
+   KASALKO — Standalone Wedding Planner
+   Responsive: mobile / tablet / desktop
+   ═══════════════════════════════════════════════ */
+
+/* ── RESET & BASE ────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; height: 100%; }
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #fef6e8;
+  color: #2c1f0e;
+  min-height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ── CSS VARIABLES ───────────────────────────── */
+:root {
+  --ink:         #2c1f0e;
+  --ink-2:       #4a3520;
+  --ink-3:       #7a6045;
+  --ink-4:       #b8977a;
+  --cream:       #fef6e8;
+  --tan:         #c9a96e;
+  --tan-dark:    #a07840;
+  --pink-accent: #e07898;
+  --pink-deep:   #b04060;
+  --green-accent:#5aab7a;
+  --green-deep:  #2d7a4f;
+  --blur:        blur(14px);
+  --r-xs:        8px;
+  --r-sm:        10px;
+  --r-md:        14px;
+  --r-lg:        18px;
+  --r-xl:        22px;
+  --edge:        inset 0 1px 0 rgba(255,255,255,0.7);
+  --edge-pink:   inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(224,120,152,0.1);
+  --f:           'Figtree', sans-serif;
+  --f2:          'Lora', Georgia, serif;
+}
+
+/* ── GLASS UTILITIES ─────────────────────────── */
+.glass {
+  background: rgba(255,253,248,0.72);
+  border: 1px solid rgba(255,255,255,0.62);
+  box-shadow: var(--edge);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+.glass-pink  { background: rgba(252,232,238,0.72); border: 1px solid rgba(255,255,255,0.62); box-shadow: var(--edge); }
+.glass-green { background: rgba(232,245,237,0.72); border: 1px solid rgba(255,255,255,0.62); box-shadow: var(--edge); }
+.glass-cream { background: rgba(245,230,200,0.72); border: 1px solid rgba(255,255,255,0.62); box-shadow: var(--edge); }
+
+/* ── APP SHELL ───────────────────────────────── */
+.app-shell {
+  max-width: 680px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ──────────────────────────────────── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(254,246,232,0.92);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid rgba(201,169,110,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+.app-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-header-logo .logo-ring { font-size: 22px; }
+.app-header-logo .logo-text {
+  font-family: var(--f2);
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+.app-header-logo .logo-sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 1px;
+}
+.btn-edit-details {
+  padding: 7px 14px;
+  border-radius: var(--r-md);
+  background: rgba(245,230,200,0.65);
+  border: 1px solid rgba(201,169,110,0.28);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--tan-dark);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.btn-edit-details:active { transform: scale(0.95); }
+
+/* ── WEDDING HERO ────────────────────────────── */
+.wedding-hero {
+  padding: 28px 20px 24px;
+  background: linear-gradient(135deg,
+    rgba(252,232,238,0.94) 0%,
+    rgba(253,239,212,0.88) 45%,
+    rgba(232,245,237,0.82) 100%);
+  border-bottom: 1px solid rgba(201,169,110,0.15);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.wedding-hero::before {
+  content: '';
+  position: absolute; top: -25%; right: -8%;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  pointer-events: none;
+}
+.wedding-hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -6%;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+  pointer-events: none;
+}
+.wedding-couple-names {
+  font-family: var(--f2);
+  font-size: 30px;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+.wedding-amp {
+  font-family: var(--f2);
+  font-size: 18px;
+  font-style: italic;
+  color: var(--tan);
+  display: block;
+  margin: 3px 0;
+}
+.wedding-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: var(--edge);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.wedding-countdown {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--pink-deep);
+  font-weight: 700;
+  padding: 4px 12px;
+  background: rgba(252,232,238,0.65);
+  border-radius: var(--r-xs);
+  border: 1px solid rgba(224,120,152,0.2);
+}
+
+/* ── TABS ────────────────────────────────────── */
+.wed-tabs-wrap {
+  position: sticky;
+  top: 57px;
+  z-index: 90;
+  display: flex;
+  gap: 5px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  background: rgba(254,246,232,0.95);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid rgba(201,169,110,0.12);
+  scrollbar-width: none;
+}
+.wed-tabs-wrap::-webkit-scrollbar { display: none; }
+.wed-tab {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink-4);
+  border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.45);
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.wed-tab:active { transform: scale(0.93); }
+.wed-tab.active {
+  background: rgba(255,255,255,0.9);
+  color: var(--tan-dark);
+  border-color: rgba(201,169,110,0.3);
+  box-shadow: var(--edge), 0 2px 8px rgba(44,31,14,0.08);
+}
+
+/* ── PANELS ──────────────────────────────────── */
+.panel {
+  flex: 1;
+  padding: 20px 16px;
+  display: none;
+}
+.panel.active { display: block; }
+
+/* ── STAT CARDS ──────────────────────────────── */
+.wed-stat-card {
+  padding: 14px;
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+.wed-stat-emoji { font-size: 22px; margin-bottom: 4px; }
+.wed-stat-val {
+  font-family: var(--f2);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.wed-stat-lbl {
+  font-size: 10.5px;
+  color: var(--ink-4);
+  font-weight: 700;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ── SECTION TITLES ──────────────────────────── */
+.sec-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* ── TOAST ───────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(44,31,14,0.88);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 9999;
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── MODALS ──────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(44,31,14,0.32);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-sheet {
+  width: 100%;
+  max-width: 500px;
+  background: var(--cream);
+  border-radius: 22px 22px 0 0;
+  padding: 20px 18px 36px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(40px);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  overscroll-behavior: contain;
+}
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(44,31,14,0.14);
+  margin: 0 auto 18px;
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+/* ── FORM INPUTS ─────────────────────────────── */
+.input-group { margin-bottom: 14px; }
+.input-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+.glass-input {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(201,169,110,0.28);
+  background: rgba(255,253,248,0.88);
+  font-size: 14px;
+  font-family: var(--f);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.glass-input:focus { border-color: rgba(201,169,110,0.6); }
+.glass-input select { font-family: var(--f); }
+
+/* ── BUTTONS ─────────────────────────────────── */
+.cta-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: none;
+  background: linear-gradient(135deg, var(--tan), var(--tan-dark));
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--edge), 0 6px 18px rgba(160,120,64,0.25);
+  transition: transform 0.15s, opacity 0.15s;
+  font-family: var(--f);
+  margin-top: 6px;
+}
+.cta-btn:active { transform: scale(0.97); opacity: 0.9; }
+.cta-btn.pink  { background: linear-gradient(135deg,var(--pink-accent),var(--pink-deep)); box-shadow: var(--edge),0 6px 18px rgba(224,120,152,0.25); }
+.cta-btn.green { background: linear-gradient(135deg,var(--green-accent),var(--green-deep)); box-shadow: var(--edge),0 6px 18px rgba(90,171,122,0.25); }
+
+.icon-btn {
+  padding: 7px 10px;
+  border-radius: var(--r-xs);
+  border: 1px solid rgba(201,169,110,0.25);
+  background: rgba(245,230,200,0.55);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--tan-dark);
+  transition: transform 0.15s;
+}
+.icon-btn:active { transform: scale(0.93); }
+
+.split-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(201,169,110,0.22);
+  background: rgba(245,230,200,0.45);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--f);
+}
+.split-btn.selected, .split-btn.active {
+  background: rgba(201,169,110,0.28);
+  border-color: rgba(201,169,110,0.5);
+  color: var(--tan-dark);
+}
+
+/* ── CANVAS ──────────────────────────────────── */
+.canvas-section { padding: 0; }
+#canvas-wrap {
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid rgba(201,169,110,0.3);
+  box-shadow: var(--edge), 0 8px 24px rgba(44,31,14,0.1);
+  margin-bottom: 12px;
+  position: relative;
+}
+#seating-canvas {
+  display: block;
+  width: 100%;
+  cursor: grab;
+  touch-action: pan-y;
+}
+#seating-canvas:active { cursor: grabbing; }
+.canvas-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  justify-content: flex-end;
+}
+.canvas-tool-btn {
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(201,169,110,0.25);
+  background: rgba(245,230,200,0.55);
+  color: var(--tan-dark);
+  transition: transform 0.15s;
+  font-family: var(--f);
+}
+.canvas-tool-btn:active { transform: scale(0.93); }
+.furniture-palette {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+.furniture-palette::-webkit-scrollbar { display: none; }
+
+/* ── RSVP CARD ───────────────────────────────── */
+#rsvp-canvas {
+  display: block;
+  border-radius: var(--r-xl);
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: var(--edge), 0 12px 40px rgba(44,31,14,0.14);
+}
+.rsvp-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.rsvp-action-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s, opacity 0.15s;
+  font-family: var(--f);
+}
+.rsvp-action-btn:active { transform: scale(0.96); opacity: 0.88; }
+.rsvp-btn-save { background: linear-gradient(135deg,var(--tan),var(--tan-dark)); color: white; }
+.rsvp-btn-share { background: linear-gradient(135deg,#1877F2,#4267B2); color: white; }
+
+/* ── CHECKLIST / PROGRESS ────────────────────── */
+.progress-bar-wrap {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(44,31,14,0.08);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--pink-accent), var(--tan));
+  transition: width 0.5s ease;
+}
+
+/* ── BUDGET HERO ─────────────────────────────── */
+.budget-hero {
+  padding: 20px 16px 18px;
+  background: linear-gradient(135deg, rgba(245,230,200,0.92), rgba(232,245,237,0.80));
+  border-radius: var(--r-xl);
+  border: 1px solid rgba(255,255,255,0.72);
+  box-shadow: var(--edge), 0 8px 28px rgba(44,31,14,0.10);
+  margin-bottom: 16px;
+}
+
+/* ── TIMELINE ────────────────────────────────── */
+.timeline-dot {
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(201,169,110,0.3), rgba(201,169,110,0.1));
+  border-radius: 1px;
+  min-height: 50px;
+  flex-shrink: 0;
+  margin-top: 14px;
+}
+
+/* ── ASSIGN GUEST ROWS ───────────────────────── */
+.assign-guest-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  margin-bottom: 7px;
+}
+
+/* ── RESPONSIVE: TABLET & DESKTOP ───────────── */
+@media (min-width: 640px) {
+  .app-shell { box-shadow: 0 0 60px rgba(44,31,14,0.12); }
+  .panel { padding: 24px 20px; }
+  .wedding-couple-names { font-size: 36px; }
+  .wed-tab { padding: 9px 18px; font-size: 13px; }
+}
+
+@media (min-width: 1024px) {
+  body { background: #f0e8d4; }
+  .app-shell { margin: 0 auto; }
+  .wed-tabs-wrap { position: sticky; top: 57px; }
+}
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+}
+.empty-state .empty-emoji { font-size: 44px; margin-bottom: 14px; }
+.empty-state .empty-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.empty-state .empty-sub { font-size: 13px; color: var(--ink-4); line-height: 1.6; margin-bottom: 22px; }
+
+/* ── FOOTER ──────────────────────────────────── */
+.app-footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 11px;
+  color: var(--ink-4);
+  border-top: 1px solid rgba(201,169,110,0.1);
+}
+.app-footer a { color: var(--tan); text-decoration: none; font-weight: 700; }
