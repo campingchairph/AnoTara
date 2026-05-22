@@ -174,34 +174,34 @@ function _showCloudConflictSheet(cloudData) {
   document.body.appendChild(ov);
 }
 
-/* ── TEMPLATE EXPORT ─────────────────────────── */
+/* ── TEMPLATE EXPORT (Save & Sell) ──────────── */
+// Only shareable fields: budget, expenses, checklist, vendors, schedule.
+// Personal info (couple names, date, venue, guests, seating) is NOT included —
+// buyers should fill in their own couple details.
 function exportTemplate() {
-  const p1 = WED.couple.p1 || 'Partner1';
-  const p2 = WED.couple.p2 || 'Partner2';
   const payload = {
     _type:       'kasalko-template',
-    _version:    1,
+    _version:    2,
     _exportedAt: new Date().toISOString(),
     _author:     CURRENT_USER ? (CURRENT_USER.displayName || CURRENT_USER.email) : 'Anonymous',
-    title:       `${p1} & ${p2} Wedding`,
-    couple:    WED.couple,    date:     WED.date,
-    venue:     WED.venue,     budget:   WED.budget,
-    guests:    WED.guests,    expenses: WED.expenses,
-    checklist: WED.checklist, schedule: WED.schedule,
-    furniture: WED.furniture, vendors:  WED.vendors,
-    nextFurnitureId: WED.nextFurnitureId,
-    nextGuestId:     WED.nextGuestId,
-    nextVendorId:    WED.nextVendorId,
+    // ── Shareable planning data ──────────────────
+    budget:    WED.budget,
+    expenses:  WED.expenses,
+    checklist: WED.checklist,
+    vendors:   WED.vendors,
+    schedule:  WED.schedule,
+    nextVendorId: WED.nextVendorId,
+    // ── NOT included: couple, date, venue, guests, furniture (personal info)
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), {
     href: url,
-    download: `kasalko-${p1.toLowerCase()}-${p2.toLowerCase()}-${Date.now()}.json`,
+    download: `dtti-wedding-plan-${Date.now()}.json`,
   });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('📦 Template exported!');
+  showToast('📦 Plan exported — ready to sell!');
 }
 
 /* ── TEMPLATE IMPORT ─────────────────────────── */
@@ -223,18 +223,25 @@ function importTemplate(file) {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (data._type !== 'kasalko-template') { showToast('⚠️ Not a valid Kasalko template'); return; }
+      if (data._type !== 'kasalko-template') { showToast('⚠️ Not a valid Down to the Isle template'); return; }
       const byline = data._author ? ` by ${data._author}` : '';
-      if (!confirm(`Import "${data.title}"${byline}?\n\nThis will replace your current data.`)) return;
-      const { _type, _version, _exportedAt, _author, title, ...wedData } = data;
-      Object.assign(WED, wedData);
+      const label  = data.title || 'Wedding Plan';
+      if (!confirm(`Import "${label}"${byline}?\n\nThis will merge the plan's budget, checklist, suppliers and schedule into your current data.`)) return;
+      // v2 templates only carry shareable fields — merge without touching personal info
+      const { _type, _version, _exportedAt, _author, title, ...planData } = data;
+      if (planData.budget    != null)  WED.budget    = planData.budget;
+      if (planData.expenses)           WED.expenses  = planData.expenses;
+      if (planData.checklist)          WED.checklist = planData.checklist;
+      if (planData.vendors)            WED.vendors   = planData.vendors;
+      if (planData.schedule)           WED.schedule  = planData.schedule;
+      if (planData.nextVendorId != null) WED.nextVendorId = planData.nextVendorId;
       if (!WED._customPhases) WED._customPhases = [];
       if (!WED.vendors)       WED.vendors       = [];
       if (!WED.nextVendorId)  WED.nextVendorId  = 1;
       saveState();
       if (CURRENT_USER) cloudSave();
       if (typeof wedTab === 'function') wedTab(WED.activeTab || 'overview');
-      showToast('📦 Template imported!');
+      showToast('📦 Plan imported!');
     } catch(err) { showToast('⚠️ Invalid template file'); }
   };
   reader.readAsText(file);

@@ -169,16 +169,28 @@ function updateHero() {
   const dateBadge  = document.getElementById('wed-hero-date');
   const venueBadge = document.getElementById('wed-hero-venue');
   const countdownEl= document.getElementById('wed-hero-countdown');
+  const ofLabel    = document.getElementById('wed-hero-of-label');
+
+  if (ofLabel) ofLabel.style.opacity = (WED.couple.p1 || WED.couple.p2) ? '0.8' : '0.3';
 
   if (namesEl) {
-    namesEl.innerHTML = (WED.couple.p1||'—')
+    namesEl.innerHTML = (WED.couple.p1 || '—')
       + '<span class="wedding-amp">&amp;</span>'
-      + (WED.couple.p2||'—');
+      + (WED.couple.p2 || '—');
   }
   if (dateBadge) {
     if (WED.date) {
-      dateBadge.style.display = 'inline-flex';
-      dateBadge.textContent = '📅 ' + new Date(WED.date).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'});
+      const d = new Date(WED.date + 'T12:00:00');
+      const weekday = d.toLocaleDateString('en-PH', { weekday: 'long' });
+      const month   = d.toLocaleDateString('en-PH', { month: 'short' }).toUpperCase();
+      const day     = d.getDate();
+      const year    = d.getFullYear();
+      dateBadge.style.display = 'block';
+      dateBadge.innerHTML =
+        `<span class="hero-date-weekday">${weekday},</span>`
+        + `<span class="hero-date-month">${month}</span>`
+        + `<span class="hero-date-day">${day}</span>`
+        + `<span class="hero-date-year">${year}</span>`;
     } else {
       dateBadge.style.display = 'none';
     }
@@ -186,7 +198,7 @@ function updateHero() {
   if (venueBadge) {
     if (WED.venue) {
       venueBadge.style.display = 'block';
-      venueBadge.textContent = '📍 ' + WED.venue;
+      venueBadge.textContent = WED.venue;
     } else {
       venueBadge.style.display = 'none';
     }
@@ -218,29 +230,26 @@ function renderOverview() {
   const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
       <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-      <div class="wed-stat-card glass-pink">
-        <div class="wed-stat-emoji">💍</div>
-        <div class="wed-stat-val">${getCountdown()}</div>
-        <div class="wed-stat-lbl">Until the Big Day</div>
+    <!-- Elegant stats strip — no boxes -->
+    <div class="hero-stats-strip" style="margin-bottom:16px">
+      <div class="hss-item">
+        <span class="hss-val">${getCountdown().replace(' to go','').replace(' days','d').replace(' months,','mo')}</span>
+        <span class="hss-lbl">To the Day</span>
       </div>
-      <div class="wed-stat-card glass-green">
-        <div class="wed-stat-emoji">👥</div>
-        <div class="wed-stat-val">${attending} / ${WED.guests.length}</div>
-        <div class="wed-stat-lbl">Guests Confirmed</div>
+      <div class="hss-item">
+        <span class="hss-val">${attending} / ${WED.guests.length}</span>
+        <span class="hss-lbl">Guests</span>
       </div>
-      <div class="wed-stat-card glass-cream">
-        <div class="wed-stat-emoji">💰</div>
-        <div class="wed-stat-val">₱${totalSpent.toLocaleString()}</div>
-        <div class="wed-stat-lbl">committed · ₱${paid.toLocaleString()} paid</div>
+      <div class="hss-item">
+        <span class="hss-val">₱${totalSpent >= 1000 ? (totalSpent/1000).toFixed(0)+'k' : totalSpent.toLocaleString()}</span>
+        <span class="hss-lbl">Committed</span>
       </div>
-      <div class="wed-stat-card glass">
-        <div class="wed-stat-emoji">✅</div>
-        <div class="wed-stat-val">${pct}%</div>
-        <div class="wed-stat-lbl">Planning Complete</div>
+      <div class="hss-item">
+        <span class="hss-val">${pct}%</span>
+        <span class="hss-lbl">Planned</span>
       </div>
     </div>
 
@@ -1011,15 +1020,15 @@ function renderSchedule() {
   if (!el) return;
   if (!WED.schedule.length) {
     el.innerHTML = `<div class="empty-state">
-      <div class="empty-emoji">📅</div>
-      <div class="empty-title">No Schedule Yet</div>
-      <div class="empty-sub">Add your wedding day timeline<br>event by event.</div>
+      <div class="empty-emoji">📋</div>
+      <div class="empty-title">No Program Yet</div>
+      <div class="empty-sub">Build your wedding day program<br>event by event.</div>
       <button onclick="openModal('wed-add-sched-modal')" class="cta-btn pink" style="max-width:220px;margin:0 auto">+ Add First Event</button>
     </div>`;
     return;
   }
   el.innerHTML = `
-    <button onclick="openModal('wed-add-sched-modal')" style="width:100%;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:14px">+ Add Schedule Item</button>
+    <button onclick="openModal('wed-add-sched-modal')" style="width:100%;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:14px">+ Add Program Item</button>
     ${WED.schedule.map((s,i)=>`
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
         <div style="min-width:58px;text-align:right;padding-top:12px">
@@ -1833,62 +1842,52 @@ function addFurnitureWithSeats(type, seats) {
 }
 
 function renderFurniturePalette() {
-  const el = document.getElementById('furniture-palette');
+  // Target: compact mini palette inside canvas float bar
+  const el = document.getElementById('canvas-palette-mini');
   if (!el) return;
 
-  // Determine if a table is currently selected (enables chair button)
   const selTable = WED.furniture.find(f => f.id === WED.selectedFurniture && (f.type === 'round' || f.type === 'long'));
   const chairOn  = !!selTable;
-
-  // Table prefix display for the chair button sub-label
   const chairSub = chairOn
     ? (() => { const p = selTable.type==='round'?'RT':'LT'; const n = selTable.label.replace(/\D/g,''); return `→ ${p}${n}`; })()
-    : 'Select table\nfirst';
+    : 'select\ntable';
 
-  const freeItems = [
-    {type:'stage',    emoji:'🎭', label:'Stage',      onclick:`addFurniture('stage','Stage')`},
-    {type:'entrance', emoji:'🚪', label:'Entrance',   onclick:`addFurniture('entrance','Entrance')`},
-    {type:'freechair',emoji:'⭐', label:'Free Chair', onclick:`addFurniture('freechair','Free Chair')`},
-  ];
-
-  const baseBtn = (extra='') =>
-    `display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);cursor:pointer;transition:transform 0.15s;min-width:68px;font-family:var(--f)${extra}`;
-
-  // Round Table button with seat count preview
   const roundSeats = _tableSeatsCount.round;
   const longSeats  = _tableSeatsCount.long;
 
   el.innerHTML =
-    // ── Round Table ──
-    `<button onclick="openAddTableModal('round')" style="${baseBtn()}" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform=''">
-      <span style="font-size:22px">⭕</span>
-      <span style="font-size:10px;font-weight:700;color:var(--ink-2)">Round Table</span>
-      <span style="font-size:9px;color:var(--ink-4)">${roundSeats} seats</span>
+    `<button class="cfb-pal-btn" onclick="openAddTableModal('round')" title="Round Table · ${roundSeats} seats">
+      <span class="cfb-pal-emoji">⭕</span>
+      <span class="cfb-pal-label">Round</span>
+      <span class="cfb-pal-sub">${roundSeats}s</span>
     </button>`
-    // ── Long Table ──
-  + `<button onclick="openAddTableModal('long')" style="${baseBtn()}" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform=''">
-      <span style="font-size:22px">▬</span>
-      <span style="font-size:10px;font-weight:700;color:var(--ink-2)">Long Table</span>
-      <span style="font-size:9px;color:var(--ink-4)">${longSeats} seats</span>
+  + `<button class="cfb-pal-btn" onclick="openAddTableModal('long')" title="Long Table · ${longSeats} seats">
+      <span class="cfb-pal-emoji">▬</span>
+      <span class="cfb-pal-label">Long</span>
+      <span class="cfb-pal-sub">${longSeats}s</span>
     </button>`
-    // ── Stage / Entrance / Free Chair ──
-  + freeItems.map(i=>`
-    <button onclick="${i.onclick}" style="${baseBtn()}" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform=''">
-      <span style="font-size:22px">${i.emoji}</span>
-      <span style="font-size:10px;font-weight:700;color:var(--ink-2)">${i.label}</span>
-    </button>`).join('')
+  + `<button class="cfb-pal-btn" onclick="addFurniture('stage','Stage')" title="Stage">
+      <span class="cfb-pal-emoji">🎭</span>
+      <span class="cfb-pal-label">Stage</span>
+    </button>`
+  + `<button class="cfb-pal-btn" onclick="addFurniture('entrance','Entrance')" title="Entrance">
+      <span class="cfb-pal-emoji">🚪</span>
+      <span class="cfb-pal-label">Entrance</span>
+    </button>`
+  + `<button class="cfb-pal-btn" onclick="addFurniture('freechair','Free Chair')" title="Free Chair">
+      <span class="cfb-pal-emoji">⭐</span>
+      <span class="cfb-pal-label">Free</span>
+    </button>`
   + (chairOn
-    ? `<button onclick="addFurniture('chair','Chair')"
-        style="${baseBtn(';border-color:rgba(90,171,122,0.5);background:rgba(90,171,122,0.12);box-shadow:0 0 0 2px rgba(90,171,122,0.25)')}"
-        onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform=''">
-        <span style="font-size:22px">🪑</span>
-        <span style="font-size:10px;font-weight:700;color:var(--green-deep)">Add Chair</span>
-        <span style="font-size:9px;font-weight:700;color:var(--green-deep);letter-spacing:0.3px">${chairSub}</span>
+    ? `<button class="cfb-pal-btn cfb-pal-active" onclick="addFurniture('chair','Chair')" title="Add chair to selected table">
+        <span class="cfb-pal-emoji">🪑</span>
+        <span class="cfb-pal-label">Chair</span>
+        <span class="cfb-pal-sub">${chairSub}</span>
       </button>`
-    : `<button disabled style="${baseBtn(';opacity:0.38;cursor:not-allowed;border-style:dashed')}">
-        <span style="font-size:22px">🪑</span>
-        <span style="font-size:10px;font-weight:700;color:var(--ink-4)">Chair</span>
-        <span style="font-size:8.5px;color:var(--ink-4);text-align:center;line-height:1.3;white-space:pre">${chairSub}</span>
+    : `<button class="cfb-pal-btn" disabled style="opacity:0.35;cursor:not-allowed;border-style:dashed" title="Select a table first">
+        <span class="cfb-pal-emoji">🪑</span>
+        <span class="cfb-pal-label">Chair</span>
+        <span class="cfb-pal-sub" style="white-space:pre">${chairSub}</span>
       </button>`
   );
 }
