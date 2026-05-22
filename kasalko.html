@@ -8,12 +8,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="Kasalko — Your personal wedding planner. Track guests, budget, checklist, schedule and seating all in one place.">
 
-  <title>💍 Kasalko — Wedding Planner</title>
+  <title>Down to the Isle — Wedding Planner</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 
   <!-- QR Code library for invitations -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
@@ -24,6 +24,81 @@
 <body>
 
 <!-- ══════════════════════════════════════════════
+     LANDING PAGE OVERLAY
+══════════════════════════════════════════════ -->
+<div id="dtti-landing" role="region" aria-label="Welcome to Down to the Isle">
+  <div class="lp-bg">
+    <!-- Floating botanical petals -->
+    <div class="lp-petal" style="left:8%;top:15%;animation-delay:0s"></div>
+    <div class="lp-petal" style="left:22%;top:68%;animation-delay:1.2s"></div>
+    <div class="lp-petal" style="left:72%;top:20%;animation-delay:0.6s"></div>
+    <div class="lp-petal" style="left:85%;top:55%;animation-delay:2.1s"></div>
+    <div class="lp-petal" style="left:48%;top:80%;animation-delay:1.7s"></div>
+    <div class="lp-petal" style="left:60%;top:40%;animation-delay:0.3s"></div>
+    <div class="lp-petal" style="left:14%;top:42%;animation-delay:2.8s"></div>
+    <div class="lp-petal" style="left:93%;top:30%;animation-delay:1.5s"></div>
+  </div>
+
+  <div class="lp-inner">
+    <!-- Nav -->
+    <nav class="lp-nav">
+      <div class="lp-nav-brand">Down to the Isle</div>
+      <div class="lp-nav-actions">
+        <a class="lp-nav-link" href="#lp-features">Features</a>
+        <a class="lp-nav-link outline" onclick="enterApp()" href="#">Open Planner</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="lp-hero">
+      <div class="lp-eyebrow">Your personal wedding planner</div>
+      <h1 class="lp-headline">Walk down the aisle<br><em>confidently.</em></h1>
+      <p class="lp-sub">Planning that you control — guests, budget, suppliers,<br> seating, and every detail, beautifully organised.</p>
+      <div class="lp-ctas">
+        <button class="lp-btn-primary" onclick="enterApp()">Start Planning</button>
+        <button class="lp-btn-secondary" onclick="enterApp()">I already have a plan</button>
+      </div>
+      <div class="lp-trust">
+        <span>Free forever</span>
+        <span class="lp-trust-sep"></span>
+        <span>No account required</span>
+        <span class="lp-trust-sep"></span>
+        <span>Works offline</span>
+      </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="lp-features" id="lp-features">
+      <div class="lp-feat">
+        <span class="lp-feat-tag">Guests</span>
+        <div class="lp-feat-title">Guest List &amp; RSVPs</div>
+        <div class="lp-feat-desc">Track RSVPs, meal preferences, and seating all in one place.</div>
+      </div>
+      <div class="lp-feat">
+        <span class="lp-feat-tag">Budget</span>
+        <div class="lp-feat-title">Budget Tracker</div>
+        <div class="lp-feat-desc">See exactly where every peso goes with real-time totals.</div>
+      </div>
+      <div class="lp-feat">
+        <span class="lp-feat-tag">Layout</span>
+        <div class="lp-feat-title">Seating Canvas</div>
+        <div class="lp-feat-desc">Drag tables, chairs, and décor on a visual floorplan.</div>
+      </div>
+      <div class="lp-feat">
+        <span class="lp-feat-tag">Sync</span>
+        <div class="lp-feat-title">Cloud Backup</div>
+        <div class="lp-feat-desc">Sign in once and your plans follow you across every device.</div>
+      </div>
+    </div>
+
+    <!-- Footer line -->
+    <div style="text-align:center;padding-bottom:48px;font-size:11.5px;color:var(--ink-4);font-weight:500">
+      Down to the Isle &nbsp;·&nbsp; part of AnoTara Suite
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      APP SHELL
 ══════════════════════════════════════════════ -->
 <div class="app-shell">
@@ -31,19 +106,18 @@
   <!-- ── HEADER ────────────────────────────────── -->
   <header class="app-header">
     <div class="app-header-logo">
-      <span class="logo-ring">💍</span>
+      <div class="logo-mark">◇</div>
       <div>
-        <div class="logo-text">Kasalko</div>
-        <div class="logo-sub">Wedding Planner</div>
+        <div class="logo-text">Down to the Isle</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <span id="cloud-save-indicator" style="font-size:10px;font-weight:700;transition:opacity 0.4s;opacity:0;white-space:nowrap"></span>
       <button id="auth-header-btn" onclick="openAuthModal()"
         style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);cursor:pointer;font-family:var(--f);flex-shrink:0">
-        ☁️ <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
+        <span class="auth-btn-icon">&#9685;</span> <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
       </button>
-      <button class="btn-edit-details" onclick="openSetupModal()">✏️ Edit Details</button>
+      <button class="btn-edit-details" onclick="openSetupModal()">Edit Details</button>
     </div>
   </header>
 
@@ -59,13 +133,13 @@
 
   <!-- ── TABS ───────────────────────────────────── -->
   <nav class="wed-tabs-wrap" role="tablist" aria-label="Wedding planner sections">
-    <button class="wed-tab active" id="tab-overview"  role="tab" aria-selected="true"  onclick="wedTab('overview')" >🏠 Overview</button>
-    <button class="wed-tab"        id="tab-budget"    role="tab" aria-selected="false" onclick="wedTab('budget')"   >💰 Budget</button>
-    <button class="wed-tab"        id="tab-guests"    role="tab" aria-selected="false" onclick="wedTab('guests')"   >👥 Guests</button>
-    <button class="wed-tab"        id="tab-suppliers" role="tab" aria-selected="false" onclick="wedTab('suppliers')" >🤝 Suppliers</button>
-    <button class="wed-tab"        id="tab-seating"   role="tab" aria-selected="false" onclick="wedTab('seating')"  >🪑 Seating</button>
-    <button class="wed-tab"        id="tab-checklist" role="tab" aria-selected="false" onclick="wedTab('checklist')">✅ Checklist</button>
-    <button class="wed-tab"        id="tab-schedule"  role="tab" aria-selected="false" onclick="wedTab('schedule')" >📅 Schedule</button>
+    <button class="wed-tab active" id="tab-overview"  role="tab" aria-selected="true"  onclick="wedTab('overview')" >Overview</button>
+    <button class="wed-tab"        id="tab-budget"    role="tab" aria-selected="false" onclick="wedTab('budget')"   >Budget</button>
+    <button class="wed-tab"        id="tab-guests"    role="tab" aria-selected="false" onclick="wedTab('guests')"   >Guests</button>
+    <button class="wed-tab"        id="tab-suppliers" role="tab" aria-selected="false" onclick="wedTab('suppliers')" >Suppliers</button>
+    <button class="wed-tab"        id="tab-seating"   role="tab" aria-selected="false" onclick="wedTab('seating')"  >Seating</button>
+    <button class="wed-tab"        id="tab-checklist" role="tab" aria-selected="false" onclick="wedTab('checklist')">Checklist</button>
+    <button class="wed-tab"        id="tab-schedule"  role="tab" aria-selected="false" onclick="wedTab('schedule')" >Schedule</button>
   </nav>
 
   <!-- ══ PANELS ════════════════════════════════════ -->
@@ -94,11 +168,11 @@
   <div id="panel-seating" style="display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:32px">
     <div style="padding:16px 16px 8px">
       <div class="canvas-toolbar">
-        <button class="canvas-tool-btn" onclick="WED.furniture=[];drawCanvas();showToast('🗑 Canvas cleared')">Clear All</button>
-        <button class="canvas-tool-btn" onclick="saveState();showToast('💾 Layout saved!')">Save Layout</button>
+        <button class="canvas-tool-btn" onclick="WED.furniture=[];drawCanvas();showToast('Canvas cleared')">Clear All</button>
+        <button class="canvas-tool-btn" onclick="saveState();showToast('Layout saved')">Save Layout</button>
       </div>
       <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:8px;text-align:center">
-        Tap a table to select it · add chairs to it · double-tap 🪑 to assign guest · double-tap long table to rotate
+        Tap a table to select it · add chairs to it · double-tap a chair to assign guest · double-tap long table to rotate
       </div>
       <div id="canvas-wrap"><canvas id="seating-canvas"></canvas></div>
       <div id="canvas-resize-handle" style="width:100%;height:22px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;background:rgba(245,230,200,0.45);border-radius:0 0 var(--r-md) var(--r-md);border:1px solid rgba(201,169,110,0.2);border-top:none;margin-bottom:8px;user-select:none;touch-action:none">
@@ -124,7 +198,7 @@
 
   <!-- Footer -->
   <footer class="app-footer">
-    Made with 💍 &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara Suite</a>
+    Down to the Isle &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara Suite</a>
   </footer>
 
 </div><!-- /app-shell -->
@@ -142,7 +216,7 @@
 <div id="wed-setup-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-setup-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Wedding Details ✏️</div>
+    <div class="modal-title">Wedding Details</div>
     <div class="input-group">
       <div class="input-label">Partner 1 Name</div>
       <input id="ov-p1" type="text" class="glass-input" placeholder="e.g. Maria">
@@ -171,7 +245,7 @@
 <div id="wed-add-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-expense-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Wedding Expense 💐</div>
+    <div class="modal-title">Add Expense</div>
     <div class="input-group">
       <div class="input-label">Description</div>
       <input type="text" id="wed-exp-label" class="glass-input" placeholder="e.g. Florist deposit, Videographer…">
@@ -202,7 +276,7 @@
 <div id="wed-add-guest-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-guest-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Guest 🎉</div>
+    <div class="modal-title">Add Guest</div>
     <div class="input-group">
       <div class="input-label">Full Name</div>
       <input type="text" id="new-guest-name" class="glass-input" placeholder="e.g. Maria Santos">
@@ -242,7 +316,7 @@
 <div id="rsvp-card-modal" class="modal-overlay" onclick="closeModalOutside(event,'rsvp-card-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">💌 Wedding Invitation</div>
+    <div class="modal-title">Wedding Invitation</div>
     <canvas id="rsvp-canvas" width="380" height="560"></canvas>
     <div style="text-align:center;margin-top:10px">
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Scan to RSVP</div>
@@ -252,13 +326,13 @@
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">Upload Custom Invitation Card</div>
       <input type="file" id="custom-card-upload" accept="image/*" style="display:none" onchange="loadCustomCard(this)">
       <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('custom-card-upload').click()" style="flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.8);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">📷 Upload Card</button>
-        <button onclick="clearCustomCard()" id="clear-card-btn" style="display:none;padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">✕ Remove</button>
+        <button onclick="document.getElementById('custom-card-upload').click()" style="flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.8);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">Upload Card</button>
+        <button onclick="clearCustomCard()" id="clear-card-btn" style="display:none;padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">Remove</button>
       </div>
     </div>
     <div class="rsvp-actions">
-      <button class="rsvp-action-btn rsvp-btn-save" onclick="showToast('📥 Long-press the invitation image to save!')">💾 Save Image</button>
-      <button class="rsvp-action-btn rsvp-btn-share" onclick="shareInvitation()">📲 Share</button>
+      <button class="rsvp-action-btn rsvp-btn-save" onclick="showToast('Long-press the invitation image to save!')">Save Image</button>
+      <button class="rsvp-action-btn rsvp-btn-share" onclick="shareInvitation()">Share</button>
     </div>
   </div>
 </div>
@@ -267,7 +341,7 @@
 <div id="wed-add-sched-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-sched-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Schedule Item 📅</div>
+    <div class="modal-title">Add Schedule Item</div>
     <div class="input-group">
       <div class="input-label">Time</div>
       <input type="time" id="sched-time" class="glass-input">
@@ -288,7 +362,7 @@
 <div id="wed-edit-sched-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-edit-sched-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Edit Schedule Item ✏️</div>
+    <div class="modal-title">Edit Schedule Item</div>
     <div style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);margin-bottom:14px;font-size:12.5px;color:var(--ink-3)">Changing the time will automatically re-sort the schedule.</div>
     <div class="input-group">
       <div class="input-label">Time</div>
@@ -310,7 +384,7 @@
 <div id="wed-add-checklist-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-checklist-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Task ✅</div>
+    <div class="modal-title">Add Task</div>
     <div class="input-group">
       <div class="input-label">Task description</div>
       <input id="checklist-item-text" type="text" class="glass-input" placeholder="e.g. Book hair and makeup…">
@@ -323,7 +397,7 @@
 <div id="wed-add-vendor-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-vendor-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Vendor 🤝</div>
+    <div class="modal-title">Add Vendor</div>
     <div class="input-group">
       <div class="input-label">Vendor / Business Name</div>
       <input type="text" id="vendor-name" class="glass-input" placeholder="e.g. Luzviminda Photography">
@@ -372,7 +446,7 @@
 <div id="auth-modal" class="modal-overlay" onclick="closeModalOutside(event,'auth-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">☁️ Sync Your Wedding Plans</div>
+    <div class="modal-title">Sync Your Wedding Plans</div>
 
     <!-- Segmented Tabs -->
     <div style="display:flex;border-radius:var(--r-md);background:rgba(44,31,14,0.06);padding:3px;margin-bottom:16px;gap:3px">
@@ -436,7 +510,7 @@
 <button id="quick-dials-fab" onclick="openQuickDials()"
   style="position:fixed;bottom:80px;right:16px;z-index:700;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;box-shadow:0 4px 18px rgba(44,31,14,0.28);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s"
   onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform=''">
-  📞
+  <span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff;letter-spacing:0">◇</span>
 </button>
 
 <!-- ══════════════════════════════════════════════
@@ -454,10 +528,10 @@ function shareInvitation() {
           .catch(() => {});
         return;
       }
-      showToast('📲 Long-press the card image to save and share!');
+      showToast('Long-press the card image to save and share!');
     });
   } else {
-    showToast('📲 Long-press the card image to save and share!');
+    showToast('Long-press the card image to save and share!');
   }
 }
 </script>

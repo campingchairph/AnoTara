@@ -1805,6 +1805,21 @@ function assignChairGuest(chairId, guestId) {
   showToast(guestId ? '🪑 Guest seated!' : '🗑 Seat cleared');
 }
 
+/* ── LANDING PAGE ────────────────────────────── */
+function enterApp(instant) {
+  sessionStorage.setItem('dtti_entered', '1');
+  const el = document.getElementById('dtti-landing');
+  if (!el) return;
+  if (instant) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.transition = 'opacity 0.55s ease, visibility 0.55s ease';
+  el.style.opacity    = '0';
+  el.style.visibility = 'hidden';
+  el.addEventListener('transitionend', () => { el.style.display = 'none'; }, { once: true });
+}
+
 /* ── INIT ────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
@@ -1820,6 +1835,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Start on overview
   wedTab('overview');
+  // Skip landing if already seen this session or URL has #app
+  if (sessionStorage.getItem('dtti_entered') || location.hash === '#app') {
+    enterApp(true);
+  }
 });
 
 /* ── WINDOW EXPORTS ──────────────────────────── */
@@ -1874,3 +1893,4 @@ window.submitAddVendor         = submitAddVendor;
 window.deleteVendor            = deleteVendor;
 window.openQuickDials          = openQuickDials;
 window.closeQuickDials         = closeQuickDials;
+window.enterApp                = enterApp;
