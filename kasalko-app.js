@@ -68,6 +68,8 @@ const WED = {
   nextVendorId: 1,
   vendors: [],
   _customPhases: [],
+  planningMonths: null,
+  _collapsedPhases: [],
 };
 
 /* ── PERSISTENCE ─────────────────────────────── */
@@ -91,6 +93,8 @@ function saveState() {
       nextGuestId:     WED.nextGuestId,
       nextVendorId:    WED.nextVendorId,
       vendors:         WED.vendors,
+      planningMonths:  WED.planningMonths,
+      _collapsedPhases: WED._collapsedPhases,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
   } catch(e) {}
@@ -104,9 +108,11 @@ function loadState() {
     if (!raw) return;
     const d = JSON.parse(raw);
     Object.assign(WED, d);
-    if (!WED._customPhases) WED._customPhases = [];
-    if (!WED.vendors)       WED.vendors       = [];
-    if (!WED.nextVendorId)  WED.nextVendorId  = 1;
+    if (!WED._customPhases)    WED._customPhases    = [];
+    if (!WED.vendors)          WED.vendors          = [];
+    if (!WED.nextVendorId)     WED.nextVendorId     = 1;
+    if (WED.planningMonths === undefined) WED.planningMonths = null;
+    if (!WED._collapsedPhases) WED._collapsedPhases = [];
   } catch(e) {}
 }
 
@@ -872,41 +878,184 @@ function closeQuickDials() {
 /* ── CHECKLIST ───────────────────────────────── */
 let _addToPhaseIndex = null;
 
+/* Generate phases based on months-before-wedding */
+function generateChecklistPhases(months) {
+  const m = parseInt(months, 10) || 12;
+  WED.planningMonths = m;
+  WED._collapsedPhases = [];
+
+  const ALL_PHASES = [
+    { minMonths: 18, phase: '18 Months Out', items: [
+      { text: 'Set wedding date' },
+      { text: 'Book the venue' },
+      { text: 'Set overall budget' },
+      { text: 'Create initial guest list' },
+      { text: 'Hire wedding coordinator' },
+    ]},
+    { minMonths: 12, phase: '12 Months Out', items: [
+      { text: 'Set wedding date' },
+      { text: 'Book the venue' },
+      { text: 'Set overall budget' },
+      { text: 'Create initial guest list' },
+      { text: 'Hire wedding coordinator' },
+    ]},
+    { minMonths: 9, phase: '9 Months Out', items: [
+      { text: 'Book photographer & videographer' },
+      { text: 'Choose wedding theme & color palette' },
+      { text: 'Start shopping for wedding attire' },
+    ]},
+    { minMonths: 6, phase: '6 Months Out', items: [
+      { text: 'Book catering' },
+      { text: 'Order wedding attire' },
+      { text: 'Send save-the-dates' },
+      { text: 'Book live band or DJ' },
+    ]},
+    { minMonths: 3, phase: '3 Months Out', items: [
+      { text: 'Send formal invitations' },
+      { text: 'Finalize menu with caterer' },
+      { text: 'Book hair & makeup' },
+      { text: 'Order wedding cake' },
+      { text: 'Arrange accommodations for guests' },
+    ]},
+    { minMonths: 1, phase: '1 Month Out', items: [
+      { text: 'Confirm all vendors' },
+      { text: 'Finalize seating arrangement' },
+      { text: 'Submit final headcount to caterer' },
+      { text: 'Pick up wedding attire' },
+      { text: 'Prepare payments & envelopes' },
+    ]},
+    { minMonths: 0, phase: 'Week Of', items: [
+      { text: 'Wedding rehearsal' },
+      { text: 'Confirm vendors one last time' },
+      { text: 'Pack for honeymoon' },
+      { text: 'Prepare emergency kit' },
+    ]},
+    { minMonths: 0, phase: 'Day Of', items: [
+      { text: 'Hair & makeup' },
+      { text: 'Bride/groom gets dressed' },
+      { text: 'Ceremony' },
+      { text: 'Reception' },
+      { text: 'Send-off / exit' },
+    ]},
+  ];
+
+  // Pick phases that fit within the planning window; always include Week Of + Day Of
+  const fixed = ['Week Of', 'Day Of'];
+  let chosen;
+  if (m >= 18) {
+    chosen = ALL_PHASES.filter(p => p.minMonths <= m && p.minMonths >= 18 || fixed.includes(p.phase) || (p.minMonths < 18 && p.minMonths > 0 && p.minMonths <= m));
+    chosen = ALL_PHASES; // 18+ months: all phases
+  } else {
+    chosen = ALL_PHASES.filter(p => p.minMonths <= m || fixed.includes(p.phase));
+  }
+  // Remove the 18-month phase if planning less than 18 months
+  if (m < 18) chosen = chosen.filter(p => p.phase !== '18 Months Out');
+  // Remove the 12-month phase if planning less than 12 months
+  if (m < 12) chosen = chosen.filter(p => p.phase !== '12 Months Out');
+  // Remove the 9-month phase if planning less than 9 months
+  if (m < 9) chosen = chosen.filter(p => p.phase !== '9 Months Out');
+
+  let idCounter = Date.now();
+  WED.checklist = chosen.map(p => ({
+    phase: p.phase,
+    items: p.items.map(it => ({
+      id: 'c' + (idCounter++),
+      text: it.text,
+      done: false,
+      note: '',
+      noteAt: null,
+    })),
+  }));
+  saveState();
+}
+
+function submitChecklistTimeline() {
+  const sel = document.getElementById('checklist-months-select');
+  const months = sel ? parseInt(sel.value, 10) : 12;
+  generateChecklistPhases(months);
+  renderChecklist();
+  showToast('✅ Checklist ready!');
+}
+
+function togglePhaseCollapse(pi) {
+  const phaseName = WED.checklist[pi]?.phase;
+  if (!phaseName) return;
+  const idx = WED._collapsedPhases.indexOf(phaseName);
+  if (idx > -1) WED._collapsedPhases.splice(idx, 1);
+  else WED._collapsedPhases.push(phaseName);
+  saveState();
+  renderChecklist();
+}
+
 function renderChecklist() {
   const el = document.getElementById('wed-checklist-content');
   if (!el) return;
+
+  /* ── Setup screen when planning window not set ── */
+  if (WED.planningMonths === null) {
+    el.innerHTML = `
+      <div style="max-width:360px;margin:24px auto 0;padding:28px 22px 26px;border-radius:var(--r-lg);background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.22);text-align:center">
+        <div style="font-size:26px;margin-bottom:10px">💍</div>
+        <div style="font-family:var(--f2);font-size:20px;font-style:italic;color:var(--ink);margin-bottom:6px">Let's build your checklist</div>
+        <div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:20px">How many months do you have until your wedding? We'll create the right planning phases for you.</div>
+        <select id="checklist-months-select" style="width:100%;padding:10px 14px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.3);background:rgba(250,246,238,0.9);font-size:13px;color:var(--ink);margin-bottom:16px;font-family:var(--f)">
+          <option value="3">3 months — Quick sprint</option>
+          <option value="6">6 months</option>
+          <option value="9">9 months</option>
+          <option value="12" selected>12 months — Recommended</option>
+          <option value="18">18 months — Detailed planning</option>
+          <option value="24">24 months — Extra thorough</option>
+        </select>
+        <button onclick="submitChecklistTimeline()" style="width:100%;padding:11px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--tan-dark));border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Build My Checklist →</button>
+      </div>`;
+    return;
+  }
+
+  /* ── Normal checklist view ── */
   const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
   const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
   const pct = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
 
+  const fmtNoteAt = iso => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })
+      + ' · ' + d.toLocaleTimeString('en-PH', { hour:'numeric', minute:'2-digit' });
+  };
+
   el.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button onclick="openAddChecklistItem()" style="flex:1;padding:9px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Task</button>
-    </div>
     <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.18);margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;font-weight:700;color:var(--ink-3)">Overall Progress</span>
         <span style="font-size:12px;font-weight:700;color:var(--tan-dark)">${totalDone}/${totalItems} · ${pct}%</span>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <button onclick="WED.planningMonths=null;WED._collapsedPhases=[];saveState();renderChecklist()" style="margin-top:10px;padding:3px 10px;border-radius:6px;background:transparent;border:1px solid rgba(184,145,106,0.25);font-size:10px;color:var(--ink-4);cursor:pointer">↺ Reset checklist</button>
     </div>
     ${WED.checklist.map((phase,pi)=>{
-      const done  = phase.items.filter(i=>i.done).length;
-      const total = phase.items.length;
-      const pp    = total ? Math.round((done/total)*100) : 0;
+      const done      = phase.items.filter(i=>i.done).length;
+      const total     = phase.items.length;
+      const pp        = total ? Math.round((done/total)*100) : 0;
+      const collapsed = WED._collapsedPhases.includes(phase.phase);
       return `
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font-size:13px;font-weight:700;color:var(--ink-2)">${phase.phase}</div>
+      <div style="margin-bottom:14px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.14)">
+        <div onclick="togglePhaseCollapse(${pi})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:rgba(245,230,200,0.55);cursor:pointer;user-select:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:var(--ink-3);transition:transform 0.2s;display:inline-block;transform:rotate(${collapsed?'-90':'0'}deg)">▾</span>
+            <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${phase.phase}</span>
+          </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:11px;color:var(--ink-4);font-weight:700">${done}/${total}</span>
-            <button onclick="openAddChecklistItemToPhase(${pi})" style="padding:3px 9px;border-radius:7px;background:rgba(245,230,200,0.6);border:1px solid rgba(201,169,110,0.22);font-size:10.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add</button>
+            <div style="width:40px;height:4px;border-radius:2px;background:rgba(44,31,14,0.1);overflow:hidden">
+              <div style="width:${pp}%;height:100%;background:linear-gradient(90deg,var(--rose),var(--tan));border-radius:2px"></div>
+            </div>
           </div>
         </div>
-        <div style="height:3px;border-radius:2px;background:rgba(44,31,14,0.07);overflow:hidden;margin-bottom:8px">
-          <div style="width:${pp}%;height:100%;background:linear-gradient(90deg,var(--pink-accent),var(--tan));border-radius:2px"></div>
-        </div>
-        ${phase.items.map(item=>`
+        ${collapsed ? '' : `
+        <div style="padding:8px 10px 10px;background:rgba(255,252,247,0.7)">
+          ${phase.items.map(item=>{
+            const noteTs = item.noteAt ? fmtNoteAt(item.noteAt) : '';
+            return `
           <div class="glass" style="padding:10px 13px;border-radius:var(--r-md);margin-bottom:6px">
             <div style="display:flex;align-items:center;gap:10px">
               <div onclick="toggleChecklist('${item.id}')" style="width:22px;height:22px;border-radius:7px;border:2px solid ${item.done?'var(--green-accent)':'var(--ink-4)'};background:${item.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s">
@@ -920,8 +1069,15 @@ function renderChecklist() {
               </button>
               <button onclick="deleteChecklistItem('${item.id}')" style="width:24px;height:24px;border-radius:7px;border:none;background:rgba(224,120,152,0.1);color:var(--pink-deep);font-size:14px;cursor:pointer;flex-shrink:0;line-height:1">×</button>
             </div>
-            ${item.note?`<div style="margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(184,145,106,0.08);border-left:2px solid rgba(184,145,106,0.3);font-size:11.5px;color:var(--ink-3);font-style:italic;line-height:1.5">"${item.note}"</div>`:''}
-          </div>`).join('')}
+            ${item.note?`
+            <div style="margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(184,145,106,0.08);border-left:2px solid rgba(184,145,106,0.3)">
+              <div style="font-size:11.5px;color:var(--ink-3);font-style:italic;line-height:1.5">"${item.note}"</div>
+              ${noteTs?`<div style="margin-top:3px;font-size:10px;color:var(--ink-4)">${noteTs}</div>`:''}
+            </div>`:''}
+          </div>`;
+          }).join('')}
+          <button onclick="openAddChecklistItemToPhase(${pi})" style="width:100%;margin-top:4px;padding:7px;border-radius:var(--r-md);background:transparent;border:1px dashed rgba(184,145,106,0.3);font-size:11.5px;font-weight:700;color:var(--ink-4);cursor:pointer">+ Add Task</button>
+        </div>`}
       </div>`;
     }).join('')}`;
 }
@@ -961,7 +1117,8 @@ function saveChecklistNote() {
   for (const phase of WED.checklist) {
     const item = phase.items.find(i => i.id === _editNoteId);
     if (item) {
-      item.note = note;
+      item.note   = note;
+      item.noteAt = note ? new Date().toISOString() : null;
       saveState();
       break;
     }
@@ -2170,6 +2327,8 @@ window.enterApp                = enterApp;
 window.rotateFurniture         = rotateFurniture;
 window.zoomCanvas              = zoomCanvas;
 window.fitCanvas               = fitCanvas;
-window.openChecklistNoteEditor = openChecklistNoteEditor;
-window.saveChecklistNote       = saveChecklistNote;
-window.openPartnerBrowse       = openPartnerBrowse;
+window.openChecklistNoteEditor  = openChecklistNoteEditor;
+window.saveChecklistNote        = saveChecklistNote;
+window.togglePhaseCollapse      = togglePhaseCollapse;
+window.submitChecklistTimeline  = submitChecklistTimeline;
+window.openPartnerBrowse        = openPartnerBrowse;
