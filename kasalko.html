@@ -145,6 +145,9 @@
 ══════════════════════════════════════════════ -->
 <div class="app-shell">
 
+  <!-- ── LEFT PANEL (sidebar on desktop / stacked on mobile) ── -->
+  <aside class="app-left-panel">
+
   <!-- ── HEADER ────────────────────────────────── -->
   <header class="app-header">
     <div class="app-header-logo">
@@ -187,6 +190,16 @@
     <button class="wed-tab"        id="tab-checklist" role="tab" aria-selected="false" onclick="wedTab('checklist')">Checklist</button>
     <button class="wed-tab"        id="tab-schedule"  role="tab" aria-selected="false" onclick="wedTab('schedule')" >Program</button>
   </nav>
+
+  <!-- Desktop sidebar footer -->
+  <div class="app-left-footer-desktop">
+    Down to the Isle &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara</a>
+  </div>
+
+  </aside><!-- /app-left-panel -->
+
+  <!-- ── MAIN CONTENT ───────────────────────────── -->
+  <main class="app-main">
 
   <!-- ══ PANELS ════════════════════════════════════ -->
 
@@ -268,6 +281,8 @@
   <footer class="app-footer">
     Down to the Isle &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara Suite</a>
   </footer>
+
+  </main><!-- /app-main -->
 
 </div><!-- /app-shell -->
 
@@ -411,6 +426,10 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Add Program Item</div>
     <div class="input-group">
+      <div class="input-label">Date</div>
+      <input type="date" id="sched-date" class="glass-input">
+    </div>
+    <div class="input-group">
       <div class="input-label">Time</div>
       <input type="time" id="sched-time" class="glass-input">
     </div>
@@ -422,7 +441,7 @@
       <div class="input-label">Assigned to</div>
       <input type="text" id="sched-assignee" class="glass-input" placeholder="e.g. Coordinator, Emcee…">
     </div>
-    <button class="cta-btn green" onclick="addWedSched()">Add to Schedule →</button>
+    <button class="cta-btn green" onclick="addWedSched()">Add to Program →</button>
   </div>
 </div>
 
@@ -430,8 +449,12 @@
 <div id="wed-edit-sched-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-edit-sched-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Edit Schedule Item</div>
-    <div style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);margin-bottom:14px;font-size:12.5px;color:var(--ink-3)">Changing the time will automatically re-sort the schedule.</div>
+    <div class="modal-title">Edit Program Item</div>
+    <div style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.2);margin-bottom:14px;font-size:12.5px;color:var(--ink-3)">Changing the date or time will automatically re-sort.</div>
+    <div class="input-group">
+      <div class="input-label">Date</div>
+      <input type="date" id="edit-sched-date" class="glass-input">
+    </div>
     <div class="input-group">
       <div class="input-label">Time</div>
       <input type="time" id="edit-sched-time" class="glass-input">
@@ -444,7 +467,7 @@
       <div class="input-label">Assigned to</div>
       <input type="text" id="edit-sched-assignee" class="glass-input">
     </div>
-    <button class="cta-btn green" onclick="submitEditSched()">Save &amp; Re-sort →</button>
+    <button class="cta-btn green" onclick="submitEditSched()">Save →</button>
   </div>
 </div>
 

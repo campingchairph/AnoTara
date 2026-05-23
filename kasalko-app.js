@@ -1172,40 +1172,222 @@ const SCHED_BORDER = {
   cream: 'rgba(255,255,255,0.5)',
 };
 
+/* ── SCHEDULE / CALENDAR ─────────────────────── */
+let _schedView = 'daily';  // 'monthly' | 'weekly' | 'daily'
+let _schedDate = null;     // Date object — currently viewed date
+
+function _getSchedDate() {
+  if (!_schedDate) {
+    _schedDate = WED.date ? new Date(WED.date + 'T12:00:00') : new Date();
+  }
+  return _schedDate;
+}
+
+function _fmtIso(d) {
+  // Date → 'YYYY-MM-DD'
+  return d.getFullYear() + '-'
+    + String(d.getMonth()+1).padStart(2,'0') + '-'
+    + String(d.getDate()).padStart(2,'0');
+}
+
+function _eventsOnDate(dateStr) {
+  return WED.schedule
+    .filter(s => (s.date || WED.date || '') === dateStr)
+    .sort((a,b) => a.time.localeCompare(b.time));
+}
+
+function setSchedView(view) {
+  _schedView = view;
+  renderSchedule();
+}
+
+function navSchedDate(delta) {
+  const d = _getSchedDate();
+  if (_schedView === 'monthly') {
+    d.setMonth(d.getMonth() + delta);
+  } else if (_schedView === 'weekly') {
+    d.setDate(d.getDate() + delta * 7);
+  } else {
+    d.setDate(d.getDate() + delta);
+  }
+  _schedDate = d;
+  renderSchedule();
+}
+
+function jumpToDate(dateStr) {
+  _schedDate = new Date(dateStr + 'T12:00:00');
+  _schedView = 'daily';
+  renderSchedule();
+}
+
+function prefillSchedDate() {
+  const inp = document.getElementById('sched-date');
+  if (!inp) return;
+  if (!inp.value) {
+    inp.value = _fmtIso(_getSchedDate());
+  }
+}
+
+/* ── Monthly calendar view ── */
+function _renderMonthView(d) {
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const monthName = d.toLocaleString('en-PH', { month: 'long', year: 'numeric' });
+  const firstDow  = new Date(year, month, 1).getDay();
+  const lastDay   = new Date(year, month + 1, 0).getDate();
+  const todayStr  = _fmtIso(new Date());
+  const dows      = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  let grid = '<div class="cal-month-grid">';
+  dows.forEach(h => { grid += `<div class="cal-month-dow">${h}</div>`; });
+
+  for (let i = 0; i < firstDow; i++) {
+    grid += '<div class="cal-month-cell cal-month-empty"></div>';
+  }
+  for (let day = 1; day <= lastDay; day++) {
+    const mm     = String(month+1).padStart(2,'0');
+    const dd     = String(day).padStart(2,'0');
+    const dStr   = `${year}-${mm}-${dd}`;
+    const evs    = _eventsOnDate(dStr);
+    const isTdy  = dStr === todayStr;
+    const isWed  = dStr === WED.date;
+    grid += `
+      <div class="cal-month-cell${isTdy?' cal-today':''}${isWed?' cal-wed-day':''}" onclick="jumpToDate('${dStr}')">
+        <span class="cal-day-num">${day}</span>
+        ${evs.length ? `<div class="cal-dots">${evs.slice(0,4).map(()=>'<span class="cal-dot"></span>').join('')}</div>` : ''}
+        ${isWed ? '<span class="cal-wed-badge">💍</span>' : ''}
+      </div>`;
+  }
+  grid += '</div>';
+
+  return `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="navSchedDate(-1)">‹</button>
+      <span class="cal-nav-title">${monthName}</span>
+      <button class="cal-nav-btn" onclick="navSchedDate(1)">›</button>
+    </div>
+    ${grid}
+    <div class="cal-month-hint">Tap a date to see its events</div>`;
+}
+
+/* ── Weekly calendar view ── */
+function _renderWeekView(d) {
+  const sun = new Date(d);
+  sun.setDate(d.getDate() - d.getDay()); // back to Sunday
+
+  const todayStr  = _fmtIso(new Date());
+  const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const weekStart = sun.toLocaleDateString('en-PH', { month:'short', day:'numeric' });
+  const weekEndD  = new Date(sun); weekEndD.setDate(sun.getDate()+6);
+  const weekEnd   = weekEndD.toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' });
+
+  let cols = '';
+  for (let i = 0; i < 7; i++) {
+    const day   = new Date(sun); day.setDate(sun.getDate()+i);
+    const dStr  = _fmtIso(day);
+    const evs   = _eventsOnDate(dStr);
+    const isTdy = dStr === todayStr;
+    const isWed = dStr === WED.date;
+    cols += `
+      <div class="cal-week-col${isTdy?' cal-week-today':''}${isWed?' cal-week-wedday':''}">
+        <div class="cal-week-header" onclick="jumpToDate('${dStr}')">
+          <div class="cal-week-dow">${dayNames[i]}</div>
+          <div class="cal-week-daynum${isTdy?' cal-today-num':''}">${day.getDate()}</div>
+          ${isWed ? '<div style="font-size:9px">💍</div>' : ''}
+        </div>
+        <div class="cal-week-events">
+          ${evs.length
+            ? evs.map(e=>`
+            <div class="cal-week-event" style="border-left:3px solid ${SCHED_BORDER[e.color]||'rgba(201,169,110,0.5)'}" onclick="jumpToDate('${dStr}')">
+              <div class="cal-week-event-time">${e.time}</div>
+              <div class="cal-week-event-name">${e.event}</div>
+            </div>`).join('')
+            : '<div class="cal-week-empty">—</div>'}
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="navSchedDate(-1)">‹</button>
+      <span class="cal-nav-title">${weekStart} – ${weekEnd}</span>
+      <button class="cal-nav-btn" onclick="navSchedDate(1)">›</button>
+    </div>
+    <div class="cal-week-grid">${cols}</div>`;
+}
+
+/* ── Daily timeline view ── */
+function _renderDayView(d) {
+  const dateStr  = _fmtIso(d);
+  const dayLabel = d.toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const evs      = _eventsOnDate(dateStr);
+  const isWedDay = dateStr === WED.date;
+
+  let html = `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="navSchedDate(-1)">‹</button>
+      <span class="cal-nav-title">${dayLabel}</span>
+      <button class="cal-nav-btn" onclick="navSchedDate(1)">›</button>
+    </div>
+    ${isWedDay ? '<div class="cal-wed-banner">💍 Your Wedding Day</div>' : ''}`;
+
+  if (!evs.length) {
+    html += `
+      <div class="empty-state" style="padding:40px 0">
+        <div class="empty-emoji">📅</div>
+        <div class="empty-title">No Events</div>
+        <div class="empty-sub">No events planned for this day.<br>Tap + Add Event above.</div>
+      </div>`;
+  } else {
+    html += '<div class="cal-day-timeline">' + evs.map(s => {
+      const i = WED.schedule.indexOf(s);
+      return `
+        <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
+          <div style="min-width:52px;text-align:right;padding-top:13px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink-3)">${s.time}</div>
+          </div>
+          <div class="timeline-dot"></div>
+          <div style="flex:1;padding:12px 14px;border-radius:var(--r-md);background:${SCHED_COLORS[s.color]||SCHED_COLORS.cream};border:1px solid ${SCHED_BORDER[s.color]||SCHED_BORDER.cream};opacity:${s.done?0.6:1}">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+              <div style="flex:1">
+                <div style="font-size:13.5px;font-weight:700;color:var(--ink);text-decoration:${s.done?'line-through':'none'}">${s.event}</div>
+                <div style="font-size:11px;color:var(--ink-4);margin-top:2px">👤 ${s.assignee}</div>
+              </div>
+              <div style="display:flex;gap:5px;flex-shrink:0">
+                <button onclick="toggleSchedule(${i})" style="width:26px;height:26px;border-radius:8px;border:2px solid ${s.done?'var(--green-accent)':'var(--ink-4)'};background:${s.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer">${s.done?'<span style="color:white;font-size:11px;font-weight:700">✓</span>':''}</button>
+                <button onclick="openEditSched(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer">✏️</button>
+                <button onclick="deleteSchedItem(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(224,120,152,0.22);background:rgba(252,232,238,0.55);font-size:14px;cursor:pointer;color:var(--pink-deep)">×</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+  }
+  return html;
+}
+
 function renderSchedule() {
   const el = document.getElementById('wed-schedule-content');
   if (!el) return;
-  if (!WED.schedule.length) {
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-emoji">📋</div>
-      <div class="empty-title">No Program Yet</div>
-      <div class="empty-sub">Build your wedding day program<br>event by event.</div>
-      <button onclick="openModal('wed-add-sched-modal')" class="cta-btn pink" style="max-width:220px;margin:0 auto">+ Add First Event</button>
+  const d = _getSchedDate();
+
+  const toolbar = `
+    <div class="sched-toolbar">
+      <div class="sched-view-switcher">
+        <button class="sched-vbtn${_schedView==='monthly'?' sched-vbtn-active':''}" onclick="setSchedView('monthly')">Monthly</button>
+        <button class="sched-vbtn${_schedView==='weekly'?' sched-vbtn-active':''}" onclick="setSchedView('weekly')">Weekly</button>
+        <button class="sched-vbtn${_schedView==='daily'?' sched-vbtn-active':''}" onclick="setSchedView('daily')">Daily</button>
+      </div>
+      <button onclick="openModal('wed-add-sched-modal');prefillSchedDate()" class="sched-add-btn">+ Add Event</button>
     </div>`;
-    return;
-  }
-  el.innerHTML = `
-    <button onclick="openModal('wed-add-sched-modal')" style="width:100%;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:14px">+ Add Program Item</button>
-    ${WED.schedule.map((s,i)=>`
-      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
-        <div style="min-width:58px;text-align:right;padding-top:12px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink-3)">${s.time}</div>
-        </div>
-        <div class="timeline-dot"></div>
-        <div style="flex:1;padding:12px 14px;border-radius:var(--r-md);background:${SCHED_COLORS[s.color]||SCHED_COLORS.cream};border:1px solid ${SCHED_BORDER[s.color]||SCHED_BORDER.cream};opacity:${s.done?0.6:1}">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-            <div style="flex:1">
-              <div style="font-size:13.5px;font-weight:700;color:var(--ink);text-decoration:${s.done?'line-through':'none'}">${s.event}</div>
-              <div style="font-size:11px;color:var(--ink-4);margin-top:2px">👤 ${s.assignee}</div>
-            </div>
-            <div style="display:flex;gap:5px;flex-shrink:0">
-              <button onclick="toggleSchedule(${i})" style="width:26px;height:26px;border-radius:8px;border:2px solid ${s.done?'var(--green-accent)':'var(--ink-4)'};background:${s.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer">${s.done?'<span style="color:white;font-size:11px;font-weight:700">✓</span>':''}</button>
-              <button onclick="openEditSched(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer">✏️</button>
-              <button onclick="deleteSchedItem(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(224,120,152,0.22);background:rgba(252,232,238,0.55);font-size:14px;cursor:pointer;color:var(--pink-deep)">×</button>
-            </div>
-          </div>
-        </div>
-      </div>`).join('')}`;
+
+  let body = '';
+  if (_schedView === 'monthly') body = _renderMonthView(d);
+  else if (_schedView === 'weekly') body = _renderWeekView(d);
+  else body = _renderDayView(d);
+
+  el.innerHTML = toolbar + body;
 }
 
 function toggleSchedule(i) {
@@ -1216,24 +1398,30 @@ function toggleSchedule(i) {
 }
 
 function addWedSched() {
+  const date     = document.getElementById('sched-date')?.value || WED.date || '';
   const time     = document.getElementById('sched-time')?.value;
   const event    = document.getElementById('sched-event')?.value.trim();
   const assignee = document.getElementById('sched-assignee')?.value.trim();
   if (!time||!event) { showToast('⚠️ Fill in time and event'); return; }
-  WED.schedule.push({ time, event, assignee:assignee||'Unassigned', done:false, color:'cream' });
-  WED.schedule.sort((a,b)=>a.time.localeCompare(b.time));
+  WED.schedule.push({ date, time, event, assignee:assignee||'Unassigned', done:false, color:'cream' });
+  WED.schedule.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a.time.localeCompare(b.time));
+  document.getElementById('sched-date').value     = '';
   document.getElementById('sched-time').value     = '';
   document.getElementById('sched-event').value    = '';
   document.getElementById('sched-assignee').value = '';
+  // Navigate calendar to the new event's date
+  if (date) { _schedDate = new Date(date + 'T12:00:00'); _schedView = 'daily'; }
   saveState();
   closeModal('wed-add-sched-modal');
   renderSchedule();
-  showToast('📅 Schedule item added!');
+  showToast('📅 Event added!');
 }
 
 function openEditSched(i) {
   _editSchedIndex = i;
   const s = WED.schedule[i];
+  const dateEl = document.getElementById('edit-sched-date');
+  if (dateEl) dateEl.value = s.date || WED.date || '';
   document.getElementById('edit-sched-time').value     = s.time;
   document.getElementById('edit-sched-event').value    = s.event;
   document.getElementById('edit-sched-assignee').value = s.assignee;
@@ -1243,15 +1431,17 @@ function openEditSched(i) {
 function submitEditSched() {
   if (_editSchedIndex === null) return;
   const s = WED.schedule[_editSchedIndex];
-  s.time     = document.getElementById('edit-sched-time')?.value    || s.time;
+  s.date     = document.getElementById('edit-sched-date')?.value   || s.date || '';
+  s.time     = document.getElementById('edit-sched-time')?.value   || s.time;
   s.event    = document.getElementById('edit-sched-event')?.value.trim()    || s.event;
   s.assignee = document.getElementById('edit-sched-assignee')?.value.trim() || s.assignee;
-  WED.schedule.sort((a,b)=>a.time.localeCompare(b.time));
+  WED.schedule.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a.time.localeCompare(b.time));
+  if (s.date) { _schedDate = new Date(s.date + 'T12:00:00'); _schedView = 'daily'; }
   _editSchedIndex = null;
   saveState();
   closeModal('wed-edit-sched-modal');
   renderSchedule();
-  showToast('📅 Schedule updated & sorted!');
+  showToast('📅 Event updated!');
 }
 
 function deleteSchedItem(i) {
@@ -2303,6 +2493,10 @@ window.toggleSchedule       = toggleSchedule;
 window.openEditSched        = openEditSched;
 window.submitEditSched      = submitEditSched;
 window.deleteSchedItem      = deleteSchedItem;
+window.setSchedView         = setSchedView;
+window.navSchedDate         = navSchedDate;
+window.jumpToDate           = jumpToDate;
+window.prefillSchedDate     = prefillSchedDate;
 window.initCanvas              = initCanvas;
 window.addFurniture            = addFurniture;
 window.drawCanvas              = drawCanvas;
