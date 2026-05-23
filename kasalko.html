@@ -390,11 +390,27 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Wedding Invitation</div>
-    <canvas id="rsvp-canvas" width="380" height="560"></canvas>
+
+    <!-- Hidden canvas used only for drawing; exported to <img> below -->
+    <canvas id="rsvp-canvas" width="380" height="560" style="display:none"></canvas>
+
+    <!-- Long-pressable image — populated from canvas after drawing -->
+    <img id="rsvp-preview-img"
+      style="width:100%;border-radius:var(--r-lg);display:block"
+      alt="Wedding Invitation">
+
+    <!-- Save hint -->
+    <div id="rsvp-save-hint" style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--ink-4)">
+      📱 <strong>Mobile:</strong> long-press the image above → <em>Save to Photos</em>
+    </div>
+
+    <!-- QR code -->
     <div style="text-align:center;margin-top:10px">
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Scan to RSVP</div>
       <div id="rsvp-qr-target" style="display:inline-block;padding:8px;background:white;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)"></div>
     </div>
+
+    <!-- Card options -->
     <div style="margin-top:12px;padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px dashed rgba(201,169,110,0.3)">
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">Invitation Card</div>
       <input type="file" id="custom-card-upload" accept="image/*" style="display:none" onchange="loadCustomCard(this)">
@@ -403,8 +419,10 @@
         <button onclick="clearCustomCard()" id="clear-card-btn" style="padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.6);font-size:12px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">↩ Default</button>
       </div>
     </div>
+
+    <!-- Actions -->
     <div class="rsvp-actions">
-      <button class="rsvp-action-btn rsvp-btn-save" onclick="showToast('Long-press the invitation image to save!')">Save Image</button>
+      <button class="rsvp-action-btn rsvp-btn-save" onclick="downloadInvitation()">⬇ Save Image</button>
       <button class="rsvp-action-btn rsvp-btn-share" onclick="shareInvitation()">Share</button>
     </div>
   </div>

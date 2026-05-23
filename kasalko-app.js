@@ -549,11 +549,21 @@ function showRSVPCard() {
   const w = canvas.width  = 380;
   const h = canvas.height = 560;
 
+  /* After any draw, push canvas → <img> so it's long-pressable on mobile */
+  function _syncPreview() {
+    const preview = document.getElementById('rsvp-preview-img');
+    if (preview) preview.src = canvas.toDataURL('image/png');
+  }
+
   if (WED.customCardImage) {
-    const img = new Image();
-    img.onload = () => { ctx.drawImage(img,0,0,w,h); };
-    img.src = WED.customCardImage;
+    const src = new Image();
+    src.onload = () => {
+      ctx.drawImage(src, 0, 0, w, h);
+      _syncPreview();
+    };
+    src.src = WED.customCardImage;
     modal.classList.add('open');
+    _generateRSVPQR();
     return;
   }
 
@@ -582,14 +592,14 @@ function showRSVPCard() {
   ctx.fillText('YOU ARE CORDIALLY INVITED TO THE WEDDING OF', w/2, 80);
 
   // names
-  const p1 = WED.couple.p1 || 'Partner 1';
-  const p2 = WED.couple.p2 || 'Partner 2';
+  const cp1 = WED.couple.p1 || 'Partner 1';
+  const cp2 = WED.couple.p2 || 'Partner 2';
   ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
-  ctx.fillText(p1, w/2, 130);
+  ctx.fillText(cp1, w/2, 130);
   ctx.fillStyle='#c9a96e'; ctx.font='italic 400 22px Lora,serif';
   ctx.fillText('&', w/2, 162);
   ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
-  ctx.fillText(p2, w/2, 200);
+  ctx.fillText(cp2, w/2, 200);
 
   // divider
   ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=1;
@@ -624,20 +634,39 @@ function showRSVPCard() {
 
   // hashtag
   ctx.fillStyle='#c9a96e'; ctx.font='italic 400 13px Lora,serif';
-  ctx.fillText(`#${p1}And${p2}`, w/2, 538);
+  ctx.fillText(`#${cp1}And${cp2}`, w/2, 538);
+
+  /* Push to <img> so it is long-pressable / saveable */
+  _syncPreview();
 
   modal.classList.add('open');
+  _generateRSVPQR();
+}
 
-  // Generate QR code pointing to the RSVP page
+/* Separate helper so both paths (custom card + default) share QR logic */
+function _generateRSVPQR() {
   const qrEl = document.getElementById('rsvp-qr-target');
-  if (qrEl && typeof QRCode !== 'undefined') {
-    qrEl.innerHTML = '';
-    const p1  = encodeURIComponent(WED.couple.p1 || '');
-    const p2  = encodeURIComponent(WED.couple.p2 || '');
-    const dt  = encodeURIComponent(WED.date       || '');
-    const vn  = encodeURIComponent(WED.venue      || '');
-    const rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}`;
-    new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  if (!qrEl || typeof QRCode === 'undefined') return;
+  qrEl.innerHTML = '';
+  const p1  = encodeURIComponent(WED.couple.p1 || '');
+  const p2  = encodeURIComponent(WED.couple.p2 || '');
+  const dt  = encodeURIComponent(WED.date       || '');
+  const vn  = encodeURIComponent(WED.venue      || '');
+  const rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}`;
+  new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+
+/* ⬇ Download invitation image (desktop / Android) */
+function downloadInvitation() {
+  const canvas = document.getElementById('rsvp-canvas');
+  if (!canvas) return;
+  try {
+    const a = document.createElement('a');
+    a.download = 'wedding-invitation.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  } catch(e) {
+    showToast('📱 Long-press the invitation image → Save to Photos');
   }
 }
 
@@ -2610,6 +2639,7 @@ window.submitAddGuest       = submitAddGuest;
 window.updateGuestRSVP      = updateGuestRSVP;
 window.removeGuest          = removeGuest;
 window.showRSVPCard         = showRSVPCard;
+window.downloadInvitation   = downloadInvitation;
 window.uploadInvitation     = uploadInvitation;
 window.toggleChecklist      = toggleChecklist;
 window.openAddChecklistItem = openAddChecklistItem;
