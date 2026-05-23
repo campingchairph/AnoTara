@@ -364,16 +364,6 @@
       <div class="input-label">Full Name</div>
       <input type="text" id="new-guest-name" class="glass-input" placeholder="e.g. Maria Santos">
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="input-group">
-        <div class="input-label">Table #</div>
-        <input type="number" id="new-guest-table" class="glass-input" value="1" min="1">
-      </div>
-      <div class="input-group">
-        <div class="input-label">Seat #</div>
-        <input type="number" id="new-guest-seat" class="glass-input" value="1" min="1">
-      </div>
-    </div>
     <div class="input-group">
       <div class="input-label">Meal Preference</div>
       <div id="guest-meal-picker" style="display:flex;gap:6px;flex-wrap:wrap">
@@ -406,11 +396,11 @@
       <div id="rsvp-qr-target" style="display:inline-block;padding:8px;background:white;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.2)"></div>
     </div>
     <div style="margin-top:12px;padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px dashed rgba(201,169,110,0.3)">
-      <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">Upload Custom Invitation Card</div>
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">Invitation Card</div>
       <input type="file" id="custom-card-upload" accept="image/*" style="display:none" onchange="loadCustomCard(this)">
       <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('custom-card-upload').click()" style="flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.8);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">Upload Card</button>
-        <button onclick="clearCustomCard()" id="clear-card-btn" style="display:none;padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">Remove</button>
+        <button onclick="document.getElementById('custom-card-upload').click()" style="flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.8);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">📎 Upload Card</button>
+        <button onclick="clearCustomCard()" id="clear-card-btn" style="padding:8px 12px;border-radius:var(--r-sm);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.6);font-size:12px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">↩ Default</button>
       </div>
     </div>
     <div class="rsvp-actions">

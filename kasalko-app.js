@@ -504,19 +504,16 @@ function selectGuestMeal(btn, val) {
 }
 
 function submitAddGuest() {
-  const name = (document.getElementById('new-guest-name')?.value || '').trim();
+  const name    = (document.getElementById('new-guest-name')?.value    || '').trim();
   if (!name) { showToast('⚠️ Enter a guest name'); return; }
-  const table   = parseInt(document.getElementById('new-guest-table')?.value) || 1;
-  const seat    = parseInt(document.getElementById('new-guest-seat')?.value)  || 1;
   const phone   = (document.getElementById('new-guest-phone')?.value   || '').trim();
   const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  WED.guests.push({ id: WED.nextGuestId++, name, table, seat, rsvp:'pending', meal:_newGuestMeal, dietary, phone });
+  WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone });
   document.getElementById('new-guest-name').value    = '';
-  document.getElementById('new-guest-table').value   = '';
-  document.getElementById('new-guest-seat').value    = '';
   document.getElementById('new-guest-phone').value   = '';
   document.getElementById('new-guest-dietary').value = '';
   _newGuestMeal = 'chicken';
+  document.querySelectorAll('#guest-meal-picker .split-btn').forEach((b,i) => b.classList.toggle('active', i===0));
   saveState();
   closeModal('wed-add-guest-modal');
   renderGuests();
@@ -630,6 +627,18 @@ function showRSVPCard() {
   ctx.fillText(`#${p1}And${p2}`, w/2, 538);
 
   modal.classList.add('open');
+
+  // Generate QR code pointing to the RSVP page
+  const qrEl = document.getElementById('rsvp-qr-target');
+  if (qrEl && typeof QRCode !== 'undefined') {
+    qrEl.innerHTML = '';
+    const p1  = encodeURIComponent(WED.couple.p1 || '');
+    const p2  = encodeURIComponent(WED.couple.p2 || '');
+    const dt  = encodeURIComponent(WED.date       || '');
+    const vn  = encodeURIComponent(WED.venue      || '');
+    const rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}`;
+    new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
 }
 
 window.loadCustomCard = function(input) {
@@ -649,9 +658,9 @@ window.loadCustomCard = function(input) {
 window.clearCustomCard = function() {
   WED.customCardImage = null;
   saveState();
-  document.getElementById('clear-card-btn').style.display = 'none';
-  document.getElementById('custom-card-upload').value = '';
-  showToast('🗑 Custom card removed');
+  const inp = document.getElementById('custom-card-upload');
+  if (inp) inp.value = '';
+  showToast('↩ Showing default invitation card');
   showRSVPCard();
 };
 
@@ -969,12 +978,17 @@ function generateChecklistPhases(months) {
   saveState();
 }
 
-function submitChecklistTimeline() {
-  const sel = document.getElementById('checklist-months-select');
+function showChecklistTimelineChanger() {
+  const el = document.getElementById('checklist-timeline-changer');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function submitChecklistTimeline(selId) {
+  const sel = document.getElementById(selId || 'checklist-months-select');
   const months = sel ? parseInt(sel.value, 10) : 12;
   generateChecklistPhases(months);
   renderChecklist();
-  showToast('✅ Checklist ready!');
+  showToast('✅ Checklist updated!');
 }
 
 function togglePhaseCollapse(pi) {
@@ -1024,13 +1038,34 @@ function renderChecklist() {
   };
 
   el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 12px;border-radius:var(--r-md);background:rgba(245,230,200,0.40);border:1px solid rgba(201,169,110,0.16)">
+      <span style="font-size:11.5px;font-weight:700;color:var(--ink-3)">📅 ${WED.planningMonths}-month plan</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="showChecklistTimelineChanger()" style="padding:4px 10px;border-radius:6px;background:rgba(255,253,248,0.9);border:1px solid rgba(184,145,106,0.25);font-size:10.5px;font-weight:700;color:var(--gold-dark);cursor:pointer">Change →</button>
+        <button onclick="if(confirm('Reset entire checklist?')){WED.planningMonths=null;WED._collapsedPhases=[];saveState();renderChecklist();}" style="padding:4px 10px;border-radius:6px;background:transparent;border:1px solid rgba(224,120,152,0.22);font-size:10.5px;font-weight:700;color:var(--ink-4);cursor:pointer">Reset</button>
+      </div>
+    </div>
+    <div id="checklist-timeline-changer" style="display:none;margin-bottom:12px;padding:14px;border-radius:var(--r-md);background:rgba(255,252,247,0.95);border:1px solid rgba(184,145,106,0.2)">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:8px">Change planning window:</div>
+      <select id="checklist-months-change" style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.3);background:rgba(250,246,238,0.9);font-size:12.5px;color:var(--ink);margin-bottom:10px;font-family:var(--f)">
+        <option value="3"${WED.planningMonths===3?' selected':''}>3 months — Quick sprint</option>
+        <option value="6"${WED.planningMonths===6?' selected':''}>6 months</option>
+        <option value="9"${WED.planningMonths===9?' selected':''}>9 months</option>
+        <option value="12"${WED.planningMonths===12?' selected':''}>12 months</option>
+        <option value="18"${WED.planningMonths===18?' selected':''}>18 months</option>
+        <option value="24"${WED.planningMonths===24?' selected':''}>24 months</option>
+      </select>
+      <div style="display:flex;gap:8px">
+        <button onclick="submitChecklistTimeline('checklist-months-change')" style="flex:1;padding:9px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--tan-dark));border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Apply New Timeline</button>
+        <button onclick="document.getElementById('checklist-timeline-changer').style.display='none'" style="padding:9px 14px;border-radius:var(--r-md);background:transparent;border:1px solid rgba(184,145,106,0.22);font-size:12px;color:var(--ink-4);cursor:pointer">Cancel</button>
+      </div>
+    </div>
     <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.18);margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;font-weight:700;color:var(--ink-3)">Overall Progress</span>
         <span style="font-size:12px;font-weight:700;color:var(--tan-dark)">${totalDone}/${totalItems} · ${pct}%</span>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-      <button onclick="WED.planningMonths=null;WED._collapsedPhases=[];saveState();renderChecklist()" style="margin-top:10px;padding:3px 10px;border-radius:6px;background:transparent;border:1px solid rgba(184,145,106,0.25);font-size:10px;color:var(--ink-4);cursor:pointer">↺ Reset checklist</button>
     </div>
     ${WED.checklist.map((phase,pi)=>{
       const done      = phase.items.filter(i=>i.done).length;
@@ -2239,57 +2274,150 @@ function renderFurniturePalette() {
   );
 }
 
+/* ── SEATING ASSIGNMENTS (grouped by table, collapsible, searchable) ── */
+let _seatSearchQ = '';
+let _seatCollapsed = new Set();
+let _seatSearchTimer = null;
+
+function updateSeatSearch(val) {
+  _seatSearchQ = val;
+  clearTimeout(_seatSearchTimer);
+  _seatSearchTimer = setTimeout(renderSeatAssignments, 150);
+}
+
+function toggleSeatTable(id) {
+  if (_seatCollapsed.has(id)) _seatCollapsed.delete(id);
+  else _seatCollapsed.add(id);
+  renderSeatAssignments();
+}
+
+function _renderChairRow(c) {
+  const guest = WED.guests.find(g => g._chairId === c.id);
+  const seat  = c.label.split(' ').pop(); // last word = seat number
+  if (guest) {
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(90,171,122,0.10);border:1px solid rgba(90,171,122,0.18)">
+      <span style="font-size:10.5px;color:var(--ink-4);min-width:22px;flex-shrink:0;font-weight:700">${seat}</span>
+      <span style="font-size:12.5px;font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${guest.name}</span>
+      <button onclick="assignChairGuest('${c.id}',null)" style="padding:2px 8px;border-radius:5px;border:none;background:rgba(224,120,152,0.12);font-size:10.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;flex-shrink:0">✕</button>
+    </div>`;
+  }
+  return `<div onclick="openChairGuestPicker('${c.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(245,230,200,0.35);border:1.5px dashed rgba(201,169,110,0.22);cursor:pointer">
+    <span style="font-size:10.5px;color:var(--ink-4);min-width:22px;flex-shrink:0;font-weight:700">${seat}</span>
+    <span style="font-size:12px;color:var(--ink-4);flex:1;font-style:italic">Empty</span>
+    <span style="font-size:10px;color:var(--tan-dark);font-weight:700;flex-shrink:0">+ Assign</span>
+  </div>`;
+}
+
 function renderSeatAssignments() {
   const el = document.getElementById('seat-assignments');
   if (!el) return;
-  const isChairType = f => f.type==='chair'||f.type==='freechair';
-  const assignedChairs   = WED.furniture.filter(f=>isChairType(f)&&WED.guests.some(g=>g._chairId===f.id));
-  const unassignedChairs = WED.furniture.filter(f=>isChairType(f)&&!WED.guests.some(g=>g._chairId===f.id));
-  const unseatedGuests   = WED.guests.filter(g=>!g._chairId);
 
-  let html = '<div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;margin-top:4px">🪑 Chair Assignments</div>';
+  const isChairType = f => f.type === 'chair' || f.type === 'freechair';
+  const isTableType = f => f.type === 'round'  || f.type === 'longtable';
 
-  if (assignedChairs.length) {
-    html += '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-bottom:6px">✅ Seated ('+assignedChairs.length+')</div>';
-    assignedChairs.forEach(f => {
-      const g = WED.guests.find(gg=>gg._chairId===f.id);
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.2)">'
-        + '<div style="width:28px;height:28px;border-radius:8px;background:rgba(90,171,122,0.2);display:flex;align-items:center;justify-content:center;font-size:13px">🪑</div>'
-        + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--ink)">'+g.name+'</div>'
-        + '<div style="font-size:10.5px;color:var(--ink-4)">'+f.label+'</div></div>'
-        + '<button onclick="assignChairGuest(\''+f.id+'\',null)" style="padding:3px 8px;border-radius:6px;border:none;background:rgba(224,120,152,0.12);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer">✕</button>'
-        + '</div>';
-    });
-    html += '</div>';
+  const chairs  = WED.furniture.filter(f => isChairType(f));
+  const tables  = WED.furniture.filter(f => isTableType(f));
+  const q       = _seatSearchQ.trim().toLowerCase();
+
+  const matchesSearch = (c) => {
+    if (!q) return true;
+    const g = WED.guests.find(gg => gg._chairId === c.id);
+    return c.label.toLowerCase().includes(q) || (g && g.name.toLowerCase().includes(q));
+  };
+
+  let html = `
+    <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;margin-top:4px">🪑 Seat Assignments</div>
+    <div style="position:relative;margin-bottom:12px">
+      <input type="text" id="seat-search-inp" value="${q.replace(/"/g,'&quot;')}"
+        oninput="updateSeatSearch(this.value)"
+        placeholder="Search guest or chair…"
+        style="width:100%;padding:8px 10px 8px 30px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.25);background:rgba(255,253,248,0.85);font-size:12.5px;font-family:var(--f);color:var(--ink);box-sizing:border-box">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;opacity:0.5">🔍</span>
+    </div>`;
+
+  let hasContent = false;
+
+  /* ── Per-table groups ── */
+  tables.forEach(table => {
+    const tableChairs   = chairs.filter(c => c.parentTableId === table.id);
+    if (!tableChairs.length) return;
+
+    const matched       = tableChairs.filter(matchesSearch);
+    if (q && !matched.length) return;
+
+    const seatedCount   = tableChairs.filter(c => WED.guests.some(g => g._chairId === c.id)).length;
+    const isCollapsed   = _seatCollapsed.has(table.id);
+    const arrow         = isCollapsed ? '▸' : '▾';
+
+    hasContent = true;
+    html += `
+      <div style="margin-bottom:7px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.14)">
+        <div onclick="toggleSeatTable('${table.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(245,230,200,0.55);cursor:pointer;user-select:none">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:11px;color:var(--ink-3)">${arrow}</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">${table.label}</span>
+          </div>
+          <span style="font-size:10.5px;color:var(--ink-4);font-weight:700">${seatedCount}/${tableChairs.length}</span>
+        </div>
+        ${isCollapsed ? '' : `<div style="padding:6px 8px 8px;background:rgba(255,252,247,0.7)">${(q ? matched : tableChairs).map(_renderChairRow).join('')}</div>`}
+      </div>`;
+  });
+
+  /* ── Free chairs (no parent table) ── */
+  const freeChairs    = chairs.filter(c => !c.parentTableId);
+  const matchedFree   = freeChairs.filter(matchesSearch);
+  if (!q || matchedFree.length) {
+    if (freeChairs.length) {
+      hasContent = true;
+      const isCollapsed   = _seatCollapsed.has('__free__');
+      const seatedFree    = freeChairs.filter(c => WED.guests.some(g => g._chairId === c.id)).length;
+      const arrow         = isCollapsed ? '▸' : '▾';
+      html += `
+        <div style="margin-bottom:7px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.12)">
+          <div onclick="toggleSeatTable('__free__')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(245,230,200,0.45);cursor:pointer;user-select:none">
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="font-size:11px;color:var(--ink-3)">${arrow}</span>
+              <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">Individual Chairs</span>
+            </div>
+            <span style="font-size:10.5px;color:var(--ink-4);font-weight:700">${seatedFree}/${freeChairs.length}</span>
+          </div>
+          ${isCollapsed ? '' : `<div style="padding:6px 8px 8px;background:rgba(255,252,247,0.7)">${(q ? matchedFree : freeChairs).map(_renderChairRow).join('')}</div>`}
+        </div>`;
+    }
   }
 
-  if (unassignedChairs.length) {
-    html += '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:6px">🪑 Empty Chairs ('+unassignedChairs.length+')</div>';
-    unassignedChairs.forEach(f => {
-      html += '<div onclick="openChairGuestPicker(\''+f.id+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(245,230,200,0.45);border:1.5px dashed rgba(201,169,110,0.3);cursor:pointer">'
-        + '<div style="width:28px;height:28px;border-radius:8px;background:rgba(245,230,200,0.6);display:flex;align-items:center;justify-content:center;font-size:13px">🪑</div>'
-        + '<span style="font-size:13px;font-weight:600;color:var(--ink-3);flex:1">'+f.label+'</span>'
-        + '<span style="font-size:11px;color:var(--tan-dark);font-weight:700">+ Assign →</span>'
-        + '</div>';
-    });
-    html += '</div>';
+  /* ── Unseated guests ── */
+  const unseated  = WED.guests.filter(g => !g._chairId);
+  const matchedU  = unseated.filter(g => !q || g.name.toLowerCase().includes(q));
+  if (matchedU.length) {
+    hasContent = true;
+    const isCollapsed = _seatCollapsed.has('__unseated__');
+    const arrow = isCollapsed ? '▸' : '▾';
+    html += `
+      <div style="margin-bottom:7px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.10)">
+        <div onclick="toggleSeatTable('__unseated__')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,253,248,0.7);cursor:pointer;user-select:none">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:11px;color:var(--ink-3)">${arrow}</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--ink-3)">👤 Not Seated (${matchedU.length})</span>
+          </div>
+        </div>
+        ${isCollapsed ? '' : `<div style="padding:6px 8px 8px;background:rgba(255,252,247,0.7)">
+          ${matchedU.map(g=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,253,248,0.7);border:1px solid rgba(201,169,110,0.12)">
+              <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:${g.rsvp==='attending'?'var(--green-accent)':g.rsvp==='declined'?'var(--pink-accent)':'var(--tan)'}"></div>
+              <span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</span>
+              <span style="font-size:10px;color:var(--ink-4)">${g.rsvp}</span>
+            </div>`).join('')}
+        </div>`}
+      </div>`;
   }
 
-  if (unseatedGuests.length) {
-    html += '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:6px">👤 Not Yet Seated ('+unseatedGuests.length+')</div>';
-    unseatedGuests.forEach(g => {
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(255,253,248,0.65);border:1px solid rgba(201,169,110,0.15)">'
-        + '<div style="width:8px;height:8px;border-radius:50%;background:'+(g.rsvp==='attending'?'var(--green-accent)':g.rsvp==='declined'?'var(--pink-accent)':'var(--tan)')+';flex-shrink:0"></div>'
-        + '<span style="font-size:13px;font-weight:600;color:var(--ink);flex:1">'+g.name+'</span>'
-        + '<span style="font-size:10.5px;color:var(--ink-4)">'+g.rsvp+'</span>'
-        + '</div>';
-    });
-    html += '</div>';
+  if (!hasContent && !chairs.length) {
+    html += '<div style="text-align:center;padding:20px;font-size:12.5px;color:var(--ink-4)">Add 🪑 chairs from the palette, then double-tap a chair to assign a guest.</div>';
+  } else if (!hasContent && q) {
+    html += `<div style="text-align:center;padding:20px;font-size:12.5px;color:var(--ink-4)">No results for "<strong>${q}</strong>"</div>`;
   }
 
-  if (!assignedChairs.length && !unassignedChairs.length) {
-    html += '<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink-4)">Add 🪑 chairs from the palette above, then double-tap a chair to assign a guest.</div>';
-  }
   el.innerHTML = html;
 }
 
@@ -2523,6 +2651,9 @@ window.zoomCanvas              = zoomCanvas;
 window.fitCanvas               = fitCanvas;
 window.openChecklistNoteEditor  = openChecklistNoteEditor;
 window.saveChecklistNote        = saveChecklistNote;
-window.togglePhaseCollapse      = togglePhaseCollapse;
-window.submitChecklistTimeline  = submitChecklistTimeline;
+window.togglePhaseCollapse        = togglePhaseCollapse;
+window.submitChecklistTimeline    = submitChecklistTimeline;
+window.showChecklistTimelineChanger = showChecklistTimelineChanger;
+window.toggleSeatTable            = toggleSeatTable;
+window.updateSeatSearch           = updateSeatSearch;
 window.openPartnerBrowse        = openPartnerBrowse;

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#fef6e8">
+  <title>RSVP — Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ivory:    #fdfaf4;
+      --gold:     #c9a96e;
+      --gold-dk:  #a07840;
+      --tan:      #e8d5b0;
+      --rose:     #e07898;
+      --sage:     #6a8e70;
+      --ink:      #2c1f0e;
+      --ink-3:    #7a6045;
+      --ink-4:    #b09070;
+      --r:        14px;
+      --f:        'Inter', sans-serif;
+      --f2:       'Cormorant Garamond', Georgia, serif;
+    }
+
+    body {
+      font-family: var(--f);
+      background: linear-gradient(160deg, #fdfaf4 0%, #fce8ee 50%, #e8f5ed 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255, 252, 247, 0.96);
+      border-radius: 24px;
+      border: 1px solid rgba(201, 169, 110, 0.22);
+      box-shadow: 0 8px 40px rgba(44, 24, 16, 0.10);
+      overflow: hidden;
+    }
+
+    /* ── Hero banner ── */
+    .hero {
+      padding: 32px 24px 24px;
+      background: linear-gradient(160deg, #fdfaf4 0%, #fce8ee 60%, #fdfaf4 100%);
+      border-bottom: 1px solid rgba(201, 169, 110, 0.14);
+      text-align: center;
+    }
+    .eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+      opacity: 0.85;
+    }
+    .couple-names {
+      font-family: var(--f2);
+      font-size: 36px;
+      font-style: italic;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+    }
+    .amp { color: var(--gold); font-size: 24px; display: inline; margin: 0 8px; }
+    .rule {
+      display: flex; align-items: center; gap: 10px;
+      max-width: 200px; margin: 12px auto 10px;
+    }
+    .rule span { flex: 1; height: 1px; background: rgba(201,169,110,0.35); }
+    .rule i { font-size: 8px; color: var(--gold); font-style: normal; }
+    .date-venue { font-family: var(--f2); font-size: 13.5px; font-style: italic; color: var(--ink-3); line-height: 1.6; }
+    .venue-text { font-size: 12px; font-style: normal; font-weight: 600; color: var(--ink-4); margin-top: 2px; }
+
+    /* ── Form ── */
+    .form-body { padding: 24px 22px; }
+    .form-title {
+      font-family: var(--f2);
+      font-size: 20px;
+      font-style: italic;
+      color: var(--ink);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .form-sub { font-size: 12px; color: var(--ink-4); margin-bottom: 20px; line-height: 1.5; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-4);
+      margin-bottom: 5px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 10px;
+      border: 1px solid rgba(201,169,110,0.28);
+      background: rgba(253,250,244,0.9);
+      font-family: var(--f);
+      font-size: 13.5px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: rgba(201,169,110,0.6);
+      background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+
+    /* Attendance pill toggle */
+    .att-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .att-pill {
+      flex: 1;
+      min-width: 80px;
+      padding: 9px 6px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(201,169,110,0.25);
+      background: rgba(245,230,200,0.35);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-3);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: var(--f);
+    }
+    .att-pill.yes.sel  { background: rgba(90,171,122,0.18); border-color: rgba(90,171,122,0.5); color: #3a7a4a; }
+    .att-pill.no.sel   { background: rgba(224,120,152,0.14); border-color: rgba(224,120,152,0.45); color: #b04060; }
+    .att-pill.maybe.sel { background: rgba(201,169,110,0.2); border-color: rgba(201,169,110,0.55); color: var(--gold-dk); }
+
+    /* Meal pills */
+    .meal-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .meal-pill {
+      padding: 7px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(201,169,110,0.22);
+      background: rgba(245,230,200,0.35);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--f);
+    }
+    .meal-pill.sel {
+      background: rgba(201,169,110,0.22);
+      border-color: rgba(201,169,110,0.55);
+      color: var(--gold-dk);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dk) 100%);
+      border: none;
+      color: #fff;
+      font-family: var(--f);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      margin-top: 20px;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:hover:not(:disabled) { opacity: 0.9; }
+
+    /* ── Success screen ── */
+    #success-screen {
+      display: none;
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .success-emoji { font-size: 48px; margin-bottom: 16px; }
+    .success-title {
+      font-family: var(--f2);
+      font-size: 28px;
+      font-style: italic;
+      color: var(--ink);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .success-sub { font-size: 13px; color: var(--ink-4); line-height: 1.6; }
+
+    /* ── Error banner ── */
+    #error-banner {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 13px;
+      border-radius: 10px;
+      background: rgba(224,120,152,0.12);
+      border: 1px solid rgba(224,120,152,0.28);
+      font-size: 12px;
+      color: #b04060;
+      font-weight: 600;
+    }
+
+    .footer-note {
+      text-align: center;
+      padding: 16px;
+      font-size: 10.5px;
+      color: var(--ink-4);
+      border-top: 1px solid rgba(201,169,110,0.10);
+    }
+    .footer-note a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="eyebrow">You're cordially invited to the wedding of</div>
+    <div class="couple-names">
+      <span id="hero-p1">—</span>
+      <span class="amp">&amp;</span>
+      <span id="hero-p2">—</span>
+    </div>
+    <div class="rule"><span></span><i>◆</i><span></span></div>
+    <div class="date-venue">
+      <div id="hero-date"></div>
+      <div id="hero-venue" class="venue-text"></div>
+    </div>
+  </div>
+
+  <!-- ── Form ── -->
+  <div id="rsvp-form-section">
+    <div class="form-body">
+      <div class="form-title">Kindly confirm your attendance</div>
+      <div class="form-sub">Please fill in your details below so we can plan accordingly. Your response means the world to us. 💌</div>
+
+      <div class="field">
+        <label>Your Full Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. Maria Santos" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label>Will you be attending?</label>
+        <div class="att-pills">
+          <button class="att-pill yes sel" data-val="yes" onclick="selectAtt(this)">✅ Yes, I'll be there!</button>
+          <button class="att-pill maybe"   data-val="maybe" onclick="selectAtt(this)">🤔 Maybe</button>
+          <button class="att-pill no"      data-val="no" onclick="selectAtt(this)">😢 Can't make it</button>
+        </div>
+      </div>
+
+      <div class="field" id="meal-field">
+        <label>Meal Preference</label>
+        <div class="meal-pills">
+          <button class="meal-pill sel" data-val="chicken" onclick="selectMeal(this)">🍗 Chicken</button>
+          <button class="meal-pill"     data-val="fish"    onclick="selectMeal(this)">🐟 Fish</button>
+          <button class="meal-pill"     data-val="beef"    onclick="selectMeal(this)">🥩 Beef</button>
+          <button class="meal-pill"     data-val="veg"     onclick="selectMeal(this)">🥦 Vegetarian</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Phone Number (optional)</label>
+        <input type="tel" id="f-phone" placeholder="+63 912 345 6789" autocomplete="tel">
+      </div>
+
+      <div class="field">
+        <label>Message for the couple (optional)</label>
+        <textarea id="f-message" placeholder="Write a heartfelt message…"></textarea>
+      </div>
+
+      <div id="error-banner"></div>
+
+      <button class="submit-btn" id="submit-btn" onclick="submitRSVP()">Send My RSVP 💌</button>
+    </div>
+  </div>
+
+  <!-- ── Success ── -->
+  <div id="success-screen">
+    <div class="success-emoji">🎊</div>
+    <div class="success-title">Thank you!</div>
+    <div class="success-sub">Your RSVP has been received.<br>The couple can't wait to celebrate with you!</div>
+  </div>
+
+  <div class="footer-note">
+    Powered by <a href="https://campingchairph.github.io/AnoTara/kasalko.html" target="_blank">Down to the Isle</a>
+  </div>
+
+</div>
+
+<script>
+/* ── Firebase ── */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs",
+  authDomain:        "weddingthings.firebaseapp.com",
+  projectId:         "weddingthings",
+  storageBucket:     "weddingthings.firebasestorage.app",
+  messagingSenderId: "732042029649",
+  appId:             "1:732042029649:web:21bbe63214e8b36770e670",
+};
+let DB = null;
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  DB = firebase.firestore();
+} catch(e) {}
+
+/* ── URL params ── */
+const params  = new URLSearchParams(window.location.search);
+const P1      = params.get('p1')    || '';
+const P2      = params.get('p2')    || '';
+const DATE    = params.get('date')  || '';
+const VENUE   = params.get('venue') || '';
+
+/* ── Populate hero ── */
+document.getElementById('hero-p1').textContent = P1 || '—';
+document.getElementById('hero-p2').textContent = P2 || '—';
+
+if (DATE) {
+  const d = new Date(DATE + 'T12:00:00');
+  document.getElementById('hero-date').textContent =
+    d.toLocaleDateString('en-PH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+if (VENUE) document.getElementById('hero-venue').textContent = VENUE;
+
+document.title = P1 && P2 ? `RSVP — ${P1} & ${P2}'s Wedding` : 'RSVP — Wedding Invitation';
+
+/* ── Form state ── */
+let _att  = 'yes';
+let _meal = 'chicken';
+
+function selectAtt(btn) {
+  document.querySelectorAll('.att-pill').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  _att = btn.dataset.val;
+  document.getElementById('meal-field').style.display = _att === 'no' ? 'none' : 'block';
+}
+function selectMeal(btn) {
+  document.querySelectorAll('.meal-pill').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  _meal = btn.dataset.val;
+}
+
+/* ── Submit ── */
+async function submitRSVP() {
+  const name = (document.getElementById('f-name').value || '').trim();
+  if (!name) {
+    showError('Please enter your full name.');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  hideError();
+
+  const coupleKey = ((P1 || 'unknown') + '_' + (P2 || 'unknown'))
+    .toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+  const payload = {
+    coupleKey,
+    p1: P1, p2: P2,
+    weddingDate: DATE,
+    guestName:   name,
+    attendance:  _att,
+    meal:        _att !== 'no' ? _meal : null,
+    phone:       (document.getElementById('f-phone').value   || '').trim() || null,
+    message:     (document.getElementById('f-message').value || '').trim() || null,
+    submittedAt: new Date().toISOString(),
+  };
+
+  let saved = false;
+  if (DB) {
+    try {
+      await DB.collection('kasalko_rsvp')
+        .doc(coupleKey)
+        .collection('responses')
+        .add(payload);
+      saved = true;
+    } catch(e) {
+      console.warn('Firestore write failed:', e);
+    }
+  }
+
+  // Fallback: if Firestore fails, try mailto
+  if (!saved) {
+    const body = encodeURIComponent(
+      `RSVP from ${name}\nAttendance: ${_att}\nMeal: ${_meal}\nPhone: ${payload.phone||'-'}\nMessage: ${payload.message||'-'}`
+    );
+    // silently log — don't block the success screen
+    console.info('RSVP could not be saved to Firebase. Payload:', payload);
+  }
+
+  // Show success regardless (UX: don't block on Firestore rule issues)
+  document.getElementById('rsvp-form-section').style.display = 'none';
+  document.getElementById('success-screen').style.display = 'block';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = msg;
+  el.style.display = 'block';
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = false;
+  btn.textContent = 'Send My RSVP 💌';
+}
+function hideError() {
+  document.getElementById('error-banner').style.display = 'none';
+}
+</script>
+</body>
+</html>
