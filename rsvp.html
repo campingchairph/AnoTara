@@ -395,13 +395,17 @@ async function submitRSVP() {
   let saved = false;
   if (DB) {
     try {
-      await DB.collection('kasalko_rsvp')
+      const writePromise = DB.collection('kasalko_rsvp')
         .doc(COUPLE_KEY)
         .collection('responses')
         .add(payload);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 6000)
+      );
+      await Promise.race([writePromise, timeoutPromise]);
       saved = true;
     } catch(e) {
-      console.warn('Firestore write failed:', e);
+      console.warn('Firestore write failed or timed out:', e);
     }
   }
 

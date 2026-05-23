@@ -188,9 +188,10 @@ function updateHero() {
   if (ofLabel) ofLabel.style.opacity = (WED.couple.p1 || WED.couple.p2) ? '0.8' : '0.3';
 
   if (namesEl) {
-    namesEl.innerHTML = (WED.couple.p1 || '—')
-      + '<span class="wedding-amp">&amp;</span>'
-      + (WED.couple.p2 || '—');
+    namesEl.innerHTML =
+      `<span class="hero-name-line">${WED.couple.p1 || '—'}</span>` +
+      `<span class="wedding-amp">&amp;</span>` +
+      `<span class="hero-name-line">${WED.couple.p2 || '—'}</span>`;
   }
   if (dateBadge) {
     if (WED.date) {
@@ -559,10 +560,17 @@ function showRSVPCard(guestId) {
   const w = canvas.width  = 380;
   const h = canvas.height = 560;
 
-  /* After any draw, push canvas → <img> so it's long-pressable on mobile */
+  /* After any draw, push canvas → <img> so it's long-pressable on mobile.
+     When showing the default generated card (no custom upload), also store
+     the data URL in WED._invitationImg so the overview card stays in sync. */
   function _syncPreview() {
     const preview = document.getElementById('rsvp-preview-img');
-    if (preview) preview.src = canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL('image/png');
+    if (preview) preview.src = dataUrl;
+    if (!WED.customCardImage) {
+      WED._invitationImg = dataUrl;
+      saveState();
+    }
   }
 
   if (WED.customCardImage) {
