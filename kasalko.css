@@ -425,7 +425,7 @@ body {
 
 /* ── WEDDING HERO — invitation card style ────── */
 .wedding-hero {
-  padding: 24px 20px 20px;
+  padding: 36px 24px 30px;
   background: linear-gradient(160deg, #fdfaf4 0%, #fef8ee 50%, #fdf4e7 100%);
   border-bottom: 1px solid rgba(184,145,106,0.14);
   text-align: center;
@@ -442,7 +442,7 @@ body {
 }
 .wedding-couple-names {
   font-family: var(--f2);
-  font-size: 40px;
+  font-size: 46px;
   font-style: italic;
   font-weight: 600;
   color: var(--ink);
@@ -940,6 +940,21 @@ textarea.glass-input {
 .rsvp-action-btn:active { transform: scale(0.96); opacity: 0.88; }
 .rsvp-btn-save  { background: linear-gradient(135deg,var(--gold),var(--gold-dark)); color: white; }
 .rsvp-btn-share { background: linear-gradient(135deg,#1877F2,#4267B2); color: white; }
+
+/* ── GUEST ACTIONS COLUMN ────────────────────── */
+.guest-actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .guest-actions-col {
+    flex-direction: row;
+    align-items: center;
+  }
+}
 
 /* ── PROGRESS ────────────────────────────────── */
 .progress-bar-wrap {

@@ -72,6 +72,14 @@ const WED = {
   _collapsedPhases: [],
 };
 
+/* ── PER-GUEST INVITE STATE ──────────────────── */
+let _rsvpGuestId = null; // set when opening RSVP card for a specific guest
+
+function _rsvpCoupleKey() {
+  return ((WED.couple.p1 || 'unknown') + '_' + (WED.couple.p2 || 'unknown'))
+    .toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
 /* ── PERSISTENCE ─────────────────────────────── */
 const STORE_KEY = 'kasalko_data';
 
@@ -283,13 +291,13 @@ function renderOverview() {
     <!-- Invitation -->
     <div style="padding:16px;border-radius:18px" class="glass">
       <span class="sec-title">Wedding Invitation</span>
-      ${WED._invitationImg ? `<img src="${WED._invitationImg}" style="width:100%;border-radius:14px;margin-bottom:10px">` : `
+      ${(WED.customCardImage || WED._invitationImg) ? `<img src="${WED.customCardImage || WED._invitationImg}" style="width:100%;border-radius:14px;margin-bottom:10px">` : `
         <div style="padding:20px;border-radius:14px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);text-align:center;margin-bottom:10px">
           <div style="font-size:28px;margin-bottom:6px">💌</div>
           <div style="font-size:12.5px;color:var(--ink-3)">Upload your own invitation design</div>
         </div>`}
       <label style="display:block;width:100%;padding:10px;border-radius:14px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center;margin-bottom:8px">
-        📎 ${WED._invitationImg ? 'Replace Invitation' : 'Upload Invitation'}
+        📎 ${(WED.customCardImage || WED._invitationImg) ? 'Replace Invitation' : 'Upload Invitation'}
         <input type="file" accept="image/*" style="display:none" onchange="uploadInvitation(event)">
       </label>
       <button onclick="showRSVPCard()" style="width:100%;padding:10px;border-radius:14px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">💌 Generate Digital Invitation</button>
@@ -463,32 +471,33 @@ function renderGuests() {
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <button onclick="openModal('wed-add-guest-modal')" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Guest</button>
-      <button onclick="showRSVPCard()" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.28);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer">💌 Send Invites</button>
     </div>
     ${WED.guests.length ? WED.guests.map(g => {
       const chair = WED.furniture.find(f => g._chairId === f.id);
       const initials = g.name.split(' ').map(n=>n[0]).join('').substring(0,2);
       const bgColor = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
       const txtColor= g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
+      const sentAt = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
       return `<div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
           <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${txtColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">${initials}</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-              <span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,230,200,0.7);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.2)">Table ${g.table} · Seat ${g.seat}</span>
               ${chair?`<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>`:''}
               ${g.meal?`<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>`:''}
               ${g.phone?`<a href="tel:${g.phone.replace(/\s/g,'')}" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>`:''}
+              ${g._inviteSent?`<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>`:''}
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <div class="guest-actions-col">
             <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
               <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
               <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
               <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
             </select>
-            <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>
+            <button onclick="shareGuestInvite(${g.id})" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Share'}</button>
+            <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
           </div>
         </div>
       </div>`;
@@ -508,7 +517,7 @@ function submitAddGuest() {
   if (!name) { showToast('⚠️ Enter a guest name'); return; }
   const phone   = (document.getElementById('new-guest-phone')?.value   || '').trim();
   const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone });
+  WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone, _inviteSent: false, _inviteSentAt: null });
   document.getElementById('new-guest-name').value    = '';
   document.getElementById('new-guest-phone').value   = '';
   document.getElementById('new-guest-dietary').value = '';
@@ -540,7 +549,8 @@ function removeGuest(id) {
 }
 
 /* ── RSVP / INVITATION CARD ──────────────────── */
-function showRSVPCard() {
+function showRSVPCard(guestId) {
+  _rsvpGuestId = (guestId !== undefined && guestId !== null) ? guestId : null;
   const modal = document.getElementById('rsvp-card-modal');
   if (!modal) return;
   const canvas = document.getElementById('rsvp-canvas');
@@ -652,8 +662,68 @@ function _generateRSVPQR() {
   const p2  = encodeURIComponent(WED.couple.p2 || '');
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
-  const rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}`;
+  const ck  = encodeURIComponent(_rsvpCoupleKey());
+  let rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
+  if (_rsvpGuestId !== null) {
+    const guest = WED.guests.find(g => g.id === _rsvpGuestId);
+    if (guest) {
+      rsvpUrl += `&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+    }
+  }
+  // Update the label below the QR
+  const qrLabel = document.getElementById('rsvp-qr-label');
+  if (qrLabel) {
+    const guest = _rsvpGuestId !== null ? WED.guests.find(g => g.id === _rsvpGuestId) : null;
+    qrLabel.textContent = guest ? `Scan to RSVP — for ${guest.name}` : 'Scan to RSVP';
+  }
   new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+
+/* 💌 Share personalised invite link / QR for a specific guest */
+async function shareGuestInvite(guestId) {
+  const guest = WED.guests.find(g => g.id === guestId);
+  if (!guest) return;
+  const p1  = encodeURIComponent(WED.couple.p1 || '');
+  const p2  = encodeURIComponent(WED.couple.p2 || '');
+  const dt  = encodeURIComponent(WED.date       || '');
+  const vn  = encodeURIComponent(WED.venue      || '');
+  const ck  = encodeURIComponent(_rsvpCoupleKey());
+  const url = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+
+  let shared = false;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `Wedding Invitation — ${WED.couple.p1} & ${WED.couple.p2}`,
+        text:  `Hi ${guest.name}! You're cordially invited to ${WED.couple.p1} & ${WED.couple.p2}'s wedding. Please RSVP using the link below 💌`,
+        url,
+      });
+      shared = true;
+    } catch(e) {
+      if (e.name !== 'AbortError') {
+        // fall through to clipboard copy
+      } else {
+        return; // user cancelled the share sheet
+      }
+    }
+  }
+
+  if (!shared) {
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('🔗 Invite link copied! Send it to ' + guest.name);
+    } catch(e) {
+      showToast('💌 Link: ' + url);
+    }
+  }
+
+  // Mark as sent
+  guest._inviteSent   = true;
+  guest._inviteSentAt = new Date().toISOString();
+  saveState();
+  renderGuests();
+  showToast('💌 Invite ' + (shared ? 'shared' : 'link copied') + ' for ' + guest.name);
 }
 
 /* ⬇ Download invitation image (desktop / Android) */
@@ -691,6 +761,7 @@ window.clearCustomCard = function() {
   if (inp) inp.value = '';
   showToast('↩ Showing default invitation card');
   showRSVPCard();
+  renderOverview();
 };
 
 /* ═══════════════════════════════════════════════
@@ -2639,6 +2710,7 @@ window.submitAddGuest       = submitAddGuest;
 window.updateGuestRSVP      = updateGuestRSVP;
 window.removeGuest          = removeGuest;
 window.showRSVPCard         = showRSVPCard;
+window.shareGuestInvite     = shareGuestInvite;
 window.downloadInvitation   = downloadInvitation;
 window.uploadInvitation     = uploadInvitation;
 window.toggleChecklist      = toggleChecklist;

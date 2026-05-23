@@ -320,11 +320,14 @@ try {
 } catch(e) {}
 
 /* ── URL params ── */
-const params  = new URLSearchParams(window.location.search);
-const P1      = params.get('p1')    || '';
-const P2      = params.get('p2')    || '';
-const DATE    = params.get('date')  || '';
-const VENUE   = params.get('venue') || '';
+const params     = new URLSearchParams(window.location.search);
+const P1         = params.get('p1')         || '';
+const P2         = params.get('p2')         || '';
+const DATE       = params.get('date')       || '';
+const VENUE      = params.get('venue')      || '';
+const GUEST_ID   = params.get('guestId')   || '';
+const GUEST_NAME = params.get('guestName') || '';
+const COUPLE_KEY = params.get('coupleKey') || ((P1 || 'unknown') + '_' + (P2 || 'unknown')).toLowerCase().replace(/[^a-z0-9_]/g, '');
 
 /* ── Populate hero ── */
 document.getElementById('hero-p1').textContent = P1 || '—';
@@ -338,6 +341,14 @@ if (DATE) {
 if (VENUE) document.getElementById('hero-venue').textContent = VENUE;
 
 document.title = P1 && P2 ? `RSVP — ${P1} & ${P2}'s Wedding` : 'RSVP — Wedding Invitation';
+
+/* ── Pre-fill guest name if link is personalised ── */
+if (GUEST_NAME) {
+  const nameInput = document.getElementById('f-name');
+  if (nameInput) nameInput.value = GUEST_NAME;
+  const formSub = document.querySelector('.form-sub');
+  if (formSub) formSub.textContent = `Hi ${GUEST_NAME}! 💌 Please fill in your details below so ${P1 && P2 ? P1 + ' & ' + P2 : 'the couple'} can plan accordingly.`;
+}
 
 /* ── Form state ── */
 let _att  = 'yes';
@@ -368,14 +379,12 @@ async function submitRSVP() {
   btn.textContent = 'Sending…';
   hideError();
 
-  const coupleKey = ((P1 || 'unknown') + '_' + (P2 || 'unknown'))
-    .toLowerCase().replace(/[^a-z0-9_]/g, '');
-
   const payload = {
-    coupleKey,
+    coupleKey:   COUPLE_KEY,
     p1: P1, p2: P2,
     weddingDate: DATE,
     guestName:   name,
+    guestId:     GUEST_ID || null,
     attendance:  _att,
     meal:        _att !== 'no' ? _meal : null,
     phone:       (document.getElementById('f-phone').value   || '').trim() || null,
@@ -387,7 +396,7 @@ async function submitRSVP() {
   if (DB) {
     try {
       await DB.collection('kasalko_rsvp')
-        .doc(coupleKey)
+        .doc(COUPLE_KEY)
         .collection('responses')
         .add(payload);
       saved = true;

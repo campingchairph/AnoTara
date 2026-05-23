@@ -140,8 +140,52 @@ function _applyCloudData(data) {
   saveState();
   if (typeof wedTab === 'function') wedTab(WED.activeTab || 'overview');
   showToast('☁️ Plans synced from cloud!');
+  // Pull RSVP responses and update guest statuses
+  setTimeout(syncRSVPsFromCloud, 800);
 }
 window._applyCloudData = _applyCloudData;
+
+/* ── SYNC RSVP RESPONSES → GUEST LIST ───────── */
+async function syncRSVPsFromCloud() {
+  if (!DB) return;
+  const coupleKey = ((WED.couple.p1 || 'unknown') + '_' + (WED.couple.p2 || 'unknown'))
+    .toLowerCase().replace(/[^a-z0-9]/g, '_');
+  try {
+    const snap = await DB.collection('kasalko_rsvp').doc(coupleKey).collection('responses').get();
+    if (snap.empty) return;
+    let updated = 0;
+    snap.forEach(doc => {
+      const r = doc.data();
+      // Match by guestId first, then fall back to name match
+      let guest = null;
+      if (r.guestId) {
+        const gid = parseInt(r.guestId, 10);
+        guest = WED.guests.find(g => g.id === gid);
+      }
+      if (!guest && r.guestName) {
+        guest = WED.guests.find(g => g.name.toLowerCase() === (r.guestName || '').toLowerCase());
+      }
+      if (!guest) return;
+      const rsvpMap = { yes: 'attending', no: 'declined', maybe: 'pending' };
+      const newRsvp = rsvpMap[r.attendance] || 'pending';
+      if (guest.rsvp !== newRsvp) {
+        guest.rsvp = newRsvp;
+        updated++;
+      }
+      // Also sync meal if provided
+      if (r.meal) guest.meal = r.meal;
+    });
+    if (updated > 0) {
+      saveState();
+      if (typeof renderGuests === 'function') renderGuests();
+      if (typeof renderOverview === 'function' && WED.activeTab === 'overview') renderOverview();
+      showToast(`💌 ${updated} RSVP response${updated>1?'s':''} synced!`);
+    }
+  } catch(e) {
+    console.warn('RSVP sync error:', e);
+  }
+}
+window.syncRSVPsFromCloud = syncRSVPsFromCloud;
 
 function _showCloudConflictSheet(cloudData) {
   const old = document.getElementById('cloud-conflict-sheet');
@@ -395,7 +439,10 @@ function renderCloudSection() {
           <span style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">● Live</span>
         </div>
         <div style="font-size:12px;color:var(--ink-3);line-height:1.5">Signed in as <b>${name}</b> — your plan auto-saves to the cloud on every change.</div>
-        <button onclick="openUserMenu()" style="margin-top:10px;width:100%;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);color:var(--tan-dark)">👤 Account &amp; Settings</button>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="openUserMenu()" style="flex:1;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);color:var(--tan-dark)">👤 Account &amp; Settings</button>
+          <button onclick="syncRSVPsFromCloud()" style="padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);color:var(--pink-deep);white-space:nowrap">💌 Sync RSVPs</button>
+        </div>
         ${_saveSellCard}
       </div>`;
   }
