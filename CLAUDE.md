@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A standalone, framework-free wedding planner PWA. No build step, no bundler, no npm. Edit files and push — GitHub Pages serves them directly. The app was extracted from a separate repo (AnoTara) and lives here on its own.
 
+**Repo:** `https://github.com/campingchairph/[repo-name]`
 **Live URLs**
 - App: `https://campingchairph.github.io/[repo-name]/` (index.html)
 - RSVP page: `https://campingchairph.github.io/[repo-name]/rsvp.html`
