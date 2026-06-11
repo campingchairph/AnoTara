@@ -5345,10 +5345,12 @@ window.toggleBillPaid = toggleBillPaid;
 /* ═══════════════════════════════════════════════
    BUDGET PLANNER
    ═══════════════════════════════════════════════ */
-let BUDGET_PROFILE = JSON.parse(localStorage.getItem('at_budget') || 'null') || { salary:0, freq:'monthly', bills:[], deductions:{ sss:0, philhealth:0, pagibig:0, tax:0, other:0 }, essentials:[] };
+let BUDGET_PROFILE = JSON.parse(localStorage.getItem('at_budget') || 'null') || { salary:0, freq:'monthly', bills:[], deductions:{ sss:0, philhealth:0, pagibig:0, tax:0, other:0 }, essentials:[], savingsPct:20, emergencyPct:10 };
 // Migrate old profiles that lack new fields
 if (!BUDGET_PROFILE.deductions) BUDGET_PROFILE.deductions = { sss:0, philhealth:0, pagibig:0, tax:0, other:0 };
 if (!BUDGET_PROFILE.essentials) BUDGET_PROFILE.essentials = [];
+if (BUDGET_PROFILE.savingsPct  == null) BUDGET_PROFILE.savingsPct  = 20;
+if (BUDGET_PROFILE.emergencyPct == null) BUDGET_PROFILE.emergencyPct = 10;
 function saveBudgetProfile() { localStorage.setItem('at_budget', JSON.stringify(BUDGET_PROFILE)); }
 
 const FREQ_PER_MONTH = { monthly:1, semi:2, weekly:4.33, daily:21.7 };
@@ -5972,16 +5974,18 @@ function renderBudgetChart() {
   const monthly    = getMonthlyNet();   // use NET take-home
   const billsTotal = getActiveBills().reduce((s,b)=>s+b.amount, 0);
   const essTotal   = getEssentialsTotal();
-  const savings    = monthly * 0.20;
-  const emergency  = monthly * 0.10;
+  const sPct       = (BUDGET_PROFILE.savingsPct   || 0) / 100;
+  const ePct       = (BUDGET_PROFILE.emergencyPct || 0) / 100;
+  const savings    = monthly * sPct;
+  const emergency  = monthly * ePct;
   const remainder  = Math.max(0, monthly - billsTotal - essTotal - savings - emergency);
 
   const segments = monthly > 0 ? [
-    { label:'Bills',          value:billsTotal, color:'#E07898', pct:(monthly>0?billsTotal/monthly*100:0) },
-    { label:'Essentials',     value:essTotal,   color:'#60A5FA', pct:(monthly>0?essTotal/monthly*100:0) },
-    { label:'Savings (20%)',  value:savings,    color:'#5AAB7A', pct:20 },
-    { label:'Emergency (10%)',value:emergency,  color:'#D4A853', pct:10 },
-    { label:'Free Spending',  value:remainder,  color:'#9CA3AF', pct:(monthly>0?remainder/monthly*100:0) },
+    { label:'Bills',                                     value:billsTotal, color:'#E07898', pct:(monthly>0?billsTotal/monthly*100:0) },
+    { label:'Essentials',                                value:essTotal,   color:'#60A5FA', pct:(monthly>0?essTotal/monthly*100:0) },
+    { label:'Savings ('  +(BUDGET_PROFILE.savingsPct  ||0)+'%)', value:savings,    color:'#5AAB7A', pct:BUDGET_PROFILE.savingsPct   ||0 },
+    { label:'Emergency (' +(BUDGET_PROFILE.emergencyPct||0)+'%)', value:emergency,  color:'#D4A853', pct:BUDGET_PROFILE.emergencyPct ||0 },
+    { label:'Free Spending',                             value:remainder,  color:'#9CA3AF', pct:(monthly>0?remainder/monthly*100:0) },
   ].filter(s=>s.value>0) : [];
 
   drawBudgetDonut(canvas, segments, monthly);
@@ -6071,9 +6075,25 @@ function renderPaycheckGuide() {
   const periods     = getPaycheckPeriods();
   const active      = getActiveBills();
   const essPC       = getEssentialsTotal() / paychecks;
-  const savingsPC   = monthly * 0.20 / paychecks;
-  const emerPC      = monthly * 0.10 / paychecks;
+  const savingsPC   = monthly * (BUDGET_PROFILE.savingsPct   || 0) / 100 / paychecks;
+  const emerPC      = monthly * (BUDGET_PROFILE.emergencyPct || 0) / 100 / paychecks;
   const deductTotal = getTotalDeductions();
+
+  const sPctVal = BUDGET_PROFILE.savingsPct   ?? 20;
+  const ePctVal = BUDGET_PROFILE.emergencyPct ?? 10;
+  const pctEditor =
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(245,230,200,0.35);border-radius:var(--r-md);margin-bottom:14px;flex-wrap:wrap;border:1px solid rgba(201,169,110,0.2)">' +
+      '<span style="font-size:11.5px;font-weight:700;color:var(--tan-dark);flex:1;min-width:100px">Allocation Goals</span>' +
+      '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3)">' +
+        '🐷 Savings' +
+        '<input id="savings-pct-input" type="number" min="0" max="80" value="' + sPctVal + '" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);font-size:12px;font-weight:700;text-align:center;background:#fff">%' +
+      '</label>' +
+      '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3)">' +
+        '🛡️ Emergency' +
+        '<input id="emergency-pct-input" type="number" min="0" max="50" value="' + ePctVal + '" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);font-size:12px;font-weight:700;text-align:center;background:#fff">%' +
+      '</label>' +
+      '<button onclick="updateAllocationPcts()" style="padding:5px 14px;border-radius:var(--r-xs);border:none;background:rgba(90,171,122,0.15);color:var(--green-deep);font-size:12px;font-weight:700;cursor:pointer">Apply</button>' +
+    '</div>';
 
   function payBtn(billId) {
     const isPaid = paidIds.includes(billId);
@@ -6122,13 +6142,13 @@ function renderPaycheckGuide() {
       '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">' +
         '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>' +
         '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">You receive <b>₱' + Math.round(paycheckNet).toLocaleString() + '</b> net ' + freqLabel + '. Here\'s how to split it:</div>' +
-        deductLine + billsList +
+        pctEditor + deductLine + billsList +
         [
-          { icon:'💳', label:'Bills (remaining)',  amt:billsPC,    color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
-          { icon:'🛒', label:'Essentials',          amt:essPC,      color:'#3B82F6',           bg:'rgba(96,165,250,0.08)' },
-          { icon:'🐷', label:'Savings (20%)',        amt:savingsPC,  color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
-          { icon:'🛡️', label:'Emergency (10%)',      amt:emerPC,     color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
-          { icon:'🎉', label:'Free to spend',        amt:freePC,     color:freePC > 0 ? 'var(--ink-2)' : '#EF4444', bg:'rgba(0,0,0,0.03)' },
+          { icon:'💳', label:'Bills (remaining)',                           amt:billsPC,    color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
+          { icon:'🛒', label:'Essentials',                                  amt:essPC,      color:'#3B82F6',           bg:'rgba(96,165,250,0.08)' },
+          { icon:'🐷', label:'Savings (' + sPctVal + '%)',                   amt:savingsPC,  color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
+          { icon:'🛡️', label:'Emergency (' + ePctVal + '%)',                 amt:emerPC,     color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
+          { icon:'🎉', label:'Free to spend',                               amt:freePC,     color:freePC > 0 ? 'var(--ink-2)' : '#EF4444', bg:'rgba(0,0,0,0.03)' },
         ].filter(r => r.amt > 0).map(r =>
           '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:' + r.bg + ';margin-bottom:6px">' +
             '<div style="font-size:20px;flex-shrink:0">' + r.icon + '</div>' +
@@ -6154,6 +6174,8 @@ function renderPaycheckGuide() {
   } else {
     html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱' + Math.round(paycheckNet).toLocaleString() + '</b> net take-home</div>';
   }
+
+  html += pctEditor;
 
   periods.forEach((period, idx) => {
     const effBills = getEffectiveBillsForPeriod(active, periods, idx);
@@ -6227,9 +6249,9 @@ function renderPaycheckGuide() {
 
     html += '<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px">';
     [
-      { icon:'🐷', label:'Savings (20%)',   amt:savingsPC, color:'var(--green-deep)' },
-      { icon:'🛡️', label:'Emergency (10%)', amt:emerPC,    color:'var(--tan-dark)' },
-      { icon:'🎉', label:'Free to spend',   amt:freePC,    color:freePC > 0 ? 'var(--ink-2)' : '#EF4444' },
+      { icon:'🐷', label:'Savings (' + sPctVal + '%)',    amt:savingsPC, color:'var(--green-deep)' },
+      { icon:'🛡️', label:'Emergency (' + ePctVal + '%)', amt:emerPC,    color:'var(--tan-dark)' },
+      { icon:'🎉', label:'Free to spend',                amt:freePC,    color:freePC > 0 ? 'var(--ink-2)' : '#EF4444' },
     ].forEach(r => {
       html +=
         '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);background:rgba(0,0,0,0.03)">' +
@@ -6262,6 +6284,21 @@ function renderPaycheckGuide() {
   el.innerHTML = html;
 }
 
+function updateAllocationPcts() {
+  const s = parseInt(document.getElementById('savings-pct-input').value,   10);
+  const e = parseInt(document.getElementById('emergency-pct-input').value, 10);
+  if (isNaN(s) || isNaN(e) || s < 0 || e < 0 || s + e > 95) {
+    showToast('⚠️ Percentages must each be 0–95% and total ≤ 95%');
+    return;
+  }
+  BUDGET_PROFILE.savingsPct   = s;
+  BUDGET_PROFILE.emergencyPct = e;
+  saveBudgetProfile();
+  renderPaycheckGuide();
+  renderBudgetChart();
+  showToast('✅ Allocation updated!');
+}
+
 window.initBudgetTab        = initBudgetTab;
 window.onSalaryInput        = onSalaryInput;
 window.setBudgetFreq        = setBudgetFreq;
@@ -6278,7 +6315,8 @@ window.openEditBillModal    = openEditBillModal;
 window.openEditEssentialModal = openEditEssentialModal;
 window.onDeductionInput     = onDeductionInput;
 window.suggestDeductions    = suggestDeductions;
-window.toggleDeductionsPanel= toggleDeductionsPanel;
+window.toggleDeductionsPanel  = toggleDeductionsPanel;
+window.updateAllocationPcts   = updateAllocationPcts;
 window.renderBudgetEssentials = renderBudgetEssentials;
 window.openAddEssentialPreset = openAddEssentialPreset;
 window.submitEssential      = submitEssential;
