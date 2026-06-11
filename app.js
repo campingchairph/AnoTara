@@ -5045,8 +5045,74 @@ function initHomeFeed() {
   renderHomeDailyTasks();
   renderHomeMood();
   renderHomeReminder();
+  renderHomeBillsTracker();
   renderExpenseTrendChart();
   renderHappeningNow();
+}
+
+function renderHomeBillsTracker() {
+  const el = document.getElementById('home-bills-tracker');
+  if (!el) return;
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const paidKey = 'at_bills_paid_' + monthKey;
+  const paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
+  const active = (typeof getActiveBills === 'function') ? getActiveBills() : [];
+  if (!active.length) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div><span onclick="switchMainTab(\'budget\')" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">Add bills →</span></div><div style="font-size:13px;color:var(--ink-4);padding:8px 0">No bills set up yet.</div>';
+    return;
+  }
+  const sorted = [...active].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99));
+  const today = now.getDate();
+  const totalAll = active.reduce((s, b) => s + (b.amount || 0), 0);
+  const totalUnpaid = active.filter(b => !paid.includes(b.id)).reduce((s, b) => s + (b.amount || 0), 0);
+  const rows = sorted.map(b => {
+    const isPaid = paid.includes(b.id);
+    const isOverdue = b.dueDay && b.dueDay < today && !isPaid;
+    const dueBadge = b.dueDay
+      ? '<span style="font-size:10px;font-weight:700;color:' + (isOverdue ? '#E07898' : 'var(--ink-4)') + ';background:' + (isOverdue ? 'rgba(224,120,152,0.12)' : 'rgba(0,0,0,0.05)') + ';padding:2px 7px;border-radius:99px">Due ' + ordinal(b.dueDay) + (isOverdue ? ' · Overdue' : '') + '</span>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.05);' + (isPaid ? 'opacity:0.5' : '') + '">' +
+      '<div style="font-size:22px;width:36px;height:36px;background:rgba(245,230,200,0.5);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + b.icon + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--ink);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + b.name + '</div>' +
+        (dueBadge ? '<div style="margin-top:3px">' + dueBadge + '</div>' : '') +
+      '</div>' +
+      '<div style="font-size:14px;font-weight:700;color:var(--ink);flex-shrink:0;margin-right:6px">₱' + (b.amount || 0).toLocaleString() + '</div>' +
+      '<button onclick="toggleBillPaid(\'' + b.id + '\')" style="padding:5px 10px;border-radius:var(--r-xs);border:none;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Mark Paid') + '</button>' +
+    '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div>' +
+      '<span onclick="switchMainTab(\'budget\')" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">Manage →</span>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:linear-gradient(135deg,rgba(224,120,152,0.1),rgba(245,230,200,0.2));border-radius:var(--r-md);margin-bottom:10px">' +
+      '<div>' +
+        '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Total This Month</div>' +
+        '<div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--ink);line-height:1.1">₱' + totalAll.toLocaleString() + '</div>' +
+      '</div>' +
+      '<div style="width:1px;height:36px;background:rgba(0,0,0,0.08)"></div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:0.6px">Still to Pay</div>' +
+        '<div style="font-size:22px;font-weight:800;color:' + (totalUnpaid > 0 ? 'var(--pink-deep)' : 'var(--green-deep)') + ';line-height:1.1">₱' + totalUnpaid.toLocaleString() + '</div>' +
+      '</div>' +
+    '</div>' +
+    rows;
+}
+
+function toggleBillPaid(billId) {
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const paidKey = 'at_bills_paid_' + monthKey;
+  let paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
+  if (paid.includes(billId)) {
+    paid = paid.filter(id => id !== billId);
+  } else {
+    paid.push(billId);
+  }
+  localStorage.setItem(paidKey, JSON.stringify(paid));
+  renderHomeBillsTracker();
 }
 
 function renderHappeningNow() {
@@ -5272,6 +5338,8 @@ function drawChart(ctx, canvas, data, selIdx) {
 
 window.initHomeFeed = initHomeFeed;
 window.renderExpenseTrendChart = renderExpenseTrendChart;
+window.renderHomeBillsTracker = renderHomeBillsTracker;
+window.toggleBillPaid = toggleBillPaid;
 
 /* ═══════════════════════════════════════════════
    BUDGET PLANNER
@@ -5621,6 +5689,7 @@ function submitBudgetBill() {
   renderBudgetBills();
   renderBudgetChart();
   renderPaycheckGuide();
+  renderHomeBillsTracker();
 }
 
 function deleteBudgetBill(id) {
@@ -5631,6 +5700,7 @@ function deleteBudgetBill(id) {
   renderBudgetBills();
   renderBudgetChart();
   renderPaycheckGuide();
+  renderHomeBillsTracker();
   showToast('🗑 Removed!');
 }
 
