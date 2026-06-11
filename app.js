@@ -6082,17 +6082,25 @@ function renderPaycheckGuide() {
   const sPctVal = BUDGET_PROFILE.savingsPct   ?? 20;
   const ePctVal = BUDGET_PROFILE.emergencyPct ?? 10;
   const pctEditor =
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(245,230,200,0.35);border-radius:var(--r-md);margin-bottom:14px;flex-wrap:wrap;border:1px solid rgba(201,169,110,0.2)">' +
-      '<span style="font-size:11.5px;font-weight:700;color:var(--tan-dark);flex:1;min-width:100px">Allocation Goals</span>' +
-      '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3)">' +
-        '🐷 Savings' +
-        '<input id="savings-pct-input" type="number" min="0" max="80" value="' + sPctVal + '" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);font-size:12px;font-weight:700;text-align:center;background:#fff">%' +
-      '</label>' +
-      '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3)">' +
-        '🛡️ Emergency' +
-        '<input id="emergency-pct-input" type="number" min="0" max="50" value="' + ePctVal + '" style="width:46px;padding:4px 6px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);font-size:12px;font-weight:700;text-align:center;background:#fff">%' +
-      '</label>' +
-      '<button onclick="updateAllocationPcts()" style="padding:5px 14px;border-radius:var(--r-xs);border:none;background:rgba(90,171,122,0.15);color:var(--green-deep);font-size:12px;font-weight:700;cursor:pointer">Apply</button>' +
+    '<div style="background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.22);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px">' +
+      '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Allocation Goals</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+        '<div style="background:#fff;border:1px solid rgba(201,169,110,0.2);border-radius:var(--r-sm);padding:10px 12px">' +
+          '<div style="font-size:11px;color:var(--ink-4);margin-bottom:6px">🐷 Savings</div>' +
+          '<div style="display:flex;align-items:center;gap:4px">' +
+            '<input id="savings-pct-input" type="number" min="0" max="80" value="' + sPctVal + '" style="flex:1;min-width:0;padding:6px 8px;border-radius:6px;border:1.5px solid rgba(90,171,122,0.35);font-size:20px;font-weight:800;color:var(--green-deep);text-align:center;background:transparent;outline:none">' +
+            '<span style="font-size:16px;font-weight:700;color:var(--green-deep)">%</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="background:#fff;border:1px solid rgba(201,169,110,0.2);border-radius:var(--r-sm);padding:10px 12px">' +
+          '<div style="font-size:11px;color:var(--ink-4);margin-bottom:6px">🛡️ Emergency</div>' +
+          '<div style="display:flex;align-items:center;gap:4px">' +
+            '<input id="emergency-pct-input" type="number" min="0" max="50" value="' + ePctVal + '" style="flex:1;min-width:0;padding:6px 8px;border-radius:6px;border:1.5px solid rgba(212,168,83,0.4);font-size:20px;font-weight:800;color:var(--tan-dark);text-align:center;background:transparent;outline:none">' +
+            '<span style="font-size:16px;font-weight:700;color:var(--tan-dark)">%</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="updateAllocationPcts()" style="width:100%;padding:9px;border-radius:var(--r-sm);border:none;background:rgba(90,171,122,0.15);color:var(--green-deep);font-size:13px;font-weight:700;cursor:pointer">Apply Changes</button>' +
     '</div>';
 
   function payBtn(billId) {
