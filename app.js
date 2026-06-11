@@ -5113,6 +5113,7 @@ function toggleBillPaid(billId) {
   }
   localStorage.setItem(paidKey, JSON.stringify(paid));
   renderHomeBillsTracker();
+  renderPaycheckGuide();
 }
 
 function renderHappeningNow() {
@@ -6059,6 +6060,10 @@ function renderPaycheckGuide() {
   if (!el) return;
   if (!BUDGET_PROFILE.salary) { el.innerHTML = ''; return; }
 
+  const now         = new Date();
+  const monthKey    = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const paidIds     = JSON.parse(localStorage.getItem('at_bills_paid_' + monthKey) || '[]');
+
   const freq        = BUDGET_PROFILE.freq || 'monthly';
   const paychecks   = FREQ_PER_MONTH[freq];
   const paycheckNet = getPaycheckNet();
@@ -6070,61 +6075,71 @@ function renderPaycheckGuide() {
   const emerPC      = monthly * 0.10 / paychecks;
   const deductTotal = getTotalDeductions();
 
+  function payBtn(billId) {
+    const isPaid = paidIds.includes(billId);
+    return '<button onclick="toggleBillPaid(\'' + billId + '\')" style="padding:3px 9px;border-radius:var(--r-xs);border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Pay') + '</button>';
+  }
+
   // ── Monthly & Daily: single simple card ──────────────────────────────────
   if (freq === 'monthly' || freq === 'daily') {
-    const freqLabel  = freq === 'monthly' ? 'each paycheck' : 'each daily pay';
-    const billsPC    = active.reduce((s,b)=>s+b.amount, 0) / paychecks;
-    const freePC     = Math.max(0, paycheckNet - billsPC - essPC - savingsPC - emerPC);
-    const totalFixed = active.reduce((s,b)=>s+b.amount,0) + getEssentialsTotal();
-    const fixedPct   = monthly > 0 ? (totalFixed/monthly*100) : 0;
-    const healthAlert= fixedPct>70?'⚠️ Over 70%! Budget is very tight.':fixedPct>50?'⚠️ Over 50%. Consider reducing.':'✅ Looking healthy.';
-    const deductLine = deductTotal > 0
-      ? '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:rgba(252,165,165,0.1);margin-bottom:6px">'+
-          '<div style="font-size:20px;flex-shrink:0">📋</div>'+
-          '<div style="flex:1;font-size:12px;color:var(--ink-3)">Deductions (SSS, PhilHealth…)</div>'+
-          '<div style="font-size:16px;font-weight:700;color:#EF4444">−₱'+Math.round(deductTotal/paychecks).toLocaleString()+'</div>'+
+    const freqLabel    = freq === 'monthly' ? 'each paycheck' : 'each daily pay';
+    const unpaidBills  = active.filter(b => !paidIds.includes(b.id));
+    const paidBills    = active.filter(b =>  paidIds.includes(b.id));
+    const unpaidTotal  = unpaidBills.reduce((s, b) => s + b.amount, 0);
+    const billsPC      = unpaidTotal / paychecks;
+    const freePC       = Math.max(0, paycheckNet - billsPC - essPC - savingsPC - emerPC);
+    const totalFixed   = unpaidTotal + getEssentialsTotal();
+    const fixedPct     = monthly > 0 ? (totalFixed / monthly * 100) : 0;
+    const healthAlert  = fixedPct > 70 ? '⚠️ Over 70%! Budget is very tight.' : fixedPct > 50 ? '⚠️ Over 50%. Consider reducing.' : '✅ Looking healthy.';
+    const deductLine   = deductTotal > 0
+      ? '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:rgba(252,165,165,0.1);margin-bottom:6px">' +
+          '<div style="font-size:20px;flex-shrink:0">📋</div>' +
+          '<div style="flex:1;font-size:12px;color:var(--ink-3)">Deductions (SSS, PhilHealth…)</div>' +
+          '<div style="font-size:16px;font-weight:700;color:#EF4444">−₱' + Math.round(deductTotal / paychecks).toLocaleString() + '</div>' +
         '</div>' : '';
 
-    // List bills sorted by due day
     const billsList = active.length
-      ? '<div style="margin-bottom:10px">'+
-          '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bills this month</div>'+
-          [...active].sort((a,b)=>(a.dueDay||99)-(b.dueDay||99)).map(b=>
-            '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04)">'+
-              '<span style="font-size:16px">'+b.icon+'</span>'+
-              '<span style="flex:1;font-size:12px;color:var(--ink-3)">'+b.name+'</span>'+
-              (b.dueDay?'<span style="font-size:10px;color:var(--green-deep);background:rgba(90,171,122,0.1);padding:2px 5px;border-radius:99px">'+ordinal(b.dueDay)+'</span>':'')+
-              '<span style="font-size:12px;font-weight:700;color:var(--pink-deep)">₱'+b.amount.toLocaleString()+'</span>'+
-            '</div>'
-          ).join('')+
-          '<div style="display:flex;justify-content:flex-end;padding-top:5px;border-top:2px solid rgba(0,0,0,0.06);margin-top:4px">'+
-            '<span style="font-size:12px;font-weight:700;color:var(--pink-deep)">Total ₱'+(active.reduce((s,b)=>s+b.amount,0)).toLocaleString()+'</span>'+
-          '</div>'+
+      ? '<div style="margin-bottom:10px">' +
+          '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bills this month</div>' +
+          [...active].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99)).map(b => {
+            const isPaid = paidIds.includes(b.id);
+            return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04);' + (isPaid ? 'opacity:0.55' : '') + '">' +
+              '<span style="font-size:16px">' + b.icon + '</span>' +
+              '<span style="flex:1;font-size:12px;color:var(--ink-3);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + b.name + '</span>' +
+              (b.dueDay ? '<span style="font-size:10px;color:var(--green-deep);background:rgba(90,171,122,0.1);padding:2px 5px;border-radius:99px">' + ordinal(b.dueDay) + '</span>' : '') +
+              '<span style="font-size:12px;font-weight:700;color:' + (isPaid ? 'var(--ink-4)' : 'var(--pink-deep)') + '">₱' + b.amount.toLocaleString() + '</span>' +
+              payBtn(b.id) +
+            '</div>';
+          }).join('') +
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:2px solid rgba(0,0,0,0.06);margin-top:4px">' +
+            '<span style="font-size:11px;color:var(--ink-4)">' + paidBills.length + '/' + active.length + ' paid</span>' +
+            '<span style="font-size:12px;font-weight:700;color:var(--pink-deep)">Still to pay ₱' + unpaidTotal.toLocaleString() + '</span>' +
+          '</div>' +
         '</div>'
       : '';
 
     el.innerHTML =
-      '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">'+
-        '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>'+
-        '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">You receive <b>₱'+Math.round(paycheckNet).toLocaleString()+'</b> net '+freqLabel+'. Here\'s how to split it:</div>'+
+      '<div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:8px">' +
+        '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Per Paycheck Guide</div>' +
+        '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">You receive <b>₱' + Math.round(paycheckNet).toLocaleString() + '</b> net ' + freqLabel + '. Here\'s how to split it:</div>' +
         deductLine + billsList +
         [
-          { icon:'💳', label:'Bills',           amt:billsPC,  color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
-          { icon:'🛒', label:'Essentials',      amt:essPC,    color:'#3B82F6',           bg:'rgba(96,165,250,0.08)' },
-          { icon:'🐷', label:'Savings (20%)',   amt:savingsPC,color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
-          { icon:'🛡️', label:'Emergency (10%)', amt:emerPC,   color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
-          { icon:'🎉', label:'Free to spend',   amt:freePC,   color: freePC>0?'var(--ink-2)':'#EF4444', bg:'rgba(0,0,0,0.03)' },
-        ].filter(r=>r.amt>0).map(r=>
-          '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:'+r.bg+';margin-bottom:6px">'+
-            '<div style="font-size:20px;flex-shrink:0">'+r.icon+'</div>'+
-            '<div style="flex:1;font-size:12px;color:var(--ink-3)">'+r.label+'</div>'+
-            '<div style="font-size:16px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>'+
+          { icon:'💳', label:'Bills (remaining)',  amt:billsPC,    color:'var(--pink-deep)',  bg:'rgba(224,120,152,0.1)' },
+          { icon:'🛒', label:'Essentials',          amt:essPC,      color:'#3B82F6',           bg:'rgba(96,165,250,0.08)' },
+          { icon:'🐷', label:'Savings (20%)',        amt:savingsPC,  color:'var(--green-deep)', bg:'rgba(90,171,122,0.1)' },
+          { icon:'🛡️', label:'Emergency (10%)',      amt:emerPC,     color:'var(--tan-dark)',   bg:'rgba(201,169,110,0.1)' },
+          { icon:'🎉', label:'Free to spend',        amt:freePC,     color:freePC > 0 ? 'var(--ink-2)' : '#EF4444', bg:'rgba(0,0,0,0.03)' },
+        ].filter(r => r.amt > 0).map(r =>
+          '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);background:' + r.bg + ';margin-bottom:6px">' +
+            '<div style="font-size:20px;flex-shrink:0">' + r.icon + '</div>' +
+            '<div style="flex:1;font-size:12px;color:var(--ink-3)">' + r.label + '</div>' +
+            '<div style="font-size:16px;font-weight:700;color:' + r.color + '">₱' + Math.round(r.amt).toLocaleString() + '</div>' +
           '</div>'
         ).join('') +
-        '<div style="margin-top:8px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">'+
-          '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:3px">Fixed Spending vs. Net Income</div>'+
-          '<div style="font-size:12px;color:var(--ink-3)"><b>'+fixedPct.toFixed(1)+'%</b> of net income goes to fixed expenses. '+healthAlert+'</div>'+
-        '</div>'+
+        '<div style="margin-top:8px;padding:10px;border-radius:var(--r-sm);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">' +
+          '<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-bottom:3px">Fixed Spending vs. Net Income</div>' +
+          '<div style="font-size:12px;color:var(--ink-3)"><b>' + fixedPct.toFixed(1) + '%</b> of net income goes to fixed expenses. ' + healthAlert + '</div>' +
+        '</div>' +
       '</div>';
     return;
   }
@@ -6132,99 +6147,97 @@ function renderPaycheckGuide() {
   // ── Semi-Monthly & Weekly: per-period breakdown ───────────────────────────
   const freqTitle = { semi:'Semi-Monthly (2×/month)', weekly:'Weekly' }[freq] || '';
 
-  let html = '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Paycheck Plan — '+freqTitle+'</div>';
+  let html = '<div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px">💡 Paycheck Plan — ' + freqTitle + '</div>';
 
   if (deductTotal > 0) {
-    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱'+Math.round(paycheckNet).toLocaleString()+'</b> net after <span style="color:#EF4444">₱'+Math.round(deductTotal/paychecks).toLocaleString()+' deductions</span></div>';
+    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱' + Math.round(paycheckNet).toLocaleString() + '</b> net after <span style="color:#EF4444">₱' + Math.round(deductTotal / paychecks).toLocaleString() + ' deductions</span></div>';
   } else {
-    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱'+Math.round(paycheckNet).toLocaleString()+'</b> net take-home</div>';
+    html += '<div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">Each paycheck: <b style="color:var(--ink)">₱' + Math.round(paycheckNet).toLocaleString() + '</b> net take-home</div>';
   }
 
   periods.forEach((period, idx) => {
-    // Effective bills/essentials for this period (split-aware)
     const effBills = getEffectiveBillsForPeriod(active, periods, idx);
     const effEss   = getEffectiveBillsForPeriod(getActiveEssentials(), periods, idx);
 
-    // Split into "pay now" vs "pre-save"
-    const payBills    = effBills.filter(b => !b.isPreSave);
-    const presaveBills= effBills.filter(b =>  b.isPreSave);
-    const payEss      = effEss.filter(e => !e.isPreSave);
-    const presaveEss  = effEss.filter(e =>  e.isPreSave);
+    const payBills     = effBills.filter(b => !b.isPreSave);
+    const presaveBills = effBills.filter(b =>  b.isPreSave);
+    const payEss       = effEss.filter(e => !e.isPreSave);
+    const presaveEss   = effEss.filter(e =>  e.isPreSave);
 
-    const billsNow    = payBills.reduce((s,b)=>s+b.effectiveAmount, 0);
-    const presaveAmt  = presaveBills.reduce((s,b)=>s+b.effectiveAmount, 0) + presaveEss.reduce((s,e)=>s+e.effectiveAmount, 0);
-    const essNow      = payEss.reduce((s,e)=>s+e.effectiveAmount, 0);
-    const totalOut    = billsNow + presaveAmt + essNow + savingsPC + emerPC;
-    const freePC      = Math.max(0, paycheckNet - totalOut);
-    const isOver      = totalOut > paycheckNet;
-    const borderClr   = isOver ? '#E07898' : '#5AAB7A';
+    const billsNowUnpaid = payBills.filter(b => !paidIds.includes(b.id)).reduce((s, b) => s + b.effectiveAmount, 0);
+    const presaveAmt     = presaveBills.reduce((s, b) => s + b.effectiveAmount, 0) + presaveEss.reduce((s, e) => s + e.effectiveAmount, 0);
+    const essNow         = payEss.reduce((s, e) => s + e.effectiveAmount, 0);
+    const totalOut       = billsNowUnpaid + presaveAmt + essNow + savingsPC + emerPC;
+    const freePC         = Math.max(0, paycheckNet - totalOut);
+    const isOver         = totalOut > paycheckNet;
+    const borderClr      = isOver ? '#E07898' : '#5AAB7A';
 
-    html += '<div class="paycheck-period-card" style="border-left:4px solid '+borderClr+';margin-bottom:10px">';
+    html += '<div class="paycheck-period-card" style="border-left:4px solid ' + borderClr + ';margin-bottom:10px">';
 
-    // Header row
     html +=
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
-        '<div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--ink)">'+period.label+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:800;color:var(--ink)">' + period.label + '</div>' +
           (period.approxDay
-            ? '<div style="font-size:11px;color:var(--ink-4)">Received ~'+ordinal(period.approxDay)+' · covers '+ordinal(period.start)+'–'+ordinal(period.end)+'</div>'
-            : '')+
-        '</div>'+
-        '<div style="text-align:right">'+
-          '<div style="font-size:15px;font-weight:800;color:var(--green-deep)">₱'+Math.round(paycheckNet).toLocaleString()+'</div>'+
-          '<div style="font-size:10px;color:var(--ink-4)">net available</div>'+
-        '</div>'+
+            ? '<div style="font-size:11px;color:var(--ink-4)">Received ~' + ordinal(period.approxDay) + ' · covers ' + ordinal(period.start) + '–' + ordinal(period.end) + '</div>'
+            : '') +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:15px;font-weight:800;color:var(--green-deep)">₱' + Math.round(paycheckNet).toLocaleString() + '</div>' +
+          '<div style="font-size:10px;color:var(--ink-4)">net available</div>' +
+        '</div>' +
       '</div>';
 
-    // Helper to render an item row
     const itemRow = (item, isEss, isPresave) => {
-      const color = isPresave ? '#D4A853' : (isEss ? '#3B82F6' : 'var(--pink-deep)');
-      const dueLbl = item.dueDay ? ordinal(item.dueDay) : null;
-      const splitLbl = item.totalSplit > 1 ? '÷'+item.totalSplit : '';
+      const isPaidItem = !isPresave && !isEss && paidIds.includes(item.id);
+      const color = isPresave ? '#D4A853' : (isEss ? '#3B82F6' : (isPaidItem ? 'var(--ink-4)' : 'var(--pink-deep)'));
+      const dueLbl   = item.dueDay ? ordinal(item.dueDay) : null;
+      const splitLbl = item.totalSplit > 1 ? '÷' + item.totalSplit : '';
       const badge = isPresave
         ? '<span style="font-size:10px;background:rgba(212,168,83,0.15);color:#B07A00;padding:2px 6px;border-radius:99px;font-weight:700">pre-save</span>'
-        : (dueLbl ? '<span style="font-size:10px;background:rgba(90,171,122,0.1);color:var(--green-deep);padding:2px 5px;border-radius:99px">'+(isEss?'buy ':'due ')+dueLbl+'</span>' : '');
-      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04)">'+
-        '<span style="font-size:18px'+(isPresave?';opacity:.7':'')+'">'+item.icon+'</span>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:12px;color:var(--ink-3)'+(isPresave?';font-style:italic':'')+'">'+item.name+(splitLbl?' <span style="font-size:10px;color:var(--ink-4)">'+splitLbl+'</span>':'')+'</div>'+
-        '</div>'+
-        badge+
-        '<span style="font-size:13px;font-weight:700;color:'+color+'">₱'+Math.round(item.effectiveAmount).toLocaleString()+'</span>'+
+        : (dueLbl ? '<span style="font-size:10px;background:rgba(90,171,122,0.1);color:var(--green-deep);padding:2px 5px;border-radius:99px">' + (isEss ? 'buy ' : 'due ') + dueLbl + '</span>' : '');
+      const btn = (!isPresave && !isEss) ? payBtn(item.id) : '';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.04);' + (isPaidItem ? 'opacity:0.55' : '') + '">' +
+        '<span style="font-size:18px' + (isPresave ? ';opacity:.7' : '') + '">' + item.icon + '</span>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;color:var(--ink-3);' + (isPresave ? 'font-style:italic' : '') + (isPaidItem ? ';text-decoration:line-through' : '') + '">' + item.name + (splitLbl ? ' <span style="font-size:10px;color:var(--ink-4)">' + splitLbl + '</span>' : '') + '</div>' +
+        '</div>' +
+        badge +
+        '<span style="font-size:13px;font-weight:700;color:' + color + '">₱' + Math.round(item.effectiveAmount).toLocaleString() + '</span>' +
+        btn +
       '</div>';
     };
 
-    // Bills due this period
     const hasBillRows = payBills.length || presaveBills.length || payEss.length || presaveEss.length;
     if (hasBillRows) {
       html += '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">This paycheck covers</div>';
-      payBills.forEach(b    => { html += itemRow(b, false, false); });
-      payEss.forEach(e      => { html += itemRow(e, true,  false); });
-      presaveBills.forEach(b=> { html += itemRow(b, false, true);  });
-      presaveEss.forEach(e  => { html += itemRow(e, true,  true);  });
+      payBills.forEach(b     => { html += itemRow(b, false, false); });
+      payEss.forEach(e       => { html += itemRow(e, true,  false); });
+      presaveBills.forEach(b => { html += itemRow(b, false, true);  });
+      presaveEss.forEach(e   => { html += itemRow(e, true,  true);  });
+      const paidCount = payBills.filter(b => paidIds.includes(b.id)).length;
       html +=
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:2px solid rgba(0,0,0,0.07)">'+
-          '<span style="font-size:11px;font-weight:700;color:var(--ink-3)">Bills + essentials'+(presaveAmt>0?' + pre-saves':'')+'</span>'+
-          '<span style="font-size:13px;font-weight:800;color:var(--pink-deep)">₱'+Math.round(billsNow+essNow+presaveAmt).toLocaleString()+'</span>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:2px solid rgba(0,0,0,0.07)">' +
+          '<span style="font-size:11px;font-weight:700;color:var(--ink-3)">' + (paidCount > 0 ? paidCount + ' paid · ' : '') + 'Still to pay</span>' +
+          '<span style="font-size:13px;font-weight:800;color:var(--pink-deep)">₱' + Math.round(billsNowUnpaid + essNow + presaveAmt).toLocaleString() + '</span>' +
         '</div>';
     } else {
       html += '<div style="font-size:12px;color:var(--ink-4);padding:2px 0 8px;font-style:italic">No bills or essentials assigned to this period.</div>';
     }
 
-    // Fixed allocation grid
     html += '<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px">';
     [
-      { icon:'🐷', label:'Savings (20%)',  amt:savingsPC, color:'var(--green-deep)' },
-      { icon:'🛡️', label:'Emergency (10%)',amt:emerPC,    color:'var(--tan-dark)' },
-      { icon:'🎉', label:'Free to spend',  amt:freePC,    color:freePC>0?'var(--ink-2)':'#EF4444' },
+      { icon:'🐷', label:'Savings (20%)',   amt:savingsPC, color:'var(--green-deep)' },
+      { icon:'🛡️', label:'Emergency (10%)', amt:emerPC,    color:'var(--tan-dark)' },
+      { icon:'🎉', label:'Free to spend',   amt:freePC,    color:freePC > 0 ? 'var(--ink-2)' : '#EF4444' },
     ].forEach(r => {
       html +=
-        '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);background:rgba(0,0,0,0.03)">'+
-          '<span style="font-size:15px">'+r.icon+'</span>'+
-          '<div style="flex:1;min-width:0">'+
-            '<div style="font-size:10px;color:var(--ink-4)">'+r.label+'</div>'+
-            '<div style="font-size:12px;font-weight:700;color:'+r.color+'">₱'+Math.round(r.amt).toLocaleString()+'</div>'+
-          '</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);background:rgba(0,0,0,0.03)">' +
+          '<span style="font-size:15px">' + r.icon + '</span>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:10px;color:var(--ink-4)">' + r.label + '</div>' +
+            '<div style="font-size:12px;font-weight:700;color:' + r.color + '">₱' + Math.round(r.amt).toLocaleString() + '</div>' +
+          '</div>' +
         '</div>';
     });
     html += '</div>';
@@ -6233,7 +6246,7 @@ function renderPaycheckGuide() {
       html += '<div style="margin-top:8px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(224,120,152,0.1);border:1px solid rgba(224,120,152,0.2);font-size:11px;color:var(--pink-deep)">⚠️ This paycheck is over-allocated! Consider enabling split payment on big bills to spread the load.</div>';
     }
 
-    html += '</div>'; // end period card
+    html += '</div>';
   });
 
   // Tip if any bills/essentials lack due dates
