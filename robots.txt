@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://campingchairph.github.io/AnoTara/sitemap.xml
