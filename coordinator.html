@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1035">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="Down to the Isle Coordinator — create and present wedding plans to your clients. Build proposals, timelines, and vendor lists with a beautiful presentation mode.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://campingchairph.github.io/AnoTara/coordinator.html">
+  <meta property="og:title" content="Coordinator Planner — Down to the Isle">
+  <meta property="og:description" content="Build and present wedding plans to clients. Professional wedding coordinator tool — free for up to 3 plans.">
+  <title>Coordinator Planner — Down to the Isle</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #1a1035;
+      --navy-2:    #2d2060;
+      --gold:      #c9a96e;
+      --gold-lt:   #e8d5a3;
+      --gold-dk:   #a07840;
+      --rose:      #e07898;
+      --ivory:     #fdfaf4;
+      --ink:       #1a1035;
+      --ink-3:     #5a4a7a;
+      --ink-4:     #9a8ab0;
+      --green:     #5aab7a;
+      --r-sm:      8px;
+      --r-md:      12px;
+      --r-lg:      18px;
+      --r-xl:      24px;
+      --f:         'Inter', sans-serif;
+      --fs:        'Cormorant Garamond', serif;
+    }
+
+    body { font-family: var(--f); background: var(--navy); color: var(--ivory); min-height: 100vh; }
+
+    /* ── Screens ── */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* ── Topbar ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; padding-top: max(16px, env(safe-area-inset-top));
+      background: rgba(26,16,53,0.95); position: sticky; top: 0; z-index: 10;
+      border-bottom: 1px solid rgba(201,169,110,0.15);
+    }
+    .topbar-brand { font-family: var(--fs); font-size: 20px; color: var(--gold); font-style: italic; }
+    .topbar-sub { font-size: 10px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Buttons ── */
+    .btn-gold {
+      padding: 12px 20px; border-radius: var(--r-md); border: none;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dk));
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(201,169,110,0.35);
+    }
+    .btn-outline {
+      padding: 10px 18px; border-radius: var(--r-md);
+      border: 1.5px solid rgba(201,169,110,0.4);
+      color: var(--gold); background: transparent;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-danger { background: rgba(224,120,152,0.15); color: var(--rose); border: none; border-radius: var(--r-sm); padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+    /* ── Card ── */
+    .card {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(201,169,110,0.15);
+      border-radius: var(--r-lg); padding: 18px 20px;
+    }
+    .card-white {
+      background: var(--ivory); border-radius: var(--r-lg); padding: 18px 20px; color: var(--ink);
+    }
+
+    /* ── Input ── */
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .field-input {
+      width: 100%; padding: 11px 13px; border-radius: var(--r-sm);
+      border: 1.5px solid rgba(201,169,110,0.2); background: rgba(255,255,255,0.07);
+      color: var(--ivory); font-size: 14px; font-family: var(--f); outline: none;
+    }
+    .field-input:focus { border-color: var(--gold); }
+    .field-input::placeholder { color: var(--ink-4); }
+    .field-input.dark { background: rgba(26,16,53,0.06); color: var(--ink); border-color: rgba(26,16,53,0.15); }
+    .field-input.dark::placeholder { color: #9a8ab0; }
+    textarea.field-input { min-height: 80px; resize: vertical; }
+
+    /* ── Badge ── */
+    .badge-card {
+      background: linear-gradient(135deg, var(--navy-2), #3d2880);
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: var(--r-xl); padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    .badge-card::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(201,169,110,0.08);
+    }
+    .badge-verified { display: inline-flex; align-items: center; gap: 5px; background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.3); border-radius: 99px; padding: 3px 10px; font-size: 10px; font-weight: 700; color: var(--gold); margin-bottom: 10px; }
+    .badge-name { font-family: var(--fs); font-size: 26px; color: #fff; margin-bottom: 2px; }
+    .badge-specialty { font-size: 12px; color: var(--gold-lt); margin-bottom: 14px; }
+    .badge-stats { display: flex; gap: 16px; }
+    .badge-stat { text-align: center; }
+    .badge-stat-val { font-size: 20px; font-weight: 800; color: var(--gold); }
+    .badge-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Plan card ── */
+    .plan-card {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(201,169,110,0.15);
+      border-radius: var(--r-lg); padding: 16px 18px; margin-bottom: 10px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .plan-card:hover, .plan-card:active { border-color: rgba(201,169,110,0.4); }
+    .plan-card-names { font-family: var(--fs); font-size: 20px; color: #fff; margin-bottom: 2px; }
+    .plan-card-meta { font-size: 11.5px; color: var(--ink-4); }
+    .plan-card-pkg { display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; background: rgba(201,169,110,0.15); color: var(--gold); }
+
+    /* ── Free limit bar ── */
+    .limit-bar { background: rgba(255,255,255,0.05); border-radius: var(--r-sm); padding: 10px 14px; display: flex; align-items: center; gap:10px; }
+    .limit-dots { display: flex; gap: 5px; }
+    .limit-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+    .limit-dot.used { background: var(--gold); }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 10px; font-size: 12px; font-weight: 700; color: var(--ink-4); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s; }
+    .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* ── Section rows ── */
+    .section-hdr { font-size: 10px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; margin-top: 18px; }
+
+    /* ── Timeline item ── */
+    .timeline-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .timeline-time { font-size: 12px; font-weight: 700; color: var(--gold); width: 52px; flex-shrink: 0; }
+    .timeline-desc { flex: 1; font-size: 13px; color: var(--ivory); }
+
+    /* ── Vendor item ── */
+    .vendor-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .vendor-cat { font-size: 10px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.5px; width: 72px; flex-shrink: 0; }
+    .vendor-name { flex: 1; font-size: 13px; color: var(--ivory); font-weight: 600; }
+
+    /* ── Inclusion item ── */
+    .inclusion-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    .inclusion-check { width: 18px; height: 18px; border-radius: 5px; background: rgba(90,171,122,0.2); border: 1.5px solid rgba(90,171,122,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; color: var(--green); }
+    .inclusion-text { font-size: 13px; color: var(--ivory); flex: 1; }
+
+    /* ── Presentation Mode ── */
+    #presentation-mode {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: var(--navy); flex-direction: column;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+    #presentation-mode.active { display: flex; }
+    .slide { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; }
+    .slide.active { display: flex; }
+    .slide-eyebrow { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+    .slide-title { font-family: var(--fs); font-size: 38px; color: #fff; line-height: 1.15; margin-bottom: 8px; }
+    .slide-sub { font-size: 14px; color: var(--ink-4); margin-bottom: 24px; }
+    .slide-divider { width: 48px; height: 2px; background: var(--gold); margin: 0 auto 24px; border-radius: 1px; }
+    .slide-list { text-align: left; width: 100%; max-width: 420px; }
+    .slide-list-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 14px; color: var(--ivory); }
+    .slide-list-item:last-child { border-bottom: none; }
+    .slide-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 7px; }
+
+    .pres-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.07); gap: 12px; }
+    .pres-nav-btn { padding: 10px 22px; border-radius: var(--r-md); border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .pres-nav-prev { background: rgba(255,255,255,0.08); color: var(--ivory); }
+    .pres-nav-next { background: linear-gradient(135deg, var(--gold), var(--gold-dk)); color: #fff; }
+    .pres-nav-close { position: fixed; top: max(16px, env(safe-area-inset-top)); right: 16px; z-index: 10000; background: rgba(255,255,255,0.1); border: none; color: var(--ivory); font-size: 18px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .pres-progress { display: flex; gap: 4px; justify-content: center; }
+    .pres-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.2s; }
+    .pres-dot.active { background: var(--gold); }
+
+    /* ── Upgrade Banner ── */
+    .upgrade-banner {
+      background: linear-gradient(135deg, rgba(201,169,110,0.15), rgba(224,120,152,0.1));
+      border: 1px solid rgba(201,169,110,0.3); border-radius: var(--r-lg); padding: 16px 18px;
+      text-align: center; margin-bottom: 12px;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); overflow-y: auto; }
+    .modal-overlay.active { display: flex; align-items: flex-end; }
+    .modal-sheet { background: #1e1440; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-height: 92vh; overflow-y: auto; border-top: 1px solid rgba(201,169,110,0.2); }
+    .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 0 auto 16px; }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--ivory); margin-bottom: 18px; }
+
+    .pad { padding: 0 20px; }
+    .spacer { height: 100px; }
+
+    /* ── Onboarding ── */
+    #onboarding-screen {
+      background: linear-gradient(160deg, #1a1035 0%, #2d2060 60%, #1a1035 100%);
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 32px 24px;
+    }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e1440; border: 1px solid rgba(201,169,110,0.3); color: var(--ivory); padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600; z-index: 99999; opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════
+     ONBOARDING
+══════════════════════════════ -->
+<div id="onboarding-screen" style="display:none">
+  <div style="font-size:48px;margin-bottom:16px">💼</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:#fff;margin-bottom:4px;text-align:center">Coordinator Planner</div>
+  <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:36px;text-align:center">by Down to the Isle</div>
+
+  <div style="width:100%;max-width:400px">
+    <div class="field">
+      <div class="field-label">Your Full Name</div>
+      <input id="ob-name" class="field-input" type="text" placeholder="e.g. Maria Santos">
+    </div>
+    <div class="field">
+      <div class="field-label">Specialization</div>
+      <input id="ob-specialty" class="field-input" type="text" placeholder="e.g. Intimate Weddings · Garden · Church">
+    </div>
+    <div class="field">
+      <div class="field-label">Contact Number</div>
+      <input id="ob-contact" class="field-input" type="tel" placeholder="e.g. 09XX XXX XXXX">
+    </div>
+    <div class="field">
+      <div class="field-label">Years of Experience</div>
+      <input id="ob-years" class="field-input" type="number" placeholder="e.g. 5" min="0" max="50">
+    </div>
+    <div class="field">
+      <div class="field-label">Short Bio</div>
+      <textarea id="ob-bio" class="field-input" placeholder="Tell couples a little about your style and approach…"></textarea>
+    </div>
+    <button class="btn-gold" style="width:100%;margin-top:8px" onclick="saveProfile()">Set Up My Profile →</button>
+    <div style="text-align:center;margin-top:12px">
+      <a href="kasalko.html" style="font-size:12px;color:rgba(255,255,255,0.35);text-decoration:none">← Back to Down to the Isle</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     DASHBOARD
+══════════════════════════════ -->
+<div id="dashboard-screen" class="screen">
+  <div class="topbar">
+    <div>
+      <div class="topbar-brand">Coordinator</div>
+      <div class="topbar-sub">Down to the Isle</div>
+    </div>
+    <button class="btn-outline" style="font-size:11px;padding:7px 12px" onclick="showEditProfile()">✏️ Profile</button>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:20px">
+
+    <!-- Badge card -->
+    <div id="badge-preview" class="badge-card" style="margin-bottom:20px"></div>
+
+    <!-- Plans limit -->
+    <div id="plans-limit-bar" class="limit-bar" style="margin-bottom:12px"></div>
+
+    <!-- Plans list -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:15px;font-weight:800;color:#fff">Wedding Plans</div>
+      <button class="btn-gold" style="font-size:12px;padding:7px 14px" onclick="openNewPlan()">+ New Plan</button>
+    </div>
+
+    <div id="plans-list"></div>
+
+    <!-- Upgrade banner (shown when at limit) -->
+    <div id="upgrade-banner" class="upgrade-banner" style="display:none">
+      <div style="font-size:20px;margin-bottom:6px">✨</div>
+      <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:4px">Unlock Unlimited Plans</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-bottom:14px">You've used all 3 free plan slots. Upgrade to Pro to manage unlimited clients.</div>
+      <button class="btn-gold" style="width:100%" onclick="showToast('🚀 Pro plan coming soon!')">Upgrade to Pro</button>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <a href="kasalko.html" style="font-size:12px;color:rgba(255,255,255,0.25);text-decoration:none">← Down to the Isle</a>
+    </div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PLAN DETAIL
+══════════════════════════════ -->
+<div id="plan-screen" class="screen">
+  <div class="topbar">
+    <button onclick="showDashboard()" style="background:none;border:none;color:var(--ink-4);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg> Plans
+    </button>
+    <button class="btn-gold" style="font-size:12px;padding:7px 16px" onclick="startPresentation()">▶ Present</button>
+  </div>
+
+  <div style="flex:1;overflow-y:auto">
+    <!-- Tab bar -->
+    <div class="tab-bar pad" style="padding-top:12px">
+      <button class="tab-btn active" id="ptab-overview"  onclick="switchPlanTab('overview')" >Overview</button>
+      <button class="tab-btn"        id="ptab-timeline"  onclick="switchPlanTab('timeline')" >Timeline</button>
+      <button class="tab-btn"        id="ptab-vendors"   onclick="switchPlanTab('vendors')"  >Vendors</button>
+      <button class="tab-btn"        id="ptab-inclusions"onclick="switchPlanTab('inclusions')">Package</button>
+    </div>
+
+    <!-- Overview -->
+    <div id="ppanel-overview" class="pad">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;margin-bottom:4px" id="plan-detail-names">—</div>
+      <div style="font-size:13px;color:var(--ink-4);margin-bottom:20px" id="plan-detail-meta">—</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Package</div>
+          <div style="font-size:15px;font-weight:800;color:var(--gold)" id="plan-detail-pkg">—</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Budget Est.</div>
+          <div style="font-size:15px;font-weight:800;color:var(--green)" id="plan-detail-budget">—</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:8px">📝 Notes</div>
+        <div style="font-size:13px;color:var(--ivory);line-height:1.6" id="plan-detail-notes">—</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn-outline" style="flex:1" onclick="openEditPlan()">✏️ Edit Plan</button>
+        <button class="btn-danger" onclick="deletePlan()">🗑 Delete</button>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div id="ppanel-timeline" class="pad" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn-outline" style="font-size:12px;padding:7px 14px" onclick="openAddTimeline()">+ Add Item</button>
+      </div>
+      <div id="timeline-list"></div>
+      <div id="timeline-empty" style="text-align:center;padding:32px 0;color:var(--ink-4);font-size:13px;display:none">No timeline items yet. Tap + Add Item to build the day program.</div>
+    </div>
+
+    <!-- Vendors -->
+    <div id="ppanel-vendors" class="pad" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn-outline" style="font-size:12px;padding:7px 14px" onclick="openAddVendor()">+ Add Vendor</button>
+      </div>
+      <div id="vendor-list"></div>
+      <div id="vendor-empty" style="text-align:center;padding:32px 0;color:var(--ink-4);font-size:13px;display:none">No vendors added yet. Tap + Add Vendor to suggest suppliers.</div>
+    </div>
+
+    <!-- Package / Inclusions -->
+    <div id="ppanel-inclusions" class="pad" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn-outline" style="font-size:12px;padding:7px 14px" onclick="openAddInclusion()">+ Add Item</button>
+      </div>
+      <div id="inclusions-list"></div>
+      <div id="inclusions-empty" style="text-align:center;padding:32px 0;color:var(--ink-4);font-size:13px;display:none">No package inclusions yet. Tap + Add Item to list what's covered.</div>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PRESENTATION MODE
+══════════════════════════════ -->
+<div id="presentation-mode">
+  <button class="pres-nav-close" onclick="endPresentation()">✕</button>
+  <div id="slides-container" style="flex:1;overflow:hidden;position:relative"></div>
+  <div class="pres-nav">
+    <button class="pres-nav-btn pres-nav-prev" onclick="prevSlide()">← Back</button>
+    <div class="pres-progress" id="pres-progress"></div>
+    <button class="pres-nav-btn pres-nav-next" id="pres-next-btn" onclick="nextSlide()">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODALS
+══════════════════════════════ -->
+<!-- New / Edit Plan -->
+<div id="plan-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="plan-modal-title">New Wedding Plan</div>
+    <div class="field"><div class="field-label">Partner 1 Name</div><input id="pm-p1" class="field-input" type="text" placeholder="e.g. Maria"></div>
+    <div class="field"><div class="field-label">Partner 2 Name</div><input id="pm-p2" class="field-input" type="text" placeholder="e.g. Jose"></div>
+    <div class="field"><div class="field-label">Wedding Date</div><input id="pm-date" class="field-input" type="date"></div>
+    <div class="field"><div class="field-label">Venue</div><input id="pm-venue" class="field-input" type="text" placeholder="e.g. Tagaytay Picnic Grove"></div>
+    <div class="field">
+      <div class="field-label">Package Name</div>
+      <select id="pm-pkg" class="field-input">
+        <option value="Intimate">Intimate (under 50 guests)</option>
+        <option value="Garden">Garden Party</option>
+        <option value="Classic">Classic Church</option>
+        <option value="Grand">Grand Ballroom</option>
+        <option value="Destination">Destination</option>
+        <option value="Custom">Custom</option>
+      </select>
+    </div>
+    <div class="field"><div class="field-label">Estimated Budget (₱)</div><input id="pm-budget" class="field-input" type="number" placeholder="e.g. 250000"></div>
+    <div class="field"><div class="field-label">Notes / Special Requests</div><textarea id="pm-notes" class="field-input" placeholder="Flooring theme, preferred colors, couple's requests…"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-outline" style="flex:1" onclick="closePlanModal()">Cancel</button>
+      <button class="btn-gold" style="flex:1" onclick="savePlan()">Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile -->
+<div id="profile-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Profile</div>
+    <div class="field"><div class="field-label">Full Name</div><input id="ep-name" class="field-input" type="text"></div>
+    <div class="field"><div class="field-label">Specialization</div><input id="ep-specialty" class="field-input" type="text"></div>
+    <div class="field"><div class="field-label">Contact Number</div><input id="ep-contact" class="field-input" type="tel"></div>
+    <div class="field"><div class="field-label">Years of Experience</div><input id="ep-years" class="field-input" type="number"></div>
+    <div class="field"><div class="field-label">Short Bio</div><textarea id="ep-bio" class="field-input"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('profile-modal')">Cancel</button>
+      <button class="btn-gold" style="flex:1" onclick="saveEditProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Timeline Item -->
+<div id="timeline-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Timeline Item</div>
+    <div class="field"><div class="field-label">Time</div><input id="tl-time" class="field-input" type="time"></div>
+    <div class="field"><div class="field-label">Activity / Description</div><input id="tl-desc" class="field-input" type="text" placeholder="e.g. Bride preparation begins"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('timeline-modal')">Cancel</button>
+      <button class="btn-gold" style="flex:1" onclick="saveTimelineItem()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Vendor -->
+<div id="vendor-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Vendor Suggestion</div>
+    <div class="field">
+      <div class="field-label">Category</div>
+      <select id="vd-cat" class="field-input">
+        <option value="Venue">Venue</option>
+        <option value="Catering">Catering</option>
+        <option value="Photography">Photography</option>
+        <option value="Videography">Videography</option>
+        <option value="Florist">Florist</option>
+        <option value="Cake">Cake</option>
+        <option value="Hair & Makeup">Hair & Makeup</option>
+        <option value="Entourage Attire">Entourage Attire</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Lights & Sound">Lights & Sound</option>
+        <option value="Invitations">Invitations</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field"><div class="field-label">Name / Business</div><input id="vd-name" class="field-input" type="text" placeholder="e.g. Bloom & Petal Studio"></div>
+    <div class="field"><div class="field-label">Notes</div><input id="vd-notes" class="field-input" type="text" placeholder="e.g. Best for outdoor setups, ₱35,000 package"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('vendor-modal')">Cancel</button>
+      <button class="btn-gold" style="flex:1" onclick="saveVendor()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Inclusion -->
+<div id="inclusion-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Package Inclusion</div>
+    <div class="field"><div class="field-label">Inclusion</div><input id="inc-text" class="field-input" type="text" placeholder="e.g. Full-day coordinator services"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('inclusion-modal')">Cancel</button>
+      <button class="btn-gold" style="flex:1" onclick="saveInclusion()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Storage ── */
+const FREE_PLAN_LIMIT = 3;
+let PROFILE = JSON.parse(localStorage.getItem('at_coord_profile') || 'null');
+let PLANS   = JSON.parse(localStorage.getItem('at_coord_plans')   || '[]');
+let CURRENT_PLAN_ID = null;
+let EDITING_PLAN_ID = null;
+let SLIDE_IDX = 0;
+let SLIDES = [];
+
+function save() {
+  localStorage.setItem('at_coord_profile', JSON.stringify(PROFILE));
+  localStorage.setItem('at_coord_plans',   JSON.stringify(PLANS));
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ── Routing ── */
+function showScreen(id) {
+  ['onboarding-screen','dashboard-screen','plan-screen'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+  });
+  const target = document.getElementById(id);
+  if (target) { target.style.display = 'flex'; target.classList.add('active'); }
+  window.scrollTo(0, 0);
+}
+
+function showDashboard() {
+  showScreen('dashboard-screen');
+  renderBadge();
+  renderPlans();
+}
+
+/* ── Onboarding ── */
+function saveProfile() {
+  const name = document.getElementById('ob-name').value.trim();
+  if (!name) { showToast('⚠️ Please enter your name'); return; }
+  PROFILE = {
+    name,
+    specialty: document.getElementById('ob-specialty').value.trim(),
+    contact:   document.getElementById('ob-contact').value.trim(),
+    years:     parseInt(document.getElementById('ob-years').value) || 0,
+    bio:       document.getElementById('ob-bio').value.trim(),
+  };
+  save();
+  showDashboard();
+}
+
+/* ── Profile edit ── */
+function showEditProfile() {
+  document.getElementById('ep-name').value     = PROFILE.name || '';
+  document.getElementById('ep-specialty').value= PROFILE.specialty || '';
+  document.getElementById('ep-contact').value  = PROFILE.contact || '';
+  document.getElementById('ep-years').value    = PROFILE.years || '';
+  document.getElementById('ep-bio').value      = PROFILE.bio || '';
+  openModal('profile-modal');
+}
+
+function saveEditProfile() {
+  const name = document.getElementById('ep-name').value.trim();
+  if (!name) { showToast('⚠️ Name is required'); return; }
+  PROFILE.name      = name;
+  PROFILE.specialty = document.getElementById('ep-specialty').value.trim();
+  PROFILE.contact   = document.getElementById('ep-contact').value.trim();
+  PROFILE.years     = parseInt(document.getElementById('ep-years').value) || 0;
+  PROFILE.bio       = document.getElementById('ep-bio').value.trim();
+  save();
+  closeModal('profile-modal');
+  renderBadge();
+  showToast('✅ Profile updated!');
+}
+
+/* ── Badge ── */
+function renderBadge() {
+  const el = document.getElementById('badge-preview');
+  const count = PLANS.length;
+  el.innerHTML =
+    '<div class="badge-verified">✦ Coordinator</div>' +
+    '<div class="badge-name">' + (PROFILE.name || '—') + '</div>' +
+    '<div class="badge-specialty">' + (PROFILE.specialty || 'Wedding Coordinator') + '</div>' +
+    '<div class="badge-stats">' +
+      '<div class="badge-stat"><div class="badge-stat-val">' + count + '</div><div class="badge-stat-lbl">Plans</div></div>' +
+      (PROFILE.years ? '<div class="badge-stat"><div class="badge-stat-val">' + PROFILE.years + '</div><div class="badge-stat-lbl">Yrs Exp</div></div>' : '') +
+      (PROFILE.contact ? '<div class="badge-stat"><div class="badge-stat-val" style="font-size:13px">' + PROFILE.contact + '</div><div class="badge-stat-lbl">Contact</div></div>' : '') +
+    '</div>';
+}
+
+/* ── Plans list ── */
+function renderPlans() {
+  const el = document.getElementById('plans-list');
+  const limitEl = document.getElementById('plans-limit-bar');
+  const upgradeEl = document.getElementById('upgrade-banner');
+  const atLimit = PLANS.length >= FREE_PLAN_LIMIT;
+  upgradeEl.style.display = atLimit ? 'block' : 'none';
+
+  // Limit dots
+  let dots = '';
+  for (let i = 0; i < FREE_PLAN_LIMIT; i++) {
+    dots += '<div class="limit-dot' + (i < PLANS.length ? ' used' : '') + '"></div>';
+  }
+  limitEl.innerHTML =
+    '<div class="limit-dots">' + dots + '</div>' +
+    '<div style="flex:1;font-size:12px;color:var(--ink-4)">' +
+      PLANS.length + ' / ' + FREE_PLAN_LIMIT + ' free plan slots used' +
+    '</div>' +
+    (atLimit ? '<span style="font-size:10px;font-weight:700;color:var(--gold)">FULL</span>' : '');
+
+  if (!PLANS.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--ink-4);font-size:13px">No plans yet. Tap <b>+ New Plan</b> to create your first wedding proposal.</div>';
+    return;
+  }
+  el.innerHTML = PLANS.map(p => {
+    const date = p.date ? new Date(p.date).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' }) : 'Date TBD';
+    return '<div class="plan-card" onclick="openPlan(\'' + p.id + '\')">' +
+      '<div class="plan-card-names">' + p.p1 + ' <span style="font-size:16px;opacity:.5">&</span> ' + p.p2 + '</div>' +
+      '<div class="plan-card-meta">📅 ' + date + (p.venue ? ' · 📍 ' + p.venue : '') + '</div>' +
+      '<span class="plan-card-pkg">' + (p.pkg || 'Custom') + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── New / Edit Plan Modal ── */
+function openNewPlan() {
+  if (PLANS.length >= FREE_PLAN_LIMIT) {
+    showToast('⚠️ Free limit reached — upgrade to Pro!');
+    return;
+  }
+  EDITING_PLAN_ID = null;
+  document.getElementById('plan-modal-title').textContent = 'New Wedding Plan';
+  ['pm-p1','pm-p2','pm-venue','pm-notes'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('pm-date').value = '';
+  document.getElementById('pm-budget').value = '';
+  document.getElementById('pm-pkg').value = 'Intimate';
+  openModal('plan-modal');
+}
+
+function openEditPlan() {
+  const plan = PLANS.find(p => p.id === CURRENT_PLAN_ID);
+  if (!plan) return;
+  EDITING_PLAN_ID = plan.id;
+  document.getElementById('plan-modal-title').textContent = 'Edit Plan';
+  document.getElementById('pm-p1').value     = plan.p1 || '';
+  document.getElementById('pm-p2').value     = plan.p2 || '';
+  document.getElementById('pm-date').value   = plan.date || '';
+  document.getElementById('pm-venue').value  = plan.venue || '';
+  document.getElementById('pm-pkg').value    = plan.pkg || 'Custom';
+  document.getElementById('pm-budget').value = plan.budget || '';
+  document.getElementById('pm-notes').value  = plan.notes || '';
+  openModal('plan-modal');
+}
+
+function savePlan() {
+  const p1 = document.getElementById('pm-p1').value.trim();
+  const p2 = document.getElementById('pm-p2').value.trim();
+  if (!p1 || !p2) { showToast('⚠️ Both partner names are required'); return; }
+  const data = {
+    p1, p2,
+    date:   document.getElementById('pm-date').value,
+    venue:  document.getElementById('pm-venue').value.trim(),
+    pkg:    document.getElementById('pm-pkg').value,
+    budget: parseInt(document.getElementById('pm-budget').value) || 0,
+    notes:  document.getElementById('pm-notes').value.trim(),
+  };
+  if (EDITING_PLAN_ID) {
+    const idx = PLANS.findIndex(p => p.id === EDITING_PLAN_ID);
+    if (idx !== -1) PLANS[idx] = { ...PLANS[idx], ...data };
+    showToast('✅ Plan updated!');
+  } else {
+    PLANS.push({ id: 'plan_' + Date.now(), ...data, timeline: [], vendors: [], inclusions: [] });
+    showToast('✅ Plan created!');
+  }
+  save();
+  closePlanModal();
+  if (EDITING_PLAN_ID) { openPlan(EDITING_PLAN_ID); } else { showDashboard(); }
+}
+
+function closePlanModal() {
+  closeModal('plan-modal');
+  EDITING_PLAN_ID = null;
+}
+
+function deletePlan() {
+  const plan = PLANS.find(p => p.id === CURRENT_PLAN_ID);
+  if (!plan || !confirm('Delete "' + plan.p1 + ' & ' + plan.p2 + '"? This cannot be undone.')) return;
+  PLANS = PLANS.filter(p => p.id !== CURRENT_PLAN_ID);
+  save();
+  CURRENT_PLAN_ID = null;
+  showDashboard();
+  showToast('🗑 Plan deleted');
+}
+
+/* ── Plan Detail ── */
+function openPlan(id) {
+  CURRENT_PLAN_ID = id;
+  const plan = PLANS.find(p => p.id === id);
+  if (!plan) return;
+  const date = plan.date ? new Date(plan.date).toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) : 'Date TBD';
+  document.getElementById('plan-detail-names').textContent  = plan.p1 + ' & ' + plan.p2;
+  document.getElementById('plan-detail-meta').textContent   = '📅 ' + date + (plan.venue ? '  ·  📍 ' + plan.venue : '');
+  document.getElementById('plan-detail-pkg').textContent    = plan.pkg || '—';
+  document.getElementById('plan-detail-budget').textContent = plan.budget ? '₱' + plan.budget.toLocaleString() : '—';
+  document.getElementById('plan-detail-notes').textContent  = plan.notes || 'No notes yet.';
+  switchPlanTab('overview');
+  showScreen('plan-screen');
+  renderTimeline();
+  renderVendors();
+  renderInclusions();
+}
+
+function switchPlanTab(tab) {
+  ['overview','timeline','vendors','inclusions'].forEach(t => {
+    document.getElementById('ptab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('ppanel-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+/* ── Timeline ── */
+function getCurrentPlan() { return PLANS.find(p => p.id === CURRENT_PLAN_ID); }
+
+function renderTimeline() {
+  const plan = getCurrentPlan(); if (!plan) return;
+  const el  = document.getElementById('timeline-list');
+  const emp = document.getElementById('timeline-empty');
+  const items = [...(plan.timeline || [])].sort((a,b) => a.time.localeCompare(b.time));
+  emp.style.display = items.length ? 'none' : 'block';
+  el.innerHTML = items.map((t, i) =>
+    '<div class="timeline-item">' +
+      '<div class="timeline-time">' + formatTime(t.time) + '</div>' +
+      '<div class="timeline-desc">' + t.desc + '</div>' +
+      '<button onclick="deleteTimelineItem(' + i + ')" style="background:none;border:none;color:var(--ink-4);font-size:14px;cursor:pointer;padding:0 4px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hr = parseInt(h);
+  return (hr % 12 || 12) + ':' + m + ' ' + (hr < 12 ? 'AM' : 'PM');
+}
+
+function openAddTimeline() {
+  document.getElementById('tl-time').value = '';
+  document.getElementById('tl-desc').value = '';
+  openModal('timeline-modal');
+}
+
+function saveTimelineItem() {
+  const time = document.getElementById('tl-time').value;
+  const desc = document.getElementById('tl-desc').value.trim();
+  if (!time || !desc) { showToast('⚠️ Time and description are required'); return; }
+  const plan = getCurrentPlan();
+  if (!plan.timeline) plan.timeline = [];
+  plan.timeline.push({ time, desc });
+  save(); closeModal('timeline-modal'); renderTimeline();
+  showToast('✅ Added to timeline!');
+}
+
+function deleteTimelineItem(idx) {
+  const plan = getCurrentPlan();
+  const sorted = [...(plan.timeline||[])].sort((a,b) => a.time.localeCompare(b.time));
+  const item = sorted[idx];
+  plan.timeline = plan.timeline.filter(t => !(t.time === item.time && t.desc === item.desc));
+  save(); renderTimeline();
+}
+
+/* ── Vendors ── */
+function renderVendors() {
+  const plan = getCurrentPlan(); if (!plan) return;
+  const el  = document.getElementById('vendor-list');
+  const emp = document.getElementById('vendor-empty');
+  const items = plan.vendors || [];
+  emp.style.display = items.length ? 'none' : 'block';
+  el.innerHTML = items.map((v, i) =>
+    '<div class="vendor-item">' +
+      '<div class="vendor-cat">' + v.cat + '</div>' +
+      '<div style="flex:1"><div class="vendor-name">' + v.name + '</div>' + (v.notes ? '<div style="font-size:11px;color:var(--ink-4);margin-top:2px">' + v.notes + '</div>' : '') + '</div>' +
+      '<button onclick="deleteVendor(' + i + ')" style="background:none;border:none;color:var(--ink-4);font-size:14px;cursor:pointer;padding:0 4px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function openAddVendor() {
+  document.getElementById('vd-name').value = '';
+  document.getElementById('vd-notes').value = '';
+  openModal('vendor-modal');
+}
+
+function saveVendor() {
+  const name = document.getElementById('vd-name').value.trim();
+  if (!name) { showToast('⚠️ Vendor name is required'); return; }
+  const plan = getCurrentPlan();
+  if (!plan.vendors) plan.vendors = [];
+  plan.vendors.push({ cat: document.getElementById('vd-cat').value, name, notes: document.getElementById('vd-notes').value.trim() });
+  save(); closeModal('vendor-modal'); renderVendors();
+  showToast('✅ Vendor added!');
+}
+
+function deleteVendor(idx) {
+  const plan = getCurrentPlan();
+  plan.vendors.splice(idx, 1);
+  save(); renderVendors();
+}
+
+/* ── Inclusions ── */
+function renderInclusions() {
+  const plan = getCurrentPlan(); if (!plan) return;
+  const el  = document.getElementById('inclusions-list');
+  const emp = document.getElementById('inclusions-empty');
+  const items = plan.inclusions || [];
+  emp.style.display = items.length ? 'none' : 'block';
+  el.innerHTML = items.map((inc, i) =>
+    '<div class="inclusion-item">' +
+      '<div class="inclusion-check">✓</div>' +
+      '<div class="inclusion-text">' + inc + '</div>' +
+      '<button onclick="deleteInclusion(' + i + ')" style="background:none;border:none;color:var(--ink-4);font-size:14px;cursor:pointer;padding:0 4px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function openAddInclusion() {
+  document.getElementById('inc-text').value = '';
+  openModal('inclusion-modal');
+}
+
+function saveInclusion() {
+  const text = document.getElementById('inc-text').value.trim();
+  if (!text) { showToast('⚠️ Please enter an inclusion'); return; }
+  const plan = getCurrentPlan();
+  if (!plan.inclusions) plan.inclusions = [];
+  plan.inclusions.push(text);
+  save(); closeModal('inclusion-modal'); renderInclusions();
+}
+
+function deleteInclusion(idx) {
+  const plan = getCurrentPlan();
+  plan.inclusions.splice(idx, 1);
+  save(); renderInclusions();
+}
+
+/* ── Presentation Mode ── */
+function startPresentation() {
+  const plan = getCurrentPlan(); if (!plan) return;
+  SLIDES = buildSlides(plan);
+  SLIDE_IDX = 0;
+  renderSlides();
+  document.getElementById('presentation-mode').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function endPresentation() {
+  document.getElementById('presentation-mode').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function buildSlides(plan) {
+  const date = plan.date ? new Date(plan.date).toLocaleDateString('en-PH', { month:'long', day:'numeric', year:'numeric' }) : 'Date TBD';
+  const slides = [];
+
+  // Slide 1: Title
+  slides.push({
+    type: 'title',
+    eyebrow: 'Prepared by ' + (PROFILE.name || 'Your Coordinator'),
+    headline: plan.p1 + '\n& ' + plan.p2,
+    sub: date + (plan.venue ? '\n' + plan.venue : ''),
+  });
+
+  // Slide 2: Package
+  if (plan.pkg) {
+    slides.push({
+      type: 'info',
+      eyebrow: 'Your Package',
+      headline: plan.pkg,
+      sub: plan.budget ? 'Estimated Budget: ₱' + plan.budget.toLocaleString() : '',
+      body: plan.notes || '',
+    });
+  }
+
+  // Slide 3: Inclusions
+  if (plan.inclusions && plan.inclusions.length) {
+    slides.push({ type: 'list', eyebrow: "What's Included", headline: 'Package Inclusions', items: plan.inclusions });
+  }
+
+  // Slide 4: Timeline
+  if (plan.timeline && plan.timeline.length) {
+    const sorted = [...plan.timeline].sort((a,b) => a.time.localeCompare(b.time));
+    slides.push({ type: 'timeline', eyebrow: 'Day Program', headline: 'Wedding Day Timeline', items: sorted });
+  }
+
+  // Slide 5: Vendors
+  if (plan.vendors && plan.vendors.length) {
+    slides.push({ type: 'vendors', eyebrow: 'Recommended Suppliers', headline: 'Vendor Suggestions', items: plan.vendors });
+  }
+
+  // Slide 6: Thank You
+  slides.push({
+    type: 'closing',
+    eyebrow: PROFILE.specialty || 'Wedding Coordinator',
+    headline: PROFILE.name || 'Your Coordinator',
+    sub: PROFILE.contact || '',
+    body: PROFILE.bio || "It's an honor to walk with you on your big day. Let's make it unforgettable. 💍",
+  });
+
+  return slides;
+}
+
+function renderSlides() {
+  const container = document.getElementById('slides-container');
+  const progress  = document.getElementById('pres-progress');
+  const nextBtn   = document.getElementById('pres-next-btn');
+
+  container.innerHTML = SLIDES.map((s, i) => {
+    let inner = '';
+    if (s.type === 'title') {
+      inner = '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title">' + s.headline.replace('\n', '<br>') + '</div>' +
+              '<div class="slide-divider"></div>' +
+              '<div class="slide-sub" style="white-space:pre-line">' + s.sub + '</div>';
+    } else if (s.type === 'info') {
+      inner = '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title">' + s.headline + '</div>' +
+              (s.sub ? '<div class="slide-sub">' + s.sub + '</div>' : '') +
+              (s.body ? '<div class="slide-divider"></div><div style="font-size:14px;color:rgba(255,255,255,0.6);max-width:380px;line-height:1.7">' + s.body + '</div>' : '');
+    } else if (s.type === 'list') {
+      inner = '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title" style="font-size:28px;margin-bottom:16px">' + s.headline + '</div>' +
+              '<div class="slide-list">' +
+                s.items.map(item => '<div class="slide-list-item"><div class="slide-dot"></div><div>' + item + '</div></div>').join('') +
+              '</div>';
+    } else if (s.type === 'timeline') {
+      inner = '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title" style="font-size:28px;margin-bottom:16px">' + s.headline + '</div>' +
+              '<div class="slide-list">' +
+                s.items.map(t => '<div class="slide-list-item"><div style="font-size:12px;font-weight:700;color:var(--gold);width:60px;flex-shrink:0">' + formatTime(t.time) + '</div><div>' + t.desc + '</div></div>').join('') +
+              '</div>';
+    } else if (s.type === 'vendors') {
+      inner = '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title" style="font-size:28px;margin-bottom:16px">' + s.headline + '</div>' +
+              '<div class="slide-list">' +
+                s.items.map(v => '<div class="slide-list-item"><div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;width:80px;flex-shrink:0">' + v.cat + '</div><div><div style="font-weight:700">' + v.name + '</div>' + (v.notes ? '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:1px">' + v.notes + '</div>' : '') + '</div></div>').join('') +
+              '</div>';
+    } else if (s.type === 'closing') {
+      inner = '<div style="font-size:36px;margin-bottom:16px">💍</div>' +
+              '<div class="slide-eyebrow">' + s.eyebrow + '</div>' +
+              '<div class="slide-title">' + s.headline + '</div>' +
+              (s.sub ? '<div style="font-size:14px;color:var(--gold);margin-bottom:16px">' + s.sub + '</div>' : '') +
+              '<div class="slide-divider"></div>' +
+              '<div style="font-size:14px;color:rgba(255,255,255,0.55);max-width:340px;line-height:1.7">' + s.body + '</div>';
+    }
+    return '<div class="slide' + (i === 0 ? ' active' : '') + '" id="slide-' + i + '">' + inner + '</div>';
+  }).join('');
+
+  progress.innerHTML = SLIDES.map((_, i) => '<div class="pres-dot' + (i === 0 ? ' active' : '') + '" id="pdot-' + i + '"></div>').join('');
+  nextBtn.textContent = SLIDES.length > 1 ? 'Next →' : 'Done';
+  if (SLIDES.length <= 1) nextBtn.textContent = 'Done';
+}
+
+function goToSlide(idx) {
+  document.getElementById('slide-' + SLIDE_IDX)?.classList.remove('active');
+  document.getElementById('pdot-'  + SLIDE_IDX)?.classList.remove('active');
+  SLIDE_IDX = Math.max(0, Math.min(idx, SLIDES.length - 1));
+  document.getElementById('slide-' + SLIDE_IDX)?.classList.add('active');
+  document.getElementById('pdot-'  + SLIDE_IDX)?.classList.add('active');
+  document.getElementById('pres-next-btn').textContent = SLIDE_IDX === SLIDES.length - 1 ? 'Done ✓' : 'Next →';
+}
+
+function nextSlide() {
+  if (SLIDE_IDX === SLIDES.length - 1) { endPresentation(); return; }
+  goToSlide(SLIDE_IDX + 1);
+}
+
+function prevSlide() {
+  if (SLIDE_IDX === 0) { endPresentation(); return; }
+  goToSlide(SLIDE_IDX - 1);
+}
+
+/* ── Modals ── */
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+/* ── Init ── */
+window.addEventListener('DOMContentLoaded', () => {
+  if (!PROFILE) {
+    document.getElementById('onboarding-screen').style.display = 'flex';
+  } else {
+    showDashboard();
+  }
+});
+
+/* ── Expose ── */
+Object.assign(window, {
+  saveProfile, showEditProfile, saveEditProfile,
+  openNewPlan, openEditPlan, savePlan, closePlanModal, deletePlan,
+  openPlan, switchPlanTab,
+  openAddTimeline, saveTimelineItem, deleteTimelineItem,
+  openAddVendor, saveVendor, deleteVendor,
+  openAddInclusion, saveInclusion, deleteInclusion,
+  startPresentation, endPresentation, nextSlide, prevSlide,
+  openModal, closeModal, showToast, showDashboard,
+});
+</script>
+</body>
+</html>
