@@ -380,15 +380,8 @@ function bootApp() {
   // Always show splash on load
   showLoadingSplash();
 
-  // PIN lock on every boot (default PIN: 1234)
-  setTimeout(() => showPinLock('lock'), 1800);
-  const origHide = window.hidePinLock;
-  window.hidePinLock = function() {
-    origHide();
-    window.hidePinLock = origHide; // restore for idle re-lock
-    onAuthSuccess();
-    initIdleTimer();
-  };
+  // PIN disabled — boot straight into app after splash
+  setTimeout(() => onAuthSuccess(), 1900);
 }
 
 /* ── INTRO SWIPE ─────────────────────────────── */
@@ -5056,32 +5049,65 @@ function renderHomeBillsTracker() {
   const now = new Date();
   const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   const paidKey = 'at_bills_paid_' + monthKey;
-  const paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
-  const active = (typeof getActiveBills === 'function') ? getActiveBills() : [];
+  const amtKey  = 'at_bills_paid_amt_' + monthKey;
+  const paid    = JSON.parse(localStorage.getItem(paidKey) || '[]');
+  const paidAmts= JSON.parse(localStorage.getItem(amtKey)  || '{}');
+  const active  = (typeof getActiveBills === 'function') ? getActiveBills() : [];
+
   if (!active.length) {
-    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div><span onclick="switchMainTab(\'budget\')" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">Add bills →</span></div><div style="font-size:13px;color:var(--ink-4);padding:8px 0">No bills set up yet.</div>';
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+        '<div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div>' +
+        '<span onclick="switchMainTab(\'budget\')" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">Add bills →</span>' +
+      '</div>' +
+      '<div style="font-size:13px;color:var(--ink-4);padding:8px 0">No bills set up yet.</div>';
     return;
   }
-  const sorted = [...active].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99));
+
+  // Expand split bills into per-paycheck rows
   const today = now.getDate();
-  const totalAll = active.reduce((s, b) => s + (b.amount || 0), 0);
-  const totalUnpaid = active.filter(b => !paid.includes(b.id)).reduce((s, b) => s + (b.amount || 0), 0);
-  const rows = sorted.map(b => {
-    const isPaid = paid.includes(b.id);
-    const isOverdue = b.dueDay && b.dueDay < today && !isPaid;
-    const dueBadge = b.dueDay
-      ? '<span style="font-size:10px;font-weight:700;color:' + (isOverdue ? '#E07898' : 'var(--ink-4)') + ';background:' + (isOverdue ? 'rgba(224,120,152,0.12)' : 'rgba(0,0,0,0.05)') + ';padding:2px 7px;border-radius:99px">Due ' + ordinal(b.dueDay) + (isOverdue ? ' · Overdue' : '') + '</span>'
-      : '';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.05);' + (isPaid ? 'opacity:0.5' : '') + '">' +
-      '<div style="font-size:22px;width:36px;height:36px;background:rgba(245,230,200,0.5);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + b.icon + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:13px;font-weight:700;color:var(--ink);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + b.name + '</div>' +
-        (dueBadge ? '<div style="margin-top:3px">' + dueBadge + '</div>' : '') +
-      '</div>' +
-      '<div style="font-size:14px;font-weight:700;color:var(--ink);flex-shrink:0;margin-right:6px">₱' + (b.amount || 0).toLocaleString() + '</div>' +
-      '<button onclick="toggleBillPaid(\'' + b.id + '\')" style="padding:5px 10px;border-radius:var(--r-xs);border:none;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Mark Paid') + '</button>' +
-    '</div>';
-  }).join('');
+  const rows = [];
+  [...active].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99)).forEach(b => {
+    const split = b.splitPaychecks || 1;
+    for (let i = 0; i < split; i++) {
+      const rowId    = split > 1 ? b.id + '_s' + (i + 1) : b.id;
+      const portion  = Math.round(b.amount / split);
+      const label    = split > 1 ? b.name + ' (' + (i + 1) + '/' + split + ')' : b.name;
+      const isPaid   = paid.includes(rowId);
+      const paidAmt  = paidAmts[rowId];
+      const isOverdue = b.dueDay && b.dueDay < today && !isPaid && i === split - 1;
+      const dueBadge = b.dueDay && i === split - 1
+        ? '<span style="font-size:10px;font-weight:700;color:' + (isOverdue ? '#E07898' : 'var(--ink-4)') + ';background:' + (isOverdue ? 'rgba(224,120,152,0.12)' : 'rgba(0,0,0,0.05)') + ';padding:2px 7px;border-radius:99px">Due ' + ordinal(b.dueDay) + (isOverdue ? ' · Overdue' : '') + '</span>'
+        : (split > 1 && i < split - 1 ? '<span style="font-size:10px;color:var(--ink-4);background:rgba(0,0,0,0.05);padding:2px 7px;border-radius:99px">pre-save portion</span>' : '');
+      rows.push(
+        '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.05);' + (isPaid ? 'opacity:0.55' : '') + '">' +
+          '<div style="font-size:22px;width:36px;height:36px;background:rgba(245,230,200,0.5);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + b.icon + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--ink);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + label + '</div>' +
+            (dueBadge ? '<div style="margin-top:3px">' + dueBadge + '</div>' : '') +
+            (isPaid && paidAmt != null ? '<div style="font-size:11px;color:var(--green-deep);margin-top:2px">Paid ₱' + paidAmt.toLocaleString() + '</div>' : '') +
+          '</div>' +
+          '<button onclick="toggleBillPaid(\'' + rowId + '\')" data-bill-base="' + b.id + '" style="padding:5px 10px;border-radius:var(--r-xs);border:none;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Pay') + '</button>' +
+        '</div>'
+      );
+    }
+  });
+
+  // Totals: use actual paid amounts; unpaid uses bill portion amounts
+  let totalPaid = 0, totalUnpaid = 0;
+  active.forEach(b => {
+    const split = b.splitPaychecks || 1;
+    for (let i = 0; i < split; i++) {
+      const rowId = split > 1 ? b.id + '_s' + (i + 1) : b.id;
+      const portion = Math.round(b.amount / split);
+      if (paid.includes(rowId)) {
+        totalPaid += (paidAmts[rowId] != null ? paidAmts[rowId] : portion);
+      } else {
+        totalUnpaid += portion;
+      }
+    }
+  });
+
   el.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
       '<div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div>' +
@@ -5089,8 +5115,8 @@ function renderHomeBillsTracker() {
     '</div>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:linear-gradient(135deg,rgba(224,120,152,0.1),rgba(245,230,200,0.2));border-radius:var(--r-md);margin-bottom:10px">' +
       '<div>' +
-        '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Total This Month</div>' +
-        '<div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--ink);line-height:1.1">₱' + totalAll.toLocaleString() + '</div>' +
+        '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Paid This Month</div>' +
+        '<div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green-deep);line-height:1.1">₱' + totalPaid.toLocaleString() + '</div>' +
       '</div>' +
       '<div style="width:1px;height:36px;background:rgba(0,0,0,0.08)"></div>' +
       '<div style="text-align:right">' +
@@ -5098,22 +5124,83 @@ function renderHomeBillsTracker() {
         '<div style="font-size:22px;font-weight:800;color:' + (totalUnpaid > 0 ? 'var(--pink-deep)' : 'var(--green-deep)') + ';line-height:1.1">₱' + totalUnpaid.toLocaleString() + '</div>' +
       '</div>' +
     '</div>' +
-    rows;
+    rows.join('');
 }
+
+let _payingBillId = null;
 
 function toggleBillPaid(billId) {
   const now = new Date();
   const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   const paidKey = 'at_bills_paid_' + monthKey;
   let paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
+
   if (paid.includes(billId)) {
+    // Unmark paid
     paid = paid.filter(id => id !== billId);
+    localStorage.setItem(paidKey, JSON.stringify(paid));
+    const amtKey = 'at_bills_paid_amt_' + monthKey;
+    let amounts = JSON.parse(localStorage.getItem(amtKey) || '{}');
+    delete amounts[billId];
+    localStorage.setItem(amtKey, JSON.stringify(amounts));
+    renderHomeBillsTracker();
+    renderPaycheckGuide();
+    renderExpenseTrendChart();
   } else {
-    paid.push(billId);
+    openBillPayModal(billId);
   }
+}
+
+function _resolveBill(rowId) {
+  const active = (typeof getActiveBills === 'function') ? getActiveBills() : [];
+  // rowId may be "bill_123" or "bill_123_s2"
+  const baseId = rowId.replace(/_s\d+$/, '');
+  return active.find(b => b.id === baseId) || null;
+}
+
+function openBillPayModal(rowId) {
+  _payingBillId = rowId;
+  const bill = _resolveBill(rowId);
+  if (!bill) return;
+  const split = bill.splitPaychecks || 1;
+  const suggested = Math.round(bill.amount / split);
+  const splitNum = rowId.match(/_s(\d+)$/);
+  const label = split > 1 && splitNum ? bill.name + ' (' + splitNum[1] + '/' + split + ')' : bill.name;
+  const titleEl = document.getElementById('bill-pay-modal-title');
+  const subEl   = document.getElementById('bill-pay-modal-sub');
+  const hintEl  = document.getElementById('bill-pay-hint');
+  const inputEl = document.getElementById('bill-pay-amount-input');
+  if (titleEl) titleEl.textContent = label;
+  if (subEl)   subEl.textContent   = split > 1 ? 'Split ×' + split + ' — ₱' + suggested.toLocaleString() + ' per paycheck' : '';
+  if (hintEl)  hintEl.textContent  = 'Leave blank to use suggested amount (₱' + suggested.toLocaleString() + ')';
+  if (inputEl) { inputEl.value = ''; inputEl.placeholder = suggested.toLocaleString(); }
+  openModal('bill-pay-modal');
+}
+
+function confirmBillPaid() {
+  if (!_payingBillId) return;
+  const billId = _payingBillId;
+  const bill = _resolveBill(billId);
+  const split = bill ? (bill.splitPaychecks || 1) : 1;
+  const defaultAmt = bill ? Math.round(bill.amount / split) : 0;
+  const input = document.getElementById('bill-pay-amount-input');
+  const raw = input ? input.value.trim() : '';
+  const amount = raw === '' ? defaultAmt : (parseFloat(raw) || defaultAmt);
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const paidKey = 'at_bills_paid_' + monthKey;
+  const amtKey  = 'at_bills_paid_amt_' + monthKey;
+  let paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
+  if (!paid.includes(billId)) paid.push(billId);
   localStorage.setItem(paidKey, JSON.stringify(paid));
+  let amounts = JSON.parse(localStorage.getItem(amtKey) || '{}');
+  amounts[billId] = amount;
+  localStorage.setItem(amtKey, JSON.stringify(amounts));
+  closeModalById('bill-pay-modal');
+  _payingBillId = null;
   renderHomeBillsTracker();
   renderPaycheckGuide();
+  renderExpenseTrendChart();
 }
 
 function renderHappeningNow() {
@@ -5261,6 +5348,14 @@ function renderExpenseTrendChart() {
       if (m) m.total += (typeof getExpenseTotal==='function' ? getExpenseTotal(e) : (e.total||e.amount||0));
     }));
   }
+
+  // Add paid bill amounts per month
+  months.forEach(m => {
+    const mk = m.year + '-' + String(m.month + 1).padStart(2, '0');
+    const amts = JSON.parse(localStorage.getItem('at_bills_paid_amt_' + mk) || '{}');
+    Object.values(amts).forEach(a => { m.total += (a || 0); });
+  });
+
   _chartData = months;
 
   drawChart(ctx, canvas, months, null);
@@ -5341,6 +5436,8 @@ window.initHomeFeed = initHomeFeed;
 window.renderExpenseTrendChart = renderExpenseTrendChart;
 window.renderHomeBillsTracker = renderHomeBillsTracker;
 window.toggleBillPaid = toggleBillPaid;
+window.openBillPayModal = openBillPayModal;
+window.confirmBillPaid = confirmBillPaid;
 
 /* ═══════════════════════════════════════════════
    BUDGET PLANNER

@@ -755,7 +755,7 @@
     <button class="main-tab" id="main-tab-groups" onclick="switchMainTab('groups')">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><circle cx="18" cy="8" r="3"/><path d="M21 21v-1.5a3 3 0 00-3-3"/></svg>Groups
     </button>
-    <button class="main-tab" id="main-tab-jowa" onclick="switchMainTab('jowa')">
+    <button class="main-tab" id="main-tab-jowa" onclick="switchMainTab('jowa')" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Jowa
     </button>
     <button class="main-tab" id="main-tab-wedding" onclick="switchMainTab('wedding')">
@@ -775,68 +775,40 @@
     <div class="tab-panel active" id="tp-home">
       <!-- HOME FEED -->
       <div>
-        <!-- Jowa Budget Card -->
-        <div class="glass" onclick="switchMainTab('jowa')" style="padding:16px;margin-bottom:12px;cursor:pointer">
-          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">This Month · Jowa</div>
-          <div id="home-jowa-total" style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink)">₱0</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <span id="home-jowa-p1" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#D1FAE5;color:#065F46">—</span>
-            <span id="home-jowa-p2" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#FCE7F3;color:#9D174D">—</span>
-          </div>
-        </div>
-
-        <!-- Upcoming Reminder -->
-        <div id="home-reminder-card" style="display:none;margin-bottom:12px">
-          <div class="glass" onclick="switchMainTab('jowa');setTimeout(()=>window.openRemindersScreen(),100)" style="padding:14px;cursor:pointer;border-left:3px solid #EC4899">
-            <div style="font-size:11px;font-weight:700;color:#EC4899;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Coming Up</div>
-            <div style="font-size:15px;font-weight:800;color:var(--ink)" id="home-reminder-name">—</div>
-            <div style="font-size:12px;color:var(--ink-4);margin-top:2px" id="home-reminder-days">—</div>
-          </div>
-        </div>
-
-        <!-- Daily Jowa Tasks -->
-        <div class="glass" style="padding:16px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:14px;font-weight:800;color:var(--ink)">Today's Tasks</div>
-            <span onclick="navTo('daily-tasks');window.initDailyTasks()" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">See all →</span>
-          </div>
-          <div id="home-daily-tasks"></div>
-        </div>
-
-        <!-- Mood Check-in -->
-        <div class="glass" style="padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="navTo('mood-board');window.initMoodBoard()">
-          <div style="width:44px;height:44px;border-radius:var(--r-lg);background:#F2FAD8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0" id="home-mood-emoji">🫥</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:800;color:var(--ink)">Mood Board</div>
-            <div style="font-size:12px;color:var(--ink-4);margin-top:1px" id="home-mood-sub">Tap to check in today</div>
-          </div>
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ink-4);fill:none;stroke-width:2.5"><polyline points="9,18 15,12 9,6"/></svg>
-        </div>
-
-        <!-- Expense Trend Chart -->
-        <div class="glass" style="padding:16px;margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Expense Trend</div>
-          <!-- Hovered point details -->
-          <div id="chart-detail" style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <div>
-              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)" id="chart-total">₱0</div>
-              <div style="font-size:11px;color:var(--ink-4)" id="chart-label">Total across all groups</div>
-            </div>
-          </div>
-          <canvas id="expense-trend-chart" style="width:100%;height:100px;display:block"></canvas>
-        </div>
-
-        <!-- Upcoming Bills Tracker -->
+        <!-- Upcoming Bills Tracker (first) -->
         <div class="glass" style="padding:16px;margin-bottom:12px">
           <div id="home-bills-tracker">
             <!-- populated by renderHomeBillsTracker() -->
           </div>
         </div>
 
+        <!-- Expense Trend Chart -->
+        <div class="glass" style="padding:16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Expense Trend</div>
+          <div id="chart-detail" style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)" id="chart-total">₱0</div>
+              <div style="font-size:11px;color:var(--ink-4)" id="chart-label">Monthly expenses + bills paid</div>
+            </div>
+          </div>
+          <canvas id="expense-trend-chart" style="width:100%;height:100px;display:block"></canvas>
+        </div>
+
         <!-- Happening Now -->
         <div style="font-size:17px;font-weight:900;color:var(--ink);margin-bottom:10px;font-family:'Nunito',sans-serif">Happening Now</div>
         <div id="home-activity-list">
           <!-- populated by renderHappeningNow() -->
+        </div>
+
+        <!-- Hidden jowa elements (kept for JS compatibility) -->
+        <div style="display:none">
+          <div id="home-jowa-total"></div>
+          <span id="home-jowa-p1"></span>
+          <span id="home-jowa-p2"></span>
+          <div id="home-reminder-card"><div id="home-reminder-name"></div><div id="home-reminder-days"></div></div>
+          <div id="home-daily-tasks"></div>
+          <div id="home-mood-emoji"></div>
+          <div id="home-mood-sub"></div>
         </div>
       </div>
       <div style="height:24px"></div>
@@ -1111,7 +1083,7 @@
       <div class="settings-section pad">
         <div class="settings-group glass">
           <div class="settings-item" onclick="openProfileEdit()"><div class="si-left"><div class="si-icon sand">👤</div><span class="si-name">Edit Profile &amp; Name</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
-          <div class="settings-item" onclick="window.setupPIN()"><div class="si-left"><div class="si-icon sand">🔐</div><span class="si-name" id="pin-settings-label">Change PIN</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+          <div class="settings-item" onclick="window.setupPIN()" style="display:none"><div class="si-left"><div class="si-icon sand">🔐</div><span class="si-name" id="pin-settings-label">Change PIN</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
         </div>
         <div class="settings-group glass">
           <div class="settings-item" onclick="window.openPairModal()"><div class="si-left"><div class="si-icon pink">💑</div><span class="si-name">Pair with Jowa</span></div><svg class="si-arrow" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
@@ -1192,6 +1164,21 @@
     <div class="input-group"><div class="input-label" data-t="assignLabel"></div><div id="task-assign-picker" class="task-member-row"></div></div>
     <div class="input-group"><div class="input-label" data-t="dueDateLabel"></div><input type="date" id="task-due-input" class="glass-input"></div>
     <button class="cta-btn green" onclick="addTask()" data-t="addTaskBtn"></button>
+  </div>
+</div>
+
+<!-- Bill Pay Amount Modal -->
+<div id="bill-pay-modal" class="modal-overlay" onclick="closeModalOutside(event,'bill-pay-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="bill-pay-modal-title">How much did you pay?</div>
+    <div id="bill-pay-modal-sub" style="font-size:13px;color:var(--ink-4);margin:-8px 0 16px;text-align:center"></div>
+    <div class="input-group">
+      <div class="input-label">Amount Paid</div>
+      <input id="bill-pay-amount-input" type="number" inputmode="decimal" class="glass-input peso-input" placeholder="0">
+    </div>
+    <div style="font-size:12px;color:var(--ink-4);margin-bottom:16px;text-align:center" id="bill-pay-hint"></div>
+    <button class="cta-btn pink" onclick="confirmBillPaid()">Mark as Paid ✓</button>
   </div>
 </div>
 
@@ -1653,7 +1640,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="app.js?v=20260612"></script>
+<script src="app.js?v=20260707"></script>
 <script src="wedding.js?v=20260612"></script>
 <script>
 /* ── PAGE-LEVEL HELPERS ── */
