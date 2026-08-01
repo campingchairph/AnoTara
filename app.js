@@ -5043,16 +5043,53 @@ function initHomeFeed() {
   renderHappeningNow();
 }
 
+function _billRows(bills, paidArr, paidAmtObj, mk, isOverdueSection) {
+  const rows = [];
+  [...bills].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99)).forEach(b => {
+    const split = b.splitPaychecks || 1;
+    for (let i = 0; i < split; i++) {
+      const rowId   = split > 1 ? b.id + '_s' + (i + 1) : b.id;
+      const portion = Math.round(b.amount / split);
+      const label   = split > 1 ? b.name + ' (' + (i + 1) + '/' + split + ')' : b.name;
+      const isPaid  = paidArr.includes(rowId);
+      if (isOverdueSection && isPaid) continue; // only show unpaid in overdue section
+      const paidAmt = paidAmtObj[rowId];
+      const dueBadge = b.dueDay && i === split - 1
+        ? '<span style="font-size:10px;font-weight:700;color:' + (isOverdueSection && !isPaid ? '#E07898' : 'var(--ink-4)') + ';background:' + (isOverdueSection && !isPaid ? 'rgba(224,120,152,0.12)' : 'rgba(0,0,0,0.05)') + ';padding:2px 7px;border-radius:99px">Due ' + ordinal(b.dueDay) + (isOverdueSection && !isPaid ? ' · Overdue' : '') + '</span>'
+        : (split > 1 && i < split - 1 ? '<span style="font-size:10px;color:var(--ink-4);background:rgba(0,0,0,0.05);padding:2px 7px;border-radius:99px">pre-save</span>' : '');
+      rows.push(
+        '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.05);' + (isPaid ? 'opacity:0.55' : '') + '">' +
+          '<div style="font-size:22px;width:36px;height:36px;background:rgba(245,230,200,0.5);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + b.icon + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--ink);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + label + '</div>' +
+            (dueBadge ? '<div style="margin-top:3px">' + dueBadge + '</div>' : '') +
+            (isPaid && paidAmt != null ? '<div style="font-size:11px;color:var(--green-deep);margin-top:2px">Paid ₱' + paidAmt.toLocaleString() + '</div>' : '') +
+          '</div>' +
+          '<button onclick="toggleBillPaid(\'' + rowId + '\',\'' + mk + '\')" style="padding:5px 10px;border-radius:var(--r-xs);border:none;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Pay') + '</button>' +
+        '</div>'
+      );
+    }
+  });
+  return rows;
+}
+
 function renderHomeBillsTracker() {
   const el = document.getElementById('home-bills-tracker');
   if (!el) return;
   const now = new Date();
-  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  const paidKey = 'at_bills_paid_' + monthKey;
-  const amtKey  = 'at_bills_paid_amt_' + monthKey;
-  const paid    = JSON.parse(localStorage.getItem(paidKey) || '[]');
-  const paidAmts= JSON.parse(localStorage.getItem(amtKey)  || '{}');
-  const active  = (typeof getActiveBills === 'function') ? getActiveBills() : [];
+  const curMK   = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const curLabel = now.toLocaleString('en-PH', { month: 'long', year: 'numeric' });
+
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMK   = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+  const prevLabel = prevDate.toLocaleString('en-PH', { month: 'long', year: 'numeric' });
+
+  const curPaid    = JSON.parse(localStorage.getItem('at_bills_paid_' + curMK)     || '[]');
+  const curAmts    = JSON.parse(localStorage.getItem('at_bills_paid_amt_' + curMK) || '{}');
+  const prevPaid   = JSON.parse(localStorage.getItem('at_bills_paid_' + prevMK)     || '[]');
+  const prevAmts   = JSON.parse(localStorage.getItem('at_bills_paid_amt_' + prevMK) || '{}');
+
+  const active = (typeof getActiveBills === 'function') ? getActiveBills() : [];
 
   if (!active.length) {
     el.innerHTML =
@@ -5064,58 +5101,42 @@ function renderHomeBillsTracker() {
     return;
   }
 
-  // Expand split bills into per-paycheck rows
-  const today = now.getDate();
-  const rows = [];
-  [...active].sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99)).forEach(b => {
+  // Which bills have at least one unpaid portion from the previous month?
+  const prevUnpaidBills = active.filter(b => {
     const split = b.splitPaychecks || 1;
     for (let i = 0; i < split; i++) {
-      const rowId    = split > 1 ? b.id + '_s' + (i + 1) : b.id;
-      const portion  = Math.round(b.amount / split);
-      const label    = split > 1 ? b.name + ' (' + (i + 1) + '/' + split + ')' : b.name;
-      const isPaid   = paid.includes(rowId);
-      const paidAmt  = paidAmts[rowId];
-      const isOverdue = b.dueDay && b.dueDay < today && !isPaid && i === split - 1;
-      const dueBadge = b.dueDay && i === split - 1
-        ? '<span style="font-size:10px;font-weight:700;color:' + (isOverdue ? '#E07898' : 'var(--ink-4)') + ';background:' + (isOverdue ? 'rgba(224,120,152,0.12)' : 'rgba(0,0,0,0.05)') + ';padding:2px 7px;border-radius:99px">Due ' + ordinal(b.dueDay) + (isOverdue ? ' · Overdue' : '') + '</span>'
-        : (split > 1 && i < split - 1 ? '<span style="font-size:10px;color:var(--ink-4);background:rgba(0,0,0,0.05);padding:2px 7px;border-radius:99px">pre-save portion</span>' : '');
-      rows.push(
-        '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.05);' + (isPaid ? 'opacity:0.55' : '') + '">' +
-          '<div style="font-size:22px;width:36px;height:36px;background:rgba(245,230,200,0.5);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + b.icon + '</div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:13px;font-weight:700;color:var(--ink);' + (isPaid ? 'text-decoration:line-through' : '') + '">' + label + '</div>' +
-            (dueBadge ? '<div style="margin-top:3px">' + dueBadge + '</div>' : '') +
-            (isPaid && paidAmt != null ? '<div style="font-size:11px;color:var(--green-deep);margin-top:2px">Paid ₱' + paidAmt.toLocaleString() + '</div>' : '') +
-          '</div>' +
-          '<button onclick="toggleBillPaid(\'' + rowId + '\')" data-bill-base="' + b.id + '" style="padding:5px 10px;border-radius:var(--r-xs);border:none;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;' + (isPaid ? 'background:rgba(90,171,122,0.15);color:var(--green-deep)' : 'background:rgba(224,120,152,0.15);color:var(--pink-deep)') + '">' + (isPaid ? '✓ Paid' : 'Pay') + '</button>' +
-        '</div>'
-      );
+      const rowId = split > 1 ? b.id + '_s' + (i + 1) : b.id;
+      if (!prevPaid.includes(rowId)) return true;
     }
+    return false;
   });
 
-  // Totals: use actual paid amounts; unpaid uses bill portion amounts
+  // Totals for current month
   let totalPaid = 0, totalUnpaid = 0;
   active.forEach(b => {
     const split = b.splitPaychecks || 1;
     for (let i = 0; i < split; i++) {
-      const rowId = split > 1 ? b.id + '_s' + (i + 1) : b.id;
+      const rowId   = split > 1 ? b.id + '_s' + (i + 1) : b.id;
       const portion = Math.round(b.amount / split);
-      if (paid.includes(rowId)) {
-        totalPaid += (paidAmts[rowId] != null ? paidAmts[rowId] : portion);
+      if (curPaid.includes(rowId)) {
+        totalPaid += (curAmts[rowId] != null ? curAmts[rowId] : portion);
       } else {
         totalUnpaid += portion;
       }
     }
   });
 
-  el.innerHTML =
+  const sectionLabel = (text, accent) =>
+    '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.7px;color:' + accent + ';margin:12px 0 6px;padding:4px 8px;background:' + accent.replace(')', ',0.1)').replace('rgb','rgba') + ';border-radius:6px;display:inline-block">' + text + '</div>';
+
+  let html =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
       '<div style="font-size:14px;font-weight:800;color:var(--ink)">Upcoming Bills</div>' +
       '<span onclick="switchMainTab(\'budget\')" style="font-size:12px;font-weight:700;color:var(--accent-dk);cursor:pointer">Manage →</span>' +
     '</div>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:linear-gradient(135deg,rgba(224,120,152,0.1),rgba(245,230,200,0.2));border-radius:var(--r-md);margin-bottom:10px">' +
       '<div>' +
-        '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Paid This Month</div>' +
+        '<div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.6px">Paid · ' + curLabel + '</div>' +
         '<div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green-deep);line-height:1.1">₱' + totalPaid.toLocaleString() + '</div>' +
       '</div>' +
       '<div style="width:1px;height:36px;background:rgba(0,0,0,0.08)"></div>' +
@@ -5123,49 +5144,61 @@ function renderHomeBillsTracker() {
         '<div style="font-size:10px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:0.6px">Still to Pay</div>' +
         '<div style="font-size:22px;font-weight:800;color:' + (totalUnpaid > 0 ? 'var(--pink-deep)' : 'var(--green-deep)') + ';line-height:1.1">₱' + totalUnpaid.toLocaleString() + '</div>' +
       '</div>' +
-    '</div>' +
-    rows.join('');
+    '</div>';
+
+  // Previous month unpaid section
+  if (prevUnpaidBills.length) {
+    html += '<div style="margin-bottom:4px;padding:7px 10px;border-radius:var(--r-sm);background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.15);display:flex;align-items:center;gap:6px">' +
+      '<span style="font-size:14px">⚠️</span>' +
+      '<span style="font-size:11.5px;font-weight:700;color:#DC2626">Unpaid from ' + prevLabel + '</span>' +
+    '</div>';
+    html += _billRows(prevUnpaidBills, prevPaid, prevAmts, prevMK, true).join('');
+    html += '<div style="margin:10px 0 4px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.7px;color:var(--ink-4)">' + curLabel + '</div>';
+  }
+
+  html += _billRows(active, curPaid, curAmts, curMK, false).join('');
+  el.innerHTML = html;
 }
 
-let _payingBillId = null;
+let _payingBillId   = null;
+let _payingMonthKey = null;
 
-function toggleBillPaid(billId) {
+function toggleBillPaid(rowId, monthKey) {
   const now = new Date();
-  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  const paidKey = 'at_bills_paid_' + monthKey;
+  const mk = monthKey || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+  const paidKey = 'at_bills_paid_' + mk;
   let paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
 
-  if (paid.includes(billId)) {
-    // Unmark paid
-    paid = paid.filter(id => id !== billId);
+  if (paid.includes(rowId)) {
+    paid = paid.filter(id => id !== rowId);
     localStorage.setItem(paidKey, JSON.stringify(paid));
-    const amtKey = 'at_bills_paid_amt_' + monthKey;
+    const amtKey = 'at_bills_paid_amt_' + mk;
     let amounts = JSON.parse(localStorage.getItem(amtKey) || '{}');
-    delete amounts[billId];
+    delete amounts[rowId];
     localStorage.setItem(amtKey, JSON.stringify(amounts));
     renderHomeBillsTracker();
     renderPaycheckGuide();
     renderExpenseTrendChart();
   } else {
-    openBillPayModal(billId);
+    openBillPayModal(rowId, mk);
   }
 }
 
 function _resolveBill(rowId) {
   const active = (typeof getActiveBills === 'function') ? getActiveBills() : [];
-  // rowId may be "bill_123" or "bill_123_s2"
   const baseId = rowId.replace(/_s\d+$/, '');
   return active.find(b => b.id === baseId) || null;
 }
 
-function openBillPayModal(rowId) {
-  _payingBillId = rowId;
+function openBillPayModal(rowId, monthKey) {
+  _payingBillId   = rowId;
+  _payingMonthKey = monthKey || null;
   const bill = _resolveBill(rowId);
   if (!bill) return;
-  const split = bill.splitPaychecks || 1;
-  const suggested = Math.round(bill.amount / split);
-  const splitNum = rowId.match(/_s(\d+)$/);
-  const label = split > 1 && splitNum ? bill.name + ' (' + splitNum[1] + '/' + split + ')' : bill.name;
+  const split      = bill.splitPaychecks || 1;
+  const suggested  = Math.round(bill.amount / split);
+  const splitNum   = rowId.match(/_s(\d+)$/);
+  const label      = split > 1 && splitNum ? bill.name + ' (' + splitNum[1] + '/' + split + ')' : bill.name;
   const titleEl = document.getElementById('bill-pay-modal-title');
   const subEl   = document.getElementById('bill-pay-modal-sub');
   const hintEl  = document.getElementById('bill-pay-hint');
@@ -5173,31 +5206,33 @@ function openBillPayModal(rowId) {
   if (titleEl) titleEl.textContent = label;
   if (subEl)   subEl.textContent   = split > 1 ? 'Split ×' + split + ' — ₱' + suggested.toLocaleString() + ' per paycheck' : '';
   if (hintEl)  hintEl.textContent  = 'Leave blank to use suggested amount (₱' + suggested.toLocaleString() + ')';
-  if (inputEl) { inputEl.value = ''; inputEl.placeholder = suggested.toLocaleString(); }
+  if (inputEl) { inputEl.value = ''; inputEl.placeholder = suggested.toString(); }
   openModal('bill-pay-modal');
 }
 
 function confirmBillPaid() {
   if (!_payingBillId) return;
-  const billId = _payingBillId;
-  const bill = _resolveBill(billId);
-  const split = bill ? (bill.splitPaychecks || 1) : 1;
+  const rowId = _payingBillId;
+  const bill = _resolveBill(rowId);
+  const split      = bill ? (bill.splitPaychecks || 1) : 1;
   const defaultAmt = bill ? Math.round(bill.amount / split) : 0;
   const input = document.getElementById('bill-pay-amount-input');
-  const raw = input ? input.value.trim() : '';
+  // Strip commas and any non-numeric chars (handles "1,000", "1.000", etc.)
+  const raw    = input ? input.value.trim().replace(/,/g, '').replace(/[^0-9.]/g, '') : '';
   const amount = raw === '' ? defaultAmt : (parseFloat(raw) || defaultAmt);
   const now = new Date();
-  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  const paidKey = 'at_bills_paid_' + monthKey;
-  const amtKey  = 'at_bills_paid_amt_' + monthKey;
+  const mk  = _payingMonthKey || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+  const paidKey = 'at_bills_paid_' + mk;
+  const amtKey  = 'at_bills_paid_amt_' + mk;
   let paid = JSON.parse(localStorage.getItem(paidKey) || '[]');
-  if (!paid.includes(billId)) paid.push(billId);
+  if (!paid.includes(rowId)) paid.push(rowId);
   localStorage.setItem(paidKey, JSON.stringify(paid));
   let amounts = JSON.parse(localStorage.getItem(amtKey) || '{}');
-  amounts[billId] = amount;
+  amounts[rowId] = amount;
   localStorage.setItem(amtKey, JSON.stringify(amounts));
   closeModalById('bill-pay-modal');
-  _payingBillId = null;
+  _payingBillId   = null;
+  _payingMonthKey = null;
   renderHomeBillsTracker();
   renderPaycheckGuide();
   renderExpenseTrendChart();
